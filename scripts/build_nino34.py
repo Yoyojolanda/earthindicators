@@ -132,8 +132,10 @@ def main():
 
     daily = {} if a.full else load_cache(a.cache)
     this = date.today().year
-    years = range(a.start, this + 1) if not daily else range(this - 1, this + 1)
-    years = list(years)
+    counts = {}
+    for d in daily:
+        counts[d.year] = counts.get(d.year, 0) + 1
+    years = [y for y in range(a.start, this + 1) if y >= this - 1 or counts.get(y, 0) < 360]
     for n, y in enumerate(years, 1):
         print(f"[{n}/{len(years)}] fetching {y} ...", flush=True)
         got = fetch_year(y, a.weighting, a.url_template)
@@ -143,7 +145,7 @@ def main():
         for d in [d for d in daily if d.year == y]:
             del daily[d]
         daily.update(got)
-    save_cache(a.cache, daily)
+        save_cache(a.cache, daily)   # checkpoint after every year
     out = build_json(daily)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out, "w") as fh:
