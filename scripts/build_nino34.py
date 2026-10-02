@@ -15,33 +15,57 @@ LAT, LON = (-5.0, 5.0), (190.0, 240.0)   # 5S-5N, 170W-120W (degrees east)
 CLIM = (1991, 2020)
 
 
-def fetch_year(year, weighting):
+def _open(url, engine):
     import xarray as xr
-    url = URL.format(year=year)
-    for attempt in range(5):
+    for attempt in range(4):
         try:
-            ds = xr.open_dataset(url)
-            break
-        except Exception as e:  # network hiccups are common on OPeNDAP
-            print(f"  open {year} failed ({e}); retry {attempt+1}", file=sys.stderr)
-            time.sleep(10 * (attempt + 1))
-    else:
-        raise RuntimeError(f"could not open {url}")
+            return xr.open_dataset(url, engine=engine)
+        except Exception as e:
+            print(f"  [{engine}] open failed ({e}); retry {attempt+1}", flush=True)
+            time.sleep(8 * (attempt + 1))
+    raise RuntimeError(f"could not open {url} with {engine}")
+
+
+def _load(piece):
+    for attempt in range(4):
+        try:
+            return piece.load()
+        except Exception as e:
+            print(f"    chunk failed ({e}); retry {attempt+1}", flush=True)
+            time.sleep(8 * (attempt + 1))
+    raise RuntimeError("chunk failed after retries")
+
+
+def _fetch_year_engine(url, weighting, engine, chunk=30):
+    ds = _open(url, engine)
     lat, lon = ds["lat"].values, ds["lon"].values
     li = np.where((lat >= LAT[0]) & (lat <= LAT[1]))[0]
     lo = np.where((lon >= LON[0]) & (lon <= LON[1]))[0]
-    sub = ds["sst"].isel(lat=slice(li.min(), li.max() + 1),
-                         lon=slice(lo.min(), lo.max() + 1)).load()
-    if weighting == "cos":
-        sub = sub.weighted(np.cos(np.deg2rad(sub["lat"]))).mean(("lat", "lon"))
-    else:
-        sub = sub.mean(("lat", "lon"))
-    days = sub["time"].values.astype("datetime64[D]")
+    sst = ds["sst"].isel(lat=slice(li.min(), li.max() + 1), lon=slice(lo.min(), lo.max() + 1))
     out = {}
-    for d, v in zip(days, sub.values):
-        if np.isfinite(v):
-            out[d.astype(object)] = float(v)
+    for i in range(0, sst.sizes["time"], chunk):
+        sub = _load(sst.isel(time=slice(i, i + chunk)))
+        if weighting == "cos":
+            m = sub.weighted(np.cos(np.deg2rad(sub["lat"]))).mean(("lat", "lon"))
+        else:
+            m = sub.mean(("lat", "lon"))
+        days = m["time"].values.astype("datetime64[D]")
+        for d, v in zip(days, m.values):
+            if np.isfinite(v):
+                out[d.astype(object)] = float(v)
     return out
+
+
+def fetch_year(year, weighting, url_template=URL):
+    url = url_template.format(year=year)
+    last = None
+    for engine in ("netcdf4", "pydap"):
+        try:
+            return _fetch_year_engine(url, weighting, engine)
+        except Exception as e:
+            last = e
+            print(f"  engine {engine} failed for {year}: {e}", flush=True)
+    raise RuntimeError(f"all engines failed for {year}: {last}")
 
 
 def build_json(daily):
@@ -101,6 +125,7 @@ def main():
     ap.add_argument("--cache", default="data/nino34_daily_sst.csv")
     ap.add_argument("--weighting", choices=["cos", "none"], default="cos")
     ap.add_argument("--start", type=int, default=1982)
+    ap.add_argument("--url-template", default=URL)
     ap.add_argument("--full", action="store_true", help="refetch every year")
     ap.add_argument("--compare", help="reference Climate Reanalyzer JSON to compare against")
     a = ap.parse_args()
@@ -108,9 +133,11 @@ def main():
     daily = {} if a.full else load_cache(a.cache)
     this = date.today().year
     years = range(a.start, this + 1) if not daily else range(this - 1, this + 1)
-    for y in years:
-        print(f"fetching {y} ...")
-        got = fetch_year(y, a.weighting)
+    years = list(years)
+    for n, y in enumerate(years, 1):
+        print(f"[{n}/{len(years)}] fetching {y} ...", flush=True)
+        got = fetch_year(y, a.weighting, a.url_template)
+        print(f"    {len(got)} days", flush=True)
         if y < this and len(got) < 360:
             sys.exit(f"{y}: only {len(got)} days returned; refusing to continue")
         for d in [d for d in daily if d.year == y]:
