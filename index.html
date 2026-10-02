@@ -15,10 +15,21 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 .box h2{font-size:15px;margin:0 0 8px}.wrap{position:relative;height:420px}.wrap.s{height:280px}
 #read{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px}
 #read li{margin:6px 0}#err{color:var(--acc)}.hide{display:none}
+#exp{font:inherit;font-size:13px;padding:6px 12px;margin-top:14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer}
+#exp:hover{border-color:var(--acc)}
+@media print{#err,#exp{display:none}
+ *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ @page{margin:12mm}
+ main{padding:0;max-width:none;zoom:.8}
+ .cards{margin:8px 0;grid-template-columns:repeat(5,1fr)}
+ .wrap{height:360px}.wrap.s{height:240px}.box{margin-bottom:8px;break-inside:avoid}
+ #read{padding:2px 14px}#read li{margin:2px 0}
+ .wrap canvas{width:100%!important;height:100%!important}}
 </style></head><body><main>
 <h1>Niño 3.4 sea-surface temperature tracker</h1>
 <p id="err"></p>
 <div id="out" class="hide">
+<button id="exp" type="button">Export charts as JPG</button>
 <div class="cards" id="cards"></div>
 <div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:#dce6f0;border:1px solid #bbb"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:#a9c0d8"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
@@ -29,7 +40,7 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
 const HI={1982:'#e6a23c',1997:'#6a994e',2015:'#7b5ea7'};
-let c1,c2;
+let c1,c2,expName='nino34.jpg';
 const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
 const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function run(raw){
@@ -63,6 +74,7 @@ function run(raw){
   `The highest anomaly in the earlier record is ${f(pk)} °C (${pkY}, around ${fmtDate(pkI)}). ${now>pk?cur+' has already passed it.':cur+' is '+(pk-now).toFixed(2)+' °C below it.'}`,
   `El Niño usually peaks between November and January, so values after ${fmtDate(last)} can still change substantially; the last ~2 weeks of a file are often preliminary.`];
  document.getElementById('read').innerHTML=items.map(t=>`<li>${t}</li>`).join('');
+ expName=`nino34-${cur}-${fmtDate(last).replace(' ','')}.jpg`;
  document.getElementById('out').classList.remove('hide');
  const x=[...Array(N).keys()],tc=col('--fg'),gc=col('--line');
  const ds=[
@@ -82,6 +94,23 @@ function run(raw){
  c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:[...prior,cur],datasets:[{data:[...at,now],backgroundColor:[...bc,'#d00000']}]},options:{animation:false,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C'}}},scales:{x:{ticks:{color:tc,maxRotation:90,autoSkip:true},grid:{display:false}},y:{ticks:{color:tc},grid:{color:'rgba(0,0,0,.2)'}}}}});
 }
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize()}));
+document.getElementById('exp').onclick=()=>{
+ if(!c1||!c2)return;
+ const A=c1.canvas,B=c2.canvas,r=c1.currentDevicePixelRatio||window.devicePixelRatio||1;
+ const pad=16*r,tH=24*r,kH=22*r,gap=20*r,W=Math.max(A.width,B.width)+pad*2;
+ const o=document.createElement('canvas');o.width=W;o.height=pad+tH+kH+A.height+gap+tH+B.height+pad;
+ const x=o.getContext('2d'),font=(px,b)=>x.font=(b?'600 ':'')+px*r+'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+ x.fillStyle='#fff';x.fillRect(0,0,o.width,o.height);x.textBaseline='top';
+ let y=pad;
+ font(15,1);x.fillStyle='#1c1c1c';x.fillText(document.getElementById('t1').textContent,pad,y);y+=tH;
+ font(12);let kx=pad;
+ [['#dce6f0','Range of prior years (min–max)'],['#a9c0d8','Middle 80% of prior years']].forEach(([c,t])=>{x.fillStyle=c;x.fillRect(kx,y+2*r,14*r,10*r);x.fillStyle='#555';x.fillText(t,kx+20*r,y);kx+=20*r+x.measureText(t).width+18*r});
+ y+=kH;x.drawImage(A,pad,y);y+=A.height+gap;
+ font(15,1);x.fillStyle='#1c1c1c';x.fillText(document.getElementById('t2').textContent,pad,y);y+=tH;
+ x.drawImage(B,pad,y);
+ const a=document.createElement('a');a.download=expName;a.href=o.toDataURL('image/jpeg',.92);document.body.appendChild(a);a.click();a.remove();
+};
 fetch('data/oisst2.1_nino3.4_sst_day.json').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
  .catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script></main></body></html>
