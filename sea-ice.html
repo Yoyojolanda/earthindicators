@@ -18,7 +18,7 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 .box h2{font-size:15px;margin:0 0 8px}.wrap{position:relative;height:380px}.wrap.s{height:320px}
 #read{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px}
 #read li{margin:6px 0}#err{color:var(--acc)}.hide{display:none}
-@media print{.nav,#err{display:none}
+@media print{.nav,#err,.hint{display:none}
  *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
  @page{margin:12mm}
  main{padding:0;max-width:none;zoom:.8}
@@ -32,6 +32,7 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 <p id="err"></p>
 <div id="out" class="hide">
 <div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series. The anomaly chart starts with Global only; click Arctic or Antarctic to add them.</p>
 <div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
@@ -49,11 +50,15 @@ const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)retur
 const ord=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
 const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
 // parse NSIDC CSV -> {year:[365 values]} (calendar-date aligned, Feb 29 dropped), 5-day trailing mean
-function parse(t){const o={};
+function parse(t){const raw=new Map();let lo=Infinity,hi=-Infinity;
  t.split(/\r?\n/).forEach(l=>{const p=l.split(','),y=+p[0],m=+p[1],d=+p[2],e=parseFloat(p[3]);
   if(!(y>1900&&m>=1&&m<=12&&d>=1&&e>=0)||(m==2&&d==29))return;
-  (o[y]=o[y]||Array(NN).fill(null))[MS[m-1]+d-1]=e});
- for(const y in o){const a=o[y];o[y]=a.map((v,i)=>{if(v==null)return null;let s=0,n=0;for(let k=Math.max(0,i-4);k<=i;k++)if(a[k]!=null){s+=a[k];n++}return s/n})}
+  const k=y*NN+MS[m-1]+d-1;raw.set(k,e);lo=Math.min(lo,k);hi=Math.max(hi,k)});
+ // trailing 5-day mean on a continuous day axis: fills the every-other-day gaps of the early (1978-87) record
+ // and runs across year boundaries; longer gaps (e.g. Dec 1987-Jan 1988) stay empty; never extends past the last real day
+ const o={};
+ for(let k=lo;k<=hi;k++){let s=0,n=0;for(let j=k-4;j<=k;j++)if(raw.has(j)){s+=raw.get(j);n++}
+  if(!n)continue;const y=Math.floor(k/NN);(o[y]=o[y]||Array(NN).fill(null))[k-y*NN]=s/n}
  return o}
 const comb=(a,b)=>{const o={};for(const y in a)if(b[y])o[y]=a[y].map((v,i)=>v!=null&&b[y][i]!=null?v+b[y][i]:null);return o};
 function region(by,key,name){
@@ -66,10 +71,13 @@ function poly(ch,lo,hi,c){const{ctx,scales:{x,y}}=ch,ix=[];for(let i=0;i<NN;i++)
  ctx.save();ctx.beginPath();ix.forEach((i,k)=>{const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);k?ctx.lineTo(px,py):ctx.moveTo(px,py)});
  for(let k=ix.length-1;k>=0;k--)ctx.lineTo(x.getPixelForValue(ix[k]),y.getPixelForValue(lo[ix[k]]));
  ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()}
+function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
+Chart.defaults.plugins.legend.onHover=e=>{e.native.target.style.cursor='pointer'};
+Chart.defaults.plugins.legend.onLeave=e=>{e.native.target.style.cursor='default'};
 function env(id,R){
  const A=R.prior.map(y=>R.by[y]),mn=[],mx=[],p10=[],p90=[];
  for(let i=0;i<NN;i++){const v=A.map(r=>r[i]).filter(x=>x!=null);mn.push(v.length?Math.min(...v):null);mx.push(v.length?Math.max(...v):null);p10.push(q(v,.1));p90.push(q(v,.9))}
- const band={id:'band',beforeDraw(ch){poly(ch,mn,mx,'#dce6f0');poly(ch,p10,p90,'#a9c0d8')}};
+ const band={id:'band',beforeDraw(ch){if(ch.isDatasetVisible(0))poly(ch,mn,mx,'#dce6f0');if(ch.isDatasetVisible(2))poly(ch,p10,p90,'#a9c0d8')}};
  const hl=[[R.cur-1,'#e6a23c'],[R.low[0],'#7b5ea7']].filter((h,k,a)=>R.by[h[0]]&&a.findIndex(z=>z[0]==h[0])==k);
  const hid=['min','p10','Range of prior years (min–max)','Middle 80% of prior years'];
  const bd=(label,data,c)=>({label,data,backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0});
@@ -77,14 +85,14 @@ function env(id,R){
   {label:`${REF[0]}–${REF[1]} average`,data:R.cl,borderColor:'#333',borderDash:[5,4],borderWidth:1.3,pointRadius:0}];
  hl.forEach(([y,c])=>ds.push({label:y+(y==R.low[0]?` (lowest on ${fmtDate(R.L)})`:''),data:R.by[y],borderColor:c,borderWidth:1.4,pointRadius:0}));
  ds.push({label:String(R.cur),data:R.by[R.cur].map((v,i)=>i<=R.L?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0});
- charts.push(new Chart($(id),{type:'line',plugins:[band],data:{labels:[...Array(NN).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,spanGaps:true,interaction:{mode:'index',intersect:false},
+ charts.push(freeze(new Chart($(id),{type:'line',plugins:[band],data:{labels:[...Array(NN).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,spanGaps:true,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>!hid.includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' M km²')}}},
-  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:'rgba(0,0,0,.18)'}}}}}))}
+  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:'rgba(0,0,0,.18)'}}}}})))}
 function anom(id,Rs){
  const ds=Rs.map(R=>{const d=[];R.ys.forEach(y=>R.by[y].forEach((v,i)=>{if(v!=null&&R.cl[i]!=null)d.push({x:y+(i+.5)/NN,y:v-R.cl[i]})}));return{label:R.name,data:d,borderColor:COL[R.key],borderWidth:1,pointRadius:0}});
- charts.push(new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,normalized:true,interaction:{mode:'nearest',axis:'x',intersect:false},
+ charts.push(freeze(new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,normalized:true,interaction:{mode:'nearest',axis:'x',intersect:false},
   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return fmtDate(Math.min(NN-1,Math.floor((x-y)*NN)))+', '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' M km²'}}},
-  scales:{x:{type:'linear',min:Math.floor(Rs[0].ys[0]),max:Rs[0].cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Million km² vs '+REF[0]+'–'+REF[1]},grid:{color:'rgba(0,0,0,.18)'}}}}}))}
+  scales:{x:{type:'linear',min:Math.floor(Rs[0].ys[0]),max:Rs[0].cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Million km² vs '+REF[0]+'–'+REF[1]},grid:{color:'rgba(0,0,0,.18)'}}}}}),[0,1]))}
 function run(nt,st){
  const N=parse(nt),S=parse(st),R=[region(N,'n','Arctic'),region(S,'s','Antarctic'),region(comb(N,S),'g','Global')];
  $('cards').innerHTML=R.map(r=>`<div class="card"><div class="v">${r.v.toFixed(2)} M km²</div><div class="l">${r.name} extent, ${fmtDate(r.L)}, ${r.cur}<br>${sg(r.anom)} vs average · ${ord(r.rank)} lowest of ${r.n}</div></div>`).join('');
