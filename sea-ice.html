@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sea ice extent tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{color-scheme:light;--bg:#fff;--fg:#1c1c1c;--mut:#555;--card:#fff;--line:#ddd;--acc:#d00000;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size:13px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.nb{font:inherit;font-size:13px;line-height:1.5;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none;display:inline-block}
+.nb:hover{border-color:var(--acc)}.nb.off,.nb:disabled{background:#eee;color:#999;cursor:default;pointer-events:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.card .v{font-size:22px;font-weight:700}.card .l{font-size:12px;color:var(--mut)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.box h2{font-size:15px;margin:0 0 8px}.wrap{position:relative;height:380px}.wrap.s{height:320px}
+#read{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px}
+#read li{margin:6px 0}#err{color:var(--acc)}.hide{display:none}
+@media print{.nav,#err{display:none}
+ *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ @page{margin:12mm}
+ main{padding:0;max-width:none;zoom:.8}
+ .cards{margin:8px 0;grid-template-columns:repeat(3,1fr)}
+ .wrap{height:290px}.wrap.s{height:260px}.box{margin-bottom:8px;break-inside:avoid}
+ #read{padding:2px 14px}#read li{margin:2px 0}
+ .wrap canvas{width:100%!important;height:100%!important}}
+</style></head><body><main>
+<h1>Sea ice extent tracker</h1>
+<nav class="nav"><a class="nb" href="index.html">El Niño</a><span class="nb off">Sea ice extent</span><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
+<div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Extent = total area where sea-ice concentration is at least 15%. Each value is a 5-day trailing mean of daily extent; the newest days are near-real-time and may be revised. Reference period 1981–2010, as used by NSIDC. Data: Sea Ice Index, Version 4 (NSIDC / NOAA), <a href="https://nsidc.org/data/g02135/versions/4" target="_blank" rel="noopener">nsidc.org/data/g02135</a>.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
+const REF=[1981,2010],NN=365,COL={n:'#1f6fb5',s:'#e08a00',g:'#333'},charts=[];
+let expName='sea-ice.jpg';
+const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
+const ord=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
+// parse NSIDC CSV -> {year:[365 values]} (calendar-date aligned, Feb 29 dropped), 5-day trailing mean
+function parse(t){const o={};
+ t.split(/\r?\n/).forEach(l=>{const p=l.split(','),y=+p[0],m=+p[1],d=+p[2],e=parseFloat(p[3]);
+  if(!(y>1900&&m>=1&&m<=12&&d>=1&&e>=0)||(m==2&&d==29))return;
+  (o[y]=o[y]||Array(NN).fill(null))[MS[m-1]+d-1]=e});
+ for(const y in o){const a=o[y];o[y]=a.map((v,i)=>{if(v==null)return null;let s=0,n=0;for(let k=Math.max(0,i-4);k<=i;k++)if(a[k]!=null){s+=a[k];n++}return s/n})}
+ return o}
+const comb=(a,b)=>{const o={};for(const y in a)if(b[y])o[y]=a[y].map((v,i)=>v!=null&&b[y][i]!=null?v+b[y][i]:null);return o};
+function region(by,key,name){
+ const ys=Object.keys(by).map(Number).sort((a,b)=>a-b),cur=ys[ys.length-1],prior=ys.filter(y=>y<cur);
+ const cl=Array.from({length:NN},(_,i)=>{const v=ys.filter(y=>y>=REF[0]&&y<=REF[1]&&by[y][i]!=null).map(y=>by[y][i]);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null});
+ let L=-1;by[cur].forEach((v,i)=>{if(v!=null)L=i});
+ const v=by[cur][L],at=prior.filter(y=>by[y][L]!=null).map(y=>[y,by[y][L]]);
+ return{key,name,by,ys,cur,prior,cl,L,v,n:at.length+1,rank:at.filter(r=>r[1]<v).length+1,low:at.reduce((m,r)=>r[1]<m[1]?r:m),anom:v-cl[L],pct:(v-cl[L])/cl[L]*100}}
+function poly(ch,lo,hi,c){const{ctx,scales:{x,y}}=ch,ix=[];for(let i=0;i<NN;i++)if(lo[i]!=null&&hi[i]!=null)ix.push(i);
+ ctx.save();ctx.beginPath();ix.forEach((i,k)=>{const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);k?ctx.lineTo(px,py):ctx.moveTo(px,py)});
+ for(let k=ix.length-1;k>=0;k--)ctx.lineTo(x.getPixelForValue(ix[k]),y.getPixelForValue(lo[ix[k]]));
+ ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()}
+function env(id,R){
+ const A=R.prior.map(y=>R.by[y]),mn=[],mx=[],p10=[],p90=[];
+ for(let i=0;i<NN;i++){const v=A.map(r=>r[i]).filter(x=>x!=null);mn.push(v.length?Math.min(...v):null);mx.push(v.length?Math.max(...v):null);p10.push(q(v,.1));p90.push(q(v,.9))}
+ const band={id:'band',beforeDraw(ch){poly(ch,mn,mx,'#dce6f0');poly(ch,p10,p90,'#a9c0d8')}};
+ const hl=[[R.cur-1,'#e6a23c'],[R.low[0],'#7b5ea7']].filter((h,k,a)=>R.by[h[0]]&&a.findIndex(z=>z[0]==h[0])==k);
+ const hid=['min','p10','Range of prior years (min–max)','Middle 80% of prior years'];
+ const bd=(label,data,c)=>({label,data,backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0});
+ const ds=[bd('Range of prior years (min–max)',mx,'#dce6f0'),bd('min',mn),bd('Middle 80% of prior years',p90,'#a9c0d8'),bd('p10',p10),
+  {label:`${REF[0]}–${REF[1]} average`,data:R.cl,borderColor:'#333',borderDash:[5,4],borderWidth:1.3,pointRadius:0}];
+ hl.forEach(([y,c])=>ds.push({label:y+(y==R.low[0]?` (lowest on ${fmtDate(R.L)})`:''),data:R.by[y],borderColor:c,borderWidth:1.4,pointRadius:0}));
+ ds.push({label:String(R.cur),data:R.by[R.cur].map((v,i)=>i<=R.L?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0});
+ charts.push(new Chart($(id),{type:'line',plugins:[band],data:{labels:[...Array(NN).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,spanGaps:true,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>!hid.includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' M km²')}}},
+  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:'rgba(0,0,0,.18)'}}}}}))}
+function anom(id,Rs){
+ const ds=Rs.map(R=>{const d=[];R.ys.forEach(y=>R.by[y].forEach((v,i)=>{if(v!=null&&R.cl[i]!=null)d.push({x:y+(i+.5)/NN,y:v-R.cl[i]})}));return{label:R.name,data:d,borderColor:COL[R.key],borderWidth:1,pointRadius:0}});
+ charts.push(new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,normalized:true,interaction:{mode:'nearest',axis:'x',intersect:false},
+  plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return fmtDate(Math.min(NN-1,Math.floor((x-y)*NN)))+', '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' M km²'}}},
+  scales:{x:{type:'linear',min:Math.floor(Rs[0].ys[0]),max:Rs[0].cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Million km² vs '+REF[0]+'–'+REF[1]},grid:{color:'rgba(0,0,0,.18)'}}}}}))}
+function run(nt,st){
+ const N=parse(nt),S=parse(st),R=[region(N,'n','Arctic'),region(S,'s','Antarctic'),region(comb(N,S),'g','Global')];
+ $('cards').innerHTML=R.map(r=>`<div class="card"><div class="v">${r.v.toFixed(2)} M km²</div><div class="l">${r.name} extent, ${fmtDate(r.L)}, ${r.cur}<br>${sg(r.anom)} vs average · ${ord(r.rank)} lowest of ${r.n}</div></div>`).join('');
+ R.forEach((r,k)=>$('t'+(k+1)).textContent=`${r.name} sea-ice extent: ${r.cur} vs every prior year (${r.ys[0]}–${r.cur-1})`);
+ $('t4').textContent=`Daily extent anomaly vs ${REF[0]}–${REF[1]} average, ${R[0].ys[0]}–${R[0].cur}`;
+ const sent=r=>`${r.name} extent on ${fmtDate(r.L)} is ${r.v.toFixed(2)} million km², ${Math.abs(r.anom).toFixed(2)} million km² (${Math.abs(r.pct).toFixed(1)}%) ${r.anom<0?'below':'above'} the ${REF[0]}–${REF[1]} average for this date. ${r.rank===1?`This is the lowest value for this date in the record (previous low: ${r.low[1].toFixed(2)}, ${r.low[0]}).`:`It ranks ${ord(r.rank)} lowest of ${r.n} years; the record low for this date is ${r.low[1].toFixed(2)} million km² (${r.low[0]}).`}`;
+ $('read').innerHTML=[...R.map(sent),'Extent counts every grid cell with at least 15% ice, so it overstates the area actually covered by ice. It is a consistent index for comparing years, not a measure of ice volume or thickness.','Seasonal cycles dominate the extent charts; the anomaly chart removes them, so long-term trends and unusual years stand out more clearly.'].map(t=>`<li>${t}</li>`).join('');
+ expName=`sea-ice-${R[0].cur}-${fmtDate(R[0].L).replace(' ','')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);
+ $('exp').disabled=false}
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{
+ if(charts.length<4)return;
+ const S=[1,2,3,4].map(k=>[$('c'+k),$('t'+k)]),r=charts[0].currentDevicePixelRatio||1,pad=16*r,tH=24*r,gap=20*r,W=Math.max(...S.map(s=>s[0].width))+pad*2;
+ const o=document.createElement('canvas');o.width=W;o.height=pad*2+S.reduce((h,s)=>h+tH+s[0].height,0)+gap*(S.length-1);
+ const x=o.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,o.width,o.height);x.textBaseline='top';x.font='600 '+15*r+'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+ let y=pad;S.forEach(([c,t],n)=>{if(n)y+=gap;x.fillStyle='#1c1c1c';x.fillText(t.textContent,pad,y);y+=tH;x.drawImage(c,pad,y);y+=c.height});
+ const a=document.createElement('a');a.download=expName;a.href=o.toDataURL('image/jpeg',.92);document.body.appendChild(a);a.click();a.remove()};
+Promise.all(['N','S'].map(h=>fetch(`data/${h}_seaice_extent_daily_v4.0.csv`).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([n,s])=>run(n,s))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the sea ice data. Please try again later.'});
+</script></main></body></html>
