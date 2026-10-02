@@ -24,7 +24,8 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
  .cards{margin:8px 0;grid-template-columns:repeat(5,1fr)}
  .wrap{height:360px}.wrap.s{height:240px}.box{margin-bottom:8px;break-inside:avoid}
  #read{padding:2px 14px}#read li{margin:2px 0}
- .wrap canvas{width:100%!important;height:100%!important}}
+ .wrap canvas{width:100%!important;height:100%!important}
+ #b3{break-before:page}}
 </style></head><body><main>
 <h1>Niño 3.4 sea-surface temperature tracker</h1>
 <p id="err"></p>
@@ -33,6 +34,7 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 <div class="cards" id="cards"></div>
 <div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:#dce6f0;border:1px solid #bbb"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:#a9c0d8"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box" id="b3"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:#dce6f0;border:1px solid #bbb"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:#a9c0d8"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Anomaly = daily SST minus the 1991–2020 daily mean. Recent values are preliminary and may be revised by NOAA. Not the relative index NOAA uses to classify El Niño strength. Data: NOAA OISST v2.1, provided by the NOAA PSL, Boulder, Colorado, USA, from their website at <a href="https://psl.noaa.gov" target="_blank" rel="noopener">psl.noaa.gov</a>.</p>
 </div>
@@ -40,7 +42,7 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
 const HI={1982:'#e6a23c',1997:'#6a994e',2015:'#7b5ea7'};
-let c1,c2,expName='nino34.jpg';
+let c1,c2,c3,expName='nino34.jpg';
 const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
 const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function run(raw){
@@ -66,9 +68,11 @@ function run(raw){
  const f=x=>(x>=0?'+':'')+x.toFixed(2);
  document.getElementById('cards').innerHTML=[[f(now)+' °C',cur+' anomaly, '+fmtDate(last)],[f(rec)+' °C','Prior record for this date ('+recY+')'],[f(now-rec)+' °C','Margin over that record'],[z.toFixed(1)+' σ','Above 1982–'+(cur-1)+' mean for this date'],[streak+' days','Consecutive days above record']].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
  document.getElementById('t1').textContent=`Niño 3.4 anomaly: ${cur} vs every year since 1982`;
+ document.getElementById('t3').textContent=`Niño 3.4 sea-surface temperature (°C): ${cur} vs every year since 1982`;
  document.getElementById('t2').textContent=`${fmtDate(last)} anomaly, every year`;
  const items=[
   `As of ${fmtDate(last)}, the ${cur} temperature anomaly is ${f(now)} °C. The previous record for this date was ${f(rec)} °C (${recY}); ${now>rec?cur+' is above it by '+(now-rec).toFixed(2)+' °C':cur+' ranks #'+rank+' of '+(at.length+1)+' years'}.`,
+  `In absolute terms the region is at ${cd[last].toFixed(2)} °C, against a 1991–2020 average of ${clim[last].toFixed(2)} °C for this date.`,
   `Relative to the ${prior.length} prior years, that is ${z.toFixed(1)} standard deviations from the mean (${f(mean)} °C, sd ${sd.toFixed(2)}).`,
   streak>0?`${cur} has been above every prior year for ${streak} consecutive days.`:`${cur} is not currently above the record envelope for this date.`,
   `The highest anomaly in the earlier record is ${f(pk)} °C (${pkY}, around ${fmtDate(pkI)}). ${now>pk?cur+' has already passed it.':cur+' is '+(pk-now).toFixed(2)+' °C below it.'}`,
@@ -86,29 +90,45 @@ function run(raw){
  const bandPlugin={id:'band',beforeDraw(ch){poly(ch,mn,mx,'#dce6f0');poly(ch,p10,p90,'#a9c0d8')}};
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds.push({label:y,data:A[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds.push({label:String(cur),data:a.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
- if(c1)c1.destroy();if(c2)c2.destroy();
+ if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
  c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>/^\d{4}$/.test(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min','90th percentile','10th percentile',String(cur),'1982','1997','2015'].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{min:-3,max:4,title:{display:true,text:'°C vs 1991–2020',color:tc},ticks:{color:tc,stepSize:.5},grid:{color:'rgba(0,0,0,.18)',lineWidth:1}}}}});
  const bc=prior.map(y=>HI[y]||'#8fa9c4');
  c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:[...prior,cur],datasets:[{data:[...at,now],backgroundColor:[...bc,'#d00000']}]},options:{animation:false,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C'}}},scales:{x:{ticks:{color:tc,maxRotation:90,autoSkip:true},grid:{display:false}},y:{ticks:{color:tc},grid:{color:'rgba(0,0,0,.2)'}}}}});
+ // absolute temperatures
+ const P=prior.map(y=>by[y]),amn=[],amx=[],a10=[],a90=[];
+ for(let i=0;i<N;i++){const v=P.map(r=>r[i]).filter(v=>v!=null);amn.push(v.length?Math.min(...v):null);amx.push(v.length?Math.max(...v):null);a10.push(q(v,.1));a90.push(q(v,.9))}
+ const bandAbs={id:'bandAbs',beforeDraw(ch){poly(ch,amn,amx,'#dce6f0');poly(ch,a10,a90,'#a9c0d8')}};
+ const ds3=[
+  {label:'Prior-year max',data:amx,borderWidth:0,pointRadius:0,fill:false},
+  {label:'Prior-year min',data:amn,borderWidth:0,pointRadius:0,fill:false},
+  {label:'90th percentile',data:a90,borderWidth:0,pointRadius:0,fill:false},
+  {label:'10th percentile',data:a10,borderWidth:0,pointRadius:0,fill:false},
+  {label:'1991–2020 mean',data:clim,borderColor:'#333',borderWidth:1.3,borderDash:[5,4],pointRadius:0,fill:false,order:4}];
+ Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds3.push({label:y,data:P[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
+ ds3.push({label:String(cur),data:cd.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
+ const shown=['1991–2020 mean',String(cur),'1982','1997','2015'];
+ c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{color:tc,filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min',...shown].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
+  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc,stepSize:.5},grid:{color:'rgba(0,0,0,.18)',lineWidth:1}}}}});
 }
-['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize()}));
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize()}));
 document.getElementById('exp').onclick=()=>{
- if(!c1||!c2)return;
- const A=c1.canvas,B=c2.canvas,r=c1.currentDevicePixelRatio||window.devicePixelRatio||1;
- const pad=16*r,tH=24*r,kH=22*r,gap=20*r,W=Math.max(A.width,B.width)+pad*2;
- const o=document.createElement('canvas');o.width=W;o.height=pad+tH+kH+A.height+gap+tH+B.height+pad;
+ if(!c1||!c2||!c3)return;
+ const S=[[c1.canvas,'t1',1],[c2.canvas,'t2',0],[c3.canvas,'t3',1]],r=c1.currentDevicePixelRatio||window.devicePixelRatio||1;
+ const pad=16*r,tH=24*r,kH=22*r,gap=20*r,W=Math.max(...S.map(s=>s[0].width))+pad*2;
+ const o=document.createElement('canvas');o.width=W;o.height=pad*2+S.reduce((h,[c,,k])=>h+tH+(k?kH:0)+c.height,0)+gap*(S.length-1);
  const x=o.getContext('2d'),font=(px,b)=>x.font=(b?'600 ':'')+px*r+'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
  x.fillStyle='#fff';x.fillRect(0,0,o.width,o.height);x.textBaseline='top';
  let y=pad;
- font(15,1);x.fillStyle='#1c1c1c';x.fillText(document.getElementById('t1').textContent,pad,y);y+=tH;
- font(12);let kx=pad;
- [['#dce6f0','Range of prior years (min–max)'],['#a9c0d8','Middle 80% of prior years']].forEach(([c,t])=>{x.fillStyle=c;x.fillRect(kx,y+2*r,14*r,10*r);x.fillStyle='#555';x.fillText(t,kx+20*r,y);kx+=20*r+x.measureText(t).width+18*r});
- y+=kH;x.drawImage(A,pad,y);y+=A.height+gap;
- font(15,1);x.fillStyle='#1c1c1c';x.fillText(document.getElementById('t2').textContent,pad,y);y+=tH;
- x.drawImage(B,pad,y);
+ S.forEach(([c,t,k],n)=>{
+  if(n)y+=gap;
+  font(15,1);x.fillStyle='#1c1c1c';x.fillText(document.getElementById(t).textContent,pad,y);y+=tH;
+  if(k){font(12);let kx=pad;[['#dce6f0','Range of prior years (min–max)'],['#a9c0d8','Middle 80% of prior years']].forEach(([cl,tx])=>{x.fillStyle=cl;x.fillRect(kx,y+2*r,14*r,10*r);x.fillStyle='#555';x.fillText(tx,kx+20*r,y);kx+=20*r+x.measureText(tx).width+18*r});y+=kH}
+  x.drawImage(c,pad,y);y+=c.height;
+ });
  const a=document.createElement('a');a.download=expName;a.href=o.toDataURL('image/jpeg',.92);document.body.appendChild(a);a.click();a.remove();
 };
 fetch('data/oisst2.1_nino3.4_sst_day.json').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
