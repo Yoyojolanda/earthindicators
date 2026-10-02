@@ -8,8 +8,6 @@
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
 h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size:13px}
-#drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;background:var(--card);cursor:pointer}
-#drop.over{border-color:var(--acc)}#drop b{display:block;font-size:16px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:16px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .card .v{font-size:22px;font-weight:700}.card .l{font-size:12px;color:var(--mut)}
@@ -19,16 +17,13 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size
 #read li{margin:6px 0}#err{color:var(--acc)}.hide{display:none}
 </style></head><body><main>
 <h1>Niño 3.4 sea-surface temperature tracker</h1>
-<p class="sub">Data loads automatically from NOAA OISST v2.1 (updated daily). To compare with another file, drop it below. Drop in the latest <a href="https://climatereanalyzer.org/clim/sst_daily/json_2clim/oisst2.1_nino3.4_sst_day.json" download="oisst2.1_nino3.4_sst_day.json" target="_blank" rel="noopener"><code>oisst2.1_nino3.4_sst_day.json</code> from Climate Reanalyzer</a> (if it opens as text instead of downloading, right-click the link and choose "Save link as…"). Everything is calculated in your browser; nothing is uploaded.</p>
-<div id="drop"><b>Drop JSON here or click to choose</b><span class="sub">Replace with a newer download any time</span>
-<input id="file" type="file" accept=".json,application/json" class="hide"></div>
 <p id="err"></p>
 <div id="out" class="hide">
 <div class="cards" id="cards"></div>
 <div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:#dce6f0;border:1px solid #bbb"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:#a9c0d8"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">Anomaly = daily SST minus the 1991–2020 daily mean. Latest-year gaps are filled from the file's "Preliminary" series. Not the relative index NOAA uses to classify El Niño strength.</p>
+<p class="sub">Anomaly = daily SST minus the 1991–2020 daily mean. Recent values are preliminary and may be revised by NOAA. Not the relative index NOAA uses to classify El Niño strength. Data: NOAA OISST v2.1, provided by the NOAA PSL, Boulder, Colorado, USA, from their website at <a href="https://psl.noaa.gov" target="_blank" rel="noopener">psl.noaa.gov</a>.</p>
 </div>
 <script>
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -87,13 +82,6 @@ function run(raw){
  c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:[...prior,cur],datasets:[{data:[...at,now],backgroundColor:[...bc,'#d00000']}]},options:{animation:false,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C'}}},scales:{x:{ticks:{color:tc,maxRotation:90,autoSkip:true},grid:{display:false}},y:{ticks:{color:tc},grid:{color:'rgba(0,0,0,.2)'}}}}});
 }
-const file=document.getElementById('file'),drop=document.getElementById('drop');
-const load=fl=>{if(!fl)return;const r=new FileReader();r.onload=()=>run(r.result);r.readAsText(fl)};
-drop.onclick=()=>file.click();file.onchange=()=>load(file.files[0]);
-['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
-['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')}));
-drop.addEventListener('drop',ev=>load(ev.dataTransfer.files[0]));
-
 fetch('data/oisst2.1_nino3.4_sst_day.json').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
- .catch(()=>{document.getElementById('err').textContent='Automatic data file not found yet; drop a JSON file instead.'});
+ .catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script></main></body></html>
