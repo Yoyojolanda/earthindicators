@@ -156,7 +156,7 @@
   };
   const addFoot = () => { if (main && !document.querySelector('.site-foot')) main.insertAdjacentHTML('beforeend', '<footer class="site-foot">' + footNav() + '<p>© ' + years + ' Earth Indicators. Text and charts are licensed under ' +
       '<a href="https://creativecommons.org/licenses/by/4.0/" rel="license">CC BY 4.0</a>: share and adapt them freely, with credit to Earth Indicators and a link to this site. ' +
-      'The logo and drawings are not included in that license.</p>' +
+      'The logo and drawings are not included in that license. Drawings by Jolanda: a dying dandelion, for what is happening to our planet, and in the logo its seeds blowing in the wind, held in a heart, for life, love and care.</p>' +
       '<p>The data comes from NOAA, NASA, NSIDC and the Copernicus Climate Change Service and stays under their terms. <a href="methods.html">How the numbers are made</a> lists the exact datasets, processing steps and checks for every chart; all code is <a href="' + GH + '">public on GitHub</a>. <a href="https://yoyojolanda.goatcounter.com">Visitor statistics</a> are public, counted without cookies.</p></footer>'); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addFoot); else addFoot();
 
