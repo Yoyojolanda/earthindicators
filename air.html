@@ -26,6 +26,7 @@
 
 @media print{:root{--ph:210px;--phs:142px}h2:has(+ #read){break-before:page;break-after:avoid}}.maptip{position:absolute;pointer-events:none;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:13px;white-space:nowrap;transform:translate(10px,-120%)}
 #ys{width:min(260px,50vw)}
+#yr{display:inline-flex;align-items:center;gap:8px}#yr[hidden]{display:none}
 </style></head><body><main>
 <h1>Air temperature tracker (ERA5)</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
@@ -42,7 +43,7 @@
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <div class="box" id="b6" hidden><h2 id="t6"></h2>
 <div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
-<span id="yr" hidden style="display:inline-flex;align-items:center;gap:8px"><input type="range" id="ys" aria-label="Year"><b id="yl"></b></span></div>
+<span id="yr" hidden><input type="range" id="ys" aria-label="Year"><b id="yl"></b></span></div>
 <div style="position:relative"><canvas id="c6" style="width:100%;display:block;border-radius:6px"></canvas><div id="tip6" class="maptip" hidden></div></div>
 <canvas id="leg6" style="width:100%;max-width:440px;height:38px;display:block;margin:8px 0 0"></canvas>
 <p class="sub" id="n6" style="margin:6px 0 0"></p></div>
