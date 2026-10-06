@@ -35,9 +35,9 @@
 <div class="seg switch" id="region" role="group" aria-label="Region"><span class="lbl">Show:</span> <button class="nb on" type="button" data-r="world">World</button><button class="nb" type="button" data-r="nh">N. Hemisphere</button><button class="nb" type="button" data-r="sh">S. Hemisphere</button><button class="nb" type="button" data-r="arctic">Arctic</button><button class="nb" type="button" data-r="antarctic">Antarctic</button><button class="nb" type="button" data-r="tropics">Tropics</button></div>
 <div class="cards" id="cards"></div>
 <p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
-<div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
-<div class="box" id="b3"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
+<div class="box" id="b3"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
@@ -97,7 +97,10 @@ function run(raw){
  const rank=at.filter(v=>v>now).length+1;
  let s12=0,n12=0;for(let k=0;k<365;k++){const t=new Date(Date.UTC(cur,0,last+1-k)),yy=t.getUTCFullYear(),ii=Math.round((t-Date.UTC(yy,0,1))/864e5),arr=yy==cur?cd:by[yy];if(arr&&arr[ii]!=null&&clim[ii]!=null){s12+=arr[ii]-clim[ii];n12++}}
  const a12=n12>300?s12/n12:null,pre=a12==null||!R.world?null:a12+0.88;   // the pre-industrial offset (0.88 °C) is for the global series only
- HI={};HI[cur-1]='#e6a23c';if(pkY!=cur-1)HI[pkY]='#7b5ea7';
+ let wY=null,wv=-1e9;prior.forEach(y=>{const v=(by[y]||[]).filter(x=>x!=null);if(v.length>=365){const m=v.reduce((s,x)=>s+x,0)/v.length;if(m>wv){wv=m;wY=y}}});   // warmest complete year
+ HI={};HI[cur-1]='#e6a23c';if(wY&&wY!=cur-1)HI[wY]='#2a9d8f';if(pkY!=cur-1&&pkY!=wY)HI[pkY]='#7b5ea7';
+ const WHY={};[[cur-1,'last year'],[wY,'warmest year on record'],[pkY,'warmest single day on record']].forEach(([y,w])=>{if(y)(WHY[y]??=[]).push(w)});
+ document.querySelectorAll('.hin').forEach(e=>e.textContent='Highlighted: '+Object.keys(WHY).sort((a,b)=>b-a).map(y=>`${y} (${WHY[y].join(', ')})`).join(', ')+'.');
  const f=x=>{const r=Math.abs(x)<0.005?0:x;return (r>=0?'+':'')+r.toFixed(2)};
  document.getElementById('cards').innerHTML=[[f(now)+' °C',cur+' anomaly, '+fmtDate(last)],[f(rec)+' °C',(now>rec?'Prior record':'Record')+' for this date ('+recY+')'],[f(now-rec)+' °C',now>rec?'Margin over that record':'Below that record'],R.world?[pre==null?'–':f(pre)+' °C','Last 12 months vs pre-industrial (1850–1900)']:[a12==null?'–':f(a12)+' °C','Last 12 months vs 1991–2020'],[streak+' days','Consecutive days above record']].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
  document.getElementById('t1').textContent=`${R.name}: each day of ${cur} compared with the same day in every year since ${y0} (°C above or below the 1991–2020 average)`;

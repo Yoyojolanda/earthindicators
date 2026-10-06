@@ -70,6 +70,10 @@ const LOAD={
    pre12:pre.toFixed(2)+' °C',first:A[0].x,since,y98:sg(p98.y)+' °C',lastY:last.x,last:sg(last.y)+' °C',top10:Math.min(...top.map(p=>p.x)),
    trend:(slope(A.slice(-30))*10).toFixed(2)+' °C',
    warmDays:Math.round(100*y12.filter(v=>v>0).length/y12.length)+'%',
+   ...(()=>{const all=r.back(40000);let n=0;for(let i=all.length-1;i>=0&&all[i]!=null&&all[i]>0;i--)n++;      // days in a row warmer than 1991-2020
+    const cd=d.find(x=>x.name==String(r.cur)).data;let li=cd.length-1;while(li>=0&&cd[li]==null)li--;
+    const st=new Date(Date.UTC(r.cur,0,li+1-(n-1)));
+    return{warmRun:n.toLocaleString('en-US'),warmSince:st.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}})(),
    ...(()=>{const t=A.slice(-10),c=t.reduce((b,p)=>p.y<b.y?p:b,t[0]),pre=A.slice(0,-10),k=pre.filter(p=>p.y<c.y).length;
     return{cool10Y:c.x,win10:t[0].x,cool10Beat:k==pre.length?`every one of the ${pre.length} years`:`${k} of the ${pre.length} years`}})(),
    tile:{v:sg(r.now)+' °C',l:`vs 1991–2020 average on ${r.date}`,s:`Last 12 months: about ${sg(pre,2)} °C above pre-industrial (1850–1900)`,spark:A,sparkLabel:`yearly, ${A[0].x}–${last.x}`}}}),
