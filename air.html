@@ -37,6 +37,7 @@
 <div class="box" id="b3"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
+<div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Daily mean surface air temperature (2 m above the ground or sea) averaged over the whole globe, area-weighted; each day is the mean of all 24 hourly values (UTC). Anomaly = daily temperature minus the 1991–2020 daily mean. "Above pre-industrial" adds Copernicus's standard 0.88 °C offset (1850–1900 to 1991–2020) to the 12-month average anomaly; Copernicus considers that offset accurate for 12-month averages, not for single days. Values to February 2024 are the series published by Copernicus; later days are computed here from ERA5 in the Copernicus Climate Data Store using the same method, and the newest days are preliminary. Generated using Copernicus Climate Change Service information; ERA5 (Hersbach et al.), <a href="https://cds.climate.copernicus.eu/" target="_blank" rel="noopener">cds.climate.copernicus.eu</a>.</p>
 </div>
@@ -167,4 +168,34 @@ document.querySelectorAll('#region .nb').forEach(x=>x.onclick=()=>load(x.dataset
 document.querySelectorAll('#region .nb').forEach(x=>{if(x.dataset.r==='world')return;
  fetch('data/'+REGIONS[x.dataset.r].f,{method:'HEAD'}).then(r=>{if(!r.ok)throw 0}).catch(()=>{x.disabled=true;x.title='The history for this region is still being downloaded from Copernicus'})});
 load('world').catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
-</script></main></body></html>
+</script><script>
+// ---- warming rate by region: linear trend of annual means since 1979, from the daily files (no need to wait for the regional JSONs)
+(function(){
+ const START=1979, NAMES={arctic:'Arctic',nh:'Northern Hemisphere',world:'World',tropics:'Tropics',sh:'Southern Hemisphere',antarctic:'Antarctic'},
+  ORDER=['arctic','nh','world','tropics','sh','antarctic'], txt=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.text()});
+ Promise.all([txt('data/era5_t2_global_daily.csv'),txt('data/era5_t2_regions_daily.csv')]).then(([g,rg])=>{
+  const S={},add=(k,d,v)=>{const y=+d.slice(0,4),a=((S[k]??={})[y]??=[0,0]);a[0]+=v;a[1]++};
+  g.trim().split('\n').slice(1).forEach(l=>{const p=l.split(',');add('world',p[0],+p[1])});   // Copernicus series + this site's newer days
+  const L=rg.trim().split('\n'),H=L[0].split(',');
+  L.slice(1).forEach(l=>{const p=l.split(',');H.forEach((h,i)=>{if(i&&h!=='world'&&p[i]!=='')add(h,p[0],+p[i])})});
+  const full=(k,y)=>S[k]&&S[k][y]&&S[k][y][1]>=365;
+  let END=new Date().getFullYear();while(END>START&&!full('world',END))END--;          // last complete year
+  const rate={},wait=[];
+  ORDER.forEach(k=>{const P=[];for(let y=START;y<=END;y++){if(!full(k,y))break;P.push([y,S[k][y][0]/S[k][y][1]])}
+   if(P.length<END-START+1){wait.push(NAMES[k]);return}
+   const n=P.length,mx=P.reduce((s,p)=>s+p[0],0)/n,my=P.reduce((s,p)=>s+p[1],0)/n;let a=0,b=0;
+   P.forEach(([x,y])=>{a+=(x-mx)*(y-my);b+=(x-mx)**2});rate[k]=a/b*10});                 // least-squares slope, per decade
+  const K=ORDER.filter(k=>k in rate);if(!K.length)return;
+  document.getElementById('t5').textContent=`How fast each region has warmed, ${START}–${END} (°C per decade)`;
+  window.c5=new Chart(document.getElementById('c5'),{type:'bar',data:{labels:K.map(k=>NAMES[k]),
+   datasets:[{data:K.map(k=>+rate[k].toFixed(3)),backgroundColor:K.map(k=>k==='world'?THEME.trend:THEME.bar)}]},
+   options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'+'+c.parsed.y.toFixed(2)+' °C per decade'}}},
+    scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'°C per decade'},grid:{color:THEME.grid}}}}});
+  const w=rate.world,x=k=>k in rate?` The ${NAMES[k]} has warmed about ${(rate[k]/w).toFixed(1)} times as fast as the world as a whole.`:'';
+  document.getElementById('n5').textContent=`Straight-line trend through the yearly averages of daily ERA5 2 m temperature, ${START}–${END}. ${START} is the usual starting point for such comparisons: from then on, satellites observe the whole globe, including the polar regions.`+
+   x('arctic')+(wait.length?` Still being calculated back to ${START}: ${wait.join(', ')}. Their bars appear here automatically once that is done.`:'');
+  document.getElementById('b5').hidden=false;
+ }).catch(e=>console.error('warming rates:',e));
+})();
+</script>
+</main></body></html>
