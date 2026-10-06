@@ -12,7 +12,7 @@ region with cos(latitude) weights. Regions as defined by Climate Reanalyzer:
   tropics    Tropics               23.5 S to 23.5 N
   world      World                 (only used to check this calculation against Copernicus's published series)
 
-Each run first adds the newest days, then spends the remaining time budget filling in history, going back
+Each run adds the newest days and, at the same time, spends its time budget filling in history, going back
 towards 1940. Several months are requested from Copernicus at once (ERA5_PARALLEL, default 8), because almost all
 of the time is spent waiting in the CDS queue. Months can come back in any order; each is saved only once every
 newer month is in, so the cache never has gaps. Progress is saved after every month, so the backfill continues
@@ -186,19 +186,30 @@ def main():
     client = cdsapi.Client(quiet=True, progress=False)
     last_ok = date.today() - timedelta(LAG)
 
-    # 1. newest days (plus the last few again: preliminary data can be revised)
+    lock = threading.Lock()                # the newest-days thread and the history loop both write the cache
+    def save(got):
+        with lock:
+            rows.update(got); save_cache(rows)
+
+    # history targets are fixed now, from the oldest day in the cache; the newest days don't affect them
+    targets = history_targets(rows) if rows else []     # very first run: newest days only
+    if rows and not targets:
+        print("history complete back to 1940", flush=True)
+
+    # 1. newest days (plus the last few again: preliminary data can be revised), in a background thread,
+    #    so the history requests below can join the Copernicus queue at the same time instead of waiting
     start = (max(rows) - timedelta(REFETCH)) if rows else last_ok - timedelta(40)
     months = {}
     for k in range((last_ok - start).days + 1):
         d = start + timedelta(k); months.setdefault((d.year, d.month), []).append(d)
-    for (y, m), days in sorted(months.items()):
-        print(f"new: {y}-{m:02d} ({len(days)} days)", flush=True)
-        rows.update(fetch_month(client, days)); save_cache(rows)
+    def newest():
+        for (y, m), days in sorted(months.items()):
+            print(f"new: requested {y}-{m:02d} ({len(days)} days)", flush=True)
+            got = fetch_month(client, days); save(got)
+            print(f"  received new {y}-{m:02d}: {len(got)} days", flush=True)
+    th = threading.Thread(target=newest, daemon=True); th.start()
 
     # 2. history, newest month first, several requests at once while the time budget lasts
-    targets = history_targets(rows)
-    if not targets:
-        print("history complete back to 1940", flush=True)
     local = threading.local()
     def work(days):                       # one CDS client per thread
         if not hasattr(local, "c"):
@@ -231,15 +242,19 @@ def main():
             if not got:
                 print(f"  no data for {targets[keep][0]:%Y-%m}; nothing older is saved this run", flush=True)
                 failed = True; break
-            rows.update(got); save_cache(rows); keep += 1
+            save(got); keep += 1
         if failed:
             break
     ex.shutdown(wait=False, cancel_futures=True)
     print(f"history: saved {keep} months this run", flush=True)
 
-    print(f"cache: {min(rows)} to {max(rows)}", flush=True)
-    write_jsons(rows)
-    overlap_check(rows)
+    th.join(timeout=max(0, BUDGET + GRACE - (time.time() - t0)))
+    if th.is_alive():
+        print("  newest days not finished in time; the next run tries again", flush=True)
+    with lock:
+        print(f"cache: {min(rows)} to {max(rows)}", flush=True)
+        write_jsons(rows)
+        overlap_check(rows)
     sys.stdout.flush()
     os._exit(0)                          # don't wait for threads still blocked on open CDS requests
 
