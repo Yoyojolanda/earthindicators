@@ -1,0 +1,51 @@
+name: Update sea-ice volume data
+
+on:
+  schedule:
+    - cron: "15 17 * * *"      # daily, 17:15 UTC
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seaice-volume
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      # the Copernicus Marine tool reads the login from these two names automatically
+      COPERNICUSMARINE_SERVICE_USERNAME: ${{ secrets.COPERNICUSMARINE_SERVICE_USERNAME }}
+      COPERNICUSMARINE_SERVICE_PASSWORD: ${{ secrets.COPERNICUSMARINE_SERVICE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install copernicusmarine numpy xarray
+
+      # Model: Mercator GLORYS12 reanalysis 1993 to ~3 months ago, plus their real-time analysis
+      # for the newest months. The first run backfills; each year is saved as soon as it is done.
+      - name: Model volume, GLORYS (monthly, both poles)
+        continue-on-error: true
+        timeout-minutes: 240
+        run: python -u scripts/build_seaice_volume.py --source glorys
+
+      # Satellite: CryoSat-2 + SMOS thickness, sampled every Monday. Arctic October-April only
+      # (summer melt ponds blind the radar); Antarctic year-round.
+      - name: Satellite volume, CryoSat-2 + SMOS (weekly, both poles)
+        continue-on-error: true
+        timeout-minutes: 80
+        run: python -u scripts/build_seaice_volume.py --source cs2smos
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update sea-ice volume data" && git pull --rebase && git push)
