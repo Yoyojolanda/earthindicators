@@ -27,7 +27,7 @@
 :root{--h:400px;--hs:300px;--ph:260px;--phs:200px}
 .seg{display:inline-flex;gap:6px;margin:0 0 8px;font-size:13px;align-items:center;color:var(--mut)}
 .seg .nb{padding:3px 10px}.seg .nb.on{border-color:var(--acc);color:var(--acc)}
-</style></head><body><main>
+@media print{h2:has(+ #read){break-before:page;break-after:avoid}}</style></head><body><main>
 <h1>Earth's energy imbalance (NASA CERES)</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
 <p id="err"></p>

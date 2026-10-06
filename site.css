@@ -234,4 +234,4 @@ html[data-theme="dark"] body::before{opacity:.42;filter:saturate(.7) brightness(
 .how h2{font-size:14px;margin:0 0 4px}
 .how p{margin:0 0 6px;max-width:48rem;line-height:1.5}
 .how .links{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0}
-@media print{.how .links{display:none}}
+@media print{.how{display:none}}
