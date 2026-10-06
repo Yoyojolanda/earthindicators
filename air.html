@@ -24,7 +24,9 @@
 <style>
 :root{--h:420px;--hs:280px;--ph:280px;--phs:190px}
 
-@media print{:root{--ph:210px;--phs:142px}}</style></head><body><main>
+@media print{:root{--ph:210px;--phs:142px}h2:has(+ #read){break-before:page;break-after:avoid}}.maptip{position:absolute;pointer-events:none;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:13px;white-space:nowrap;transform:translate(10px,-120%)}
+#ys{width:min(260px,50vw)}
+</style></head><body><main>
 <h1>Air temperature tracker (ERA5)</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
 <p id="err"></p>
@@ -38,6 +40,12 @@
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
+<div class="box" id="b6" hidden><h2 id="t6"></h2>
+<div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
+<span id="yr" hidden style="display:inline-flex;align-items:center;gap:8px"><input type="range" id="ys" aria-label="Year"><b id="yl"></b></span></div>
+<div style="position:relative"><canvas id="c6" style="width:100%;display:block;border-radius:6px"></canvas><div id="tip6" class="maptip" hidden></div></div>
+<canvas id="leg6" style="width:100%;max-width:440px;height:38px;display:block;margin:8px 0 0"></canvas>
+<p class="sub" id="n6" style="margin:6px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Daily mean surface air temperature (2 m above the ground or sea) averaged over the whole globe, area-weighted; each day is the mean of all 24 hourly values (UTC). Anomaly = daily temperature minus the 1991–2020 daily mean. "Above pre-industrial" adds Copernicus's standard 0.88 °C offset (1850–1900 to 1991–2020) to the 12-month average anomaly; Copernicus considers that offset accurate for 12-month averages, not for single days. Values to February 2024 are the series published by Copernicus; later days are computed here from ERA5 in the Copernicus Climate Data Store using the same method, and the newest days are preliminary. Generated using Copernicus Climate Change Service information; ERA5 (Hersbach et al.), <a href="https://cds.climate.copernicus.eu/" target="_blank" rel="noopener">cds.climate.copernicus.eu</a>.</p>
 </div>
@@ -196,6 +204,60 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
    x('arctic')+(wait.length?` Not yet available back to ${START}: ${wait.join(', ')}.`:'');
   document.getElementById('b5').hidden=false;
  }).catch(e=>console.error('warming rates:',e));
+})();
+</script>
+<script>
+// ---- temperature map: yearly 2-degree ERA5 maps (data/era5_t2_annual_2deg.*), drawn on a canvas with Natural Earth coastlines
+(function(){
+ const j=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
+ Promise.all([j('data/era5_t2_annual_2deg.json'),fetch('data/era5_t2_annual_2deg.bin').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}),j('data/coastline.json')]).then(([M,buf,coast])=>{
+  const Y=M.years,NL=M.nlat,NO=M.nlon,D=M.deg,N=NL*NO,A=new Int16Array(buf),END=Y[Y.length-1];
+  const at=(i,c)=>A[i*N+c]*M.scale;
+  // per cell: trend 1979-END (least squares, per decade) and the 1951-1980 average
+  const T=Y.map((y,i)=>[y,i]).filter(([y])=>y>=1979),mx=T.reduce((s,p)=>s+p[0],0)/T.length,sxx=T.reduce((s,p)=>s+(p[0]-mx)**2,0);
+  const B=Y.map((y,i)=>[y,i]).filter(([y])=>y>=1951&&y<=1980);
+  const trend=new Float32Array(N),base=new Float32Array(N);
+  for(let c=0;c<N;c++){let my=0;T.forEach(([,i])=>my+=at(i,c));my/=T.length;let sxy=0;T.forEach(([y,i])=>sxy+=(y-mx)*(at(i,c)-my));trend[c]=sxy/sxx*10;
+   let b=0;B.forEach(([,i])=>b+=at(i,c));base[c]=b/B.length}
+  window.MAP6={trend,base,Y};
+  const cv=document.getElementById('c6'),lg=document.getElementById('leg6'),tip=document.getElementById('tip6'),ys=document.getElementById('ys');
+  ys.min=Y[0];ys.max=END;ys.value=END;
+  let mode='trend',field,max,unit;
+  // diverging scale: blue - near white - red; values beyond the scale get the end colour
+  const STOPS=[[-1,[33,102,172]],[-.5,[103,169,207]],[0,[247,247,247]],[.5,[239,138,98]],[1,[178,24,43]]];
+  const col=v=>{v=Math.max(-1,Math.min(1,v));for(let k=1;k<STOPS.length;k++)if(v<=STOPS[k][0]){const[a,ca]=STOPS[k-1],[b,cb]=STOPS[k],f=(v-a)/(b-a);return ca.map((x,i)=>Math.round(x+(cb[i]-x)*f))}return STOPS[4][1]};
+  const off=document.createElement('canvas');off.width=NO;off.height=NL;
+  function draw(){
+   if(mode==='trend'){field=trend;max=1;unit=' °C per decade'}
+   else{const i=Y.indexOf(+ys.value);field=new Float32Array(N);for(let c=0;c<N;c++)field[c]=at(i,c)-base[c];max=4;unit=' °C'}
+   const ox=off.getContext('2d'),im=ox.createImageData(NO,NL);
+   for(let r=0;r<NL;r++)for(let c=0;c<NO;c++){const x=(c+NO/2)%NO,k=(r*NO+x)*4,[R,G,Bl]=col(field[r*NO+c]/max);im.data[k]=R;im.data[k+1]=G;im.data[k+2]=Bl;im.data[k+3]=255}
+   ox.putImageData(im,0,0);
+   const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=Math.round(W/2);
+   cv.width=W*dpr;cv.height=H*dpr;cv.style.height=H+'px';
+   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.imageSmoothingEnabled=true;g.drawImage(off,0,0,W,H);
+   g.strokeStyle='rgba(30,30,30,.75)';g.lineWidth=.8;g.beginPath();
+   coast.forEach(L=>{for(let k=0;k<L.length;k+=2){const x=(L[k]+180)/360*W,y=(90-L[k+1])/180*H;if(k===0||Math.abs(L[k]-L[k-2])>180)g.moveTo(x,y);else g.lineTo(x,y)}});g.stroke();
+   // legend
+   const lw=lg.clientWidth,lh=38,lx=lg.getContext('2d');lg.width=lw*dpr;lg.height=lh*dpr;lx.setTransform(dpr,0,0,dpr,0,0);
+   for(let x=0;x<lw;x++){const[R,G,Bl]=col(x/(lw-1)*2-1);lx.fillStyle=`rgb(${R},${G},${Bl})`;lx.fillRect(x,0,1,14)}
+   lx.fillStyle=THEME.mut;lx.font='12px system-ui,sans-serif';lx.textBaseline='top';
+   [-max,-max/2,0,max/2,max].forEach((v,i)=>{lx.textAlign=i===0?'left':i===4?'right':'center';lx.fillText((v>0?'+':v<0?'−':'')+Math.abs(v)+(i===4?unit:''),i/4*lw,18)});
+   document.getElementById('t6').textContent=mode==='trend'?`Where it has warmed: trend ${T[0][0]}–${END}, °C per decade`:`${ys.value} compared with the 1951–1980 average, °C`;
+   document.getElementById('yl').textContent=ys.value;
+   document.getElementById('n6').textContent=(mode==='trend'?`Straight-line trend through each cell's yearly averages, ${T[0][0]}–${END}. `:`Yearly average minus the 1951–1980 average for the same cell; slide to compare years. `)+
+    `Values beyond the ends of the scale are shown in the darkest colour. Each cell is 2° × 2° (about 220 km wide at the equator). ERA5 2 m temperature from Copernicus's monthly averages; coastlines from Natural Earth. Hover over the map to see the value for a place.`;
+  }
+  cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect(),lon=(e.clientX-r.left)/r.width*360-180,lat=90-(e.clientY-r.top)/r.height*180;
+   const row=Math.min(NL-1,Math.max(0,Math.floor((90-lat)/D))),c=Math.floor(((lon+360)%360)/D)%NO,v=field[row*NO+c];
+   tip.hidden=false;tip.style.left=(e.clientX-r.left)+'px';tip.style.top=(e.clientY-r.top)+'px';
+   tip.textContent=`${Math.abs(Math.round(lat))}°${lat>=0?'N':'S'}, ${Math.abs(Math.round(lon))}°${lon>=0?'E':'W'}: ${v>=0?'+':'−'}${Math.abs(v).toFixed(2)}${unit}`});
+  cv.addEventListener('mouseleave',()=>tip.hidden=true);
+  document.querySelectorAll('#mmode .nb').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#mmode .nb').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('yr').hidden=mode!=='year';draw()});
+  ys.oninput=draw;
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,150)});
+  document.getElementById('b6').hidden=false;draw();
+ }).catch(e=>console.error('map:',e));
 })();
 </script>
 </main></body></html>
