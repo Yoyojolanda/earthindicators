@@ -27,3 +27,103 @@
 /index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Linux ,0,earthindicators.org/ohc.html,h,"1920,0,1",BE,0,2026-10-05T15:15:05Z
 /,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,,o,"1440,0,1",US-NY,1,2026-10-05T15:18:17Z
 /,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,,o,"1440,0,1",US-NY,0,2026-10-05T15:18:27Z
+/eei.html,Earth's energy imbalance tracker,0,Chrome 153,Linux ,0,earthindicators.org/index.html,h,"1920,0,1",US-MA,1,2026-10-05T15:37:04Z
+/air.html,Global air temperature tracker,0,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-MA,1,2026-10-05T15:43:30Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Linux ,0,bsky.app,h,"1920,0,1",US-MA,1,2026-10-05T15:48:10Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,,o,"393,0,1",ES,1,2026-10-05T15:55:14Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,,o,"393,0,1",ES,0,2026-10-05T15:55:15Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Linux ,0,,o,"800,0,1",CA,1,2026-10-05T16:27:14Z
+/,Earth Indicators: is the climate changing? The latest data,0,Safari 26.6,iOS 18.7,0,,o,"414,0,1",US-NY,1,2026-10-05T16:58:29Z
+/eei.html,Earth's energy imbalance tracker,0,Chrome 153,Linux ,0,earthindicators.org/index.html,h,"1920,0,1",US-MA,1,2026-10-05T17:02:33Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Linux ,0,,o,"1920,0,1",US-MA,1,2026-10-05T17:18:59Z
+/sea-ice.html,Sea ice extent tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-05T17:24:55Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/sea-ice.html,h,"1440,0,1",US-NY,1,2026-10-05T17:41:28Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-05T17:41:46Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/claims.html,h,"1440,0,1",US-NY,0,2026-10-05T17:41:48Z
+/air.html,Global air temperature tracker,0,Chrome 153,Linux ,0,earthindicators.org,h,"1920,0,1",US-MA,0,2026-10-05T17:44:18Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Linux ,0,earthindicators.org/air.html,h,"1920,0,1",US-MA,1,2026-10-05T17:44:53Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 153,Linux ,0,earthindicators.org/nino.html,h,"1920,0,1",US-MA,1,2026-10-05T17:45:15Z
+/ohc.html,Ocean heat content tracker,0,Chrome 153,Linux ,0,earthindicators.org/sst.html,h,"1920,0,1",US-MA,1,2026-10-05T17:45:41Z
+/sea-level.html,Sea level tracker,0,Chrome 153,Linux ,0,earthindicators.org/ohc.html,h,"1920,0,1",US-MA,1,2026-10-05T17:45:59Z
+/sea-ice.html,Sea ice extent tracker,0,Chrome 153,Linux ,0,earthindicators.org/sea-level.html,h,"1920,0,1",US-MA,1,2026-10-05T17:46:19Z
+/co2.html,CO₂ tracker,0,Chrome 153,Linux ,0,earthindicators.org/sea-ice.html,h,"1920,0,1",US-MA,1,2026-10-05T17:46:39Z
+/ch4.html,Methane tracker,0,Chrome 153,Linux ,0,earthindicators.org/co2.html,h,"1920,0,1",US-MA,1,2026-10-05T17:46:54Z
+/eei.html,Earth's energy imbalance tracker,0,Chrome 153,Linux ,0,earthindicators.org/ch4.html,h,"1920,0,1",US-NY,1,2026-10-05T17:47:50Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-NY,1,2026-10-05T17:48:08Z
+claim-open/cooling,It's freezing here. So much for global warming. Or: It's cooling.,1,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-NY,1,2026-10-05T17:48:13Z
+claim-open/weather-blame,It rained this weekend. Was that climate change too? Or: Every bit of weather gets blamed on climate change.,1,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-NY,1,2026-10-05T17:48:13Z
+claim-open/stopped-1998,Warming stopped in 1998.,1,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-NY,1,2026-10-05T17:48:13Z
+claim-open/records-short,The records are too short or too patchy to mean anything.,1,Chrome 153,Linux ,0,earthindicators.org/eei.html,h,"1920,0,1",US-NY,1,2026-10-05T17:48:13Z
+/air.html,Global air temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-05T17:58:45Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,1,2026-10-05T17:59:01Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Linux ,0,earthindicators.org/claims.html,h,"1920,0,1",US-MA,1,2026-10-05T18:31:58Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,1,2026-10-05T18:41:15Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,0,2026-10-05T18:41:16Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/claims.html,h,"1440,0,1",US-NY,1,2026-10-05T18:41:19Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Linux ,0,earthindicators.org/claims.html,h,"1920,0,1",US-MA,0,2026-10-05T18:42:13Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Linux ,0,earthindicators.org/claims.html,h,"1920,0,1",US-MA,0,2026-10-05T18:42:27Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/claims.html,h,"1440,0,1",US-NY,1,2026-10-05T19:12:48Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-05T19:12:54Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Windows 10,0,go.bsky.app,h,"1280,0,1",ES,1,2026-10-05T20:03:27Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Android 16,0,yoyojolanda.github.io,h,"412,0,1",PL,1,2026-10-05T23:45:33Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Android 16,0,earthindicators.org,h,"412,0,1",PL,1,2026-10-05T23:46:16Z
+/nino.html,Niño 3.4 tracker,0,Chrome 153,Android 15,0,www.facebook.com,h,"432,0,1",PL,1,2026-10-05T23:46:30Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-06T00:57:28Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,,o,"393,0,1",ES,1,2026-10-06T01:29:40Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,,o,"393,0,1",ES,0,2026-10-06T01:29:41Z
+/,Earth Indicators: is the climate changing? The latest data,0,Safari 11.0,iOS 26.6,0,,o,"820,0,1",US-NY,1,2026-10-06T02:19:26Z
+/air.html,Global air temperature tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org,h,"820,0,1",US-NY,1,2026-10-06T02:19:36Z
+/ohc.html,Ocean heat content tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/air.html,h,"820,0,1",US-NY,1,2026-10-06T02:20:35Z
+/sea-level.html,Sea level tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/air.html,h,"820,0,1",US-NY,1,2026-10-06T02:21:24Z
+/sea-ice.html,Sea ice extent tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/sea-level.html,h,"820,0,1",US-NY,1,2026-10-06T02:22:17Z
+/co2.html,CO₂ tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/sea-ice.html,h,"820,0,1",US-NY,1,2026-10-06T02:23:25Z
+/ch4.html,Methane tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/co2.html,h,"820,0,1",US-NY,1,2026-10-06T02:23:58Z
+/eei.html,Earth's energy imbalance tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/ch4.html,h,"820,0,1",US-NY,1,2026-10-06T02:24:37Z
+/nino.html,Niño 3.4 tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/eei.html,h,"820,0,1",US-NY,1,2026-10-06T02:25:09Z
+/sst.html,Global sea-surface temperature tracker,0,Safari 11.0,iOS 26.6,0,earthindicators.org/nino.html,h,"820,0,1",US-NY,1,2026-10-06T02:25:42Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 45,Windows 7,0,yoyojolanda.github.io/nino34-tracker,h,"800,0,1",NL,1,2026-10-06T02:31:37Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 114,macOS 10.15,0,,o,"375,0,1",US-WA,1,2026-10-06T05:01:39Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 153,Android 10,0,go.bsky.app,h,"384,0,1",CH,1,2026-10-06T05:09:07Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 151,Windows 10,0,,o,"1920,0,1",NL,1,2026-10-06T05:37:34Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 117,Windows 10,0,,o,"800,0,1",US,1,2026-10-06T07:44:07Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 134,Linux ,0,,o,"1920,0,1",NL,1,2026-10-06T08:05:15Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-06T08:18:30Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-06T08:51:32Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/index.html,h,"1440,0,1",US-NY,1,2026-10-06T09:06:38Z
+/nino.html,Niño 3.4 tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-06T09:07:44Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/claims.html,h,"1440,0,1",US-NY,1,2026-10-06T09:08:01Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/nino.html,h,"1440,0,1",US-NY,0,2026-10-06T09:08:40Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-06T09:12:46Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/nino.html,h,"1440,0,1",US-NY,1,2026-10-06T09:12:49Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/nino.html,h,"1440,0,1",US-NY,0,2026-10-06T09:21:59Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-06T09:44:51Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,0,2026-10-06T09:44:53Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,0,2026-10-06T09:44:55Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,0,2026-10-06T09:44:56Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,0,2026-10-06T09:46:17Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-06T09:51:26Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,0,2026-10-06T09:51:33Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,0,2026-10-06T09:53:36Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,1,2026-10-06T09:54:59Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,0,2026-10-06T09:55:01Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,0,2026-10-06T09:56:48Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,1,2026-10-06T10:02:25Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,macOS 10.15,0,,o,"1440,0,1",US-NY,1,2026-10-06T10:22:23Z
+/air.html,Global air temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-06T10:22:32Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,1,2026-10-06T10:30:30Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 134,Windows ,0,,o,"1280,0,1",US-VA,1,2026-10-06T11:12:26Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,yoyojolanda.github.io,h,"423,0,1",KH,1,2026-10-06T11:15:14Z
+/nino.html,Niño 3.4 tracker,0,Chrome 154,Android 10,0,earthindicators.org,h,"423,0,1",KH,1,2026-10-06T11:15:25Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 154,Android 10,0,earthindicators.org,h,"423,0,1",KH,0,2026-10-06T11:28:43Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,1,2026-10-06T11:34:21Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,0,2026-10-06T11:34:26Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,0,2026-10-06T11:34:29Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,0,2026-10-06T11:34:38Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/air.html,h,"1440,0,1",US-NY,0,2026-10-06T11:34:47Z
+/eei.html,Earth's energy imbalance tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-06T11:34:55Z
+/methods.html,How the numbers are made: data and methods | Earth Indicators,0,Chrome 154,macOS 10.15,0,earthindicators.org/eei.html,h,"1440,0,1",US-NY,1,2026-10-06T11:35:11Z
+/ohc.html,Ocean heat content tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/methods.html,h,"1440,0,1",US-NY,1,2026-10-06T11:37:17Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,0,2026-10-06T11:37:26Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 117,Windows 10,0,,o,"800,0,1",US,1,2026-10-06T11:50:05Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-MA,1,2026-10-06T12:10:30Z
+/air.html,Global air temperature tracker,0,Chrome 154,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-MA,1,2026-10-06T12:16:11Z
