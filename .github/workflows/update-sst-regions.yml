@@ -1,0 +1,70 @@
+name: Update regional sea-surface temperature data
+
+on:
+  schedule:
+    - cron: "45 15 * * *"      # daily, 15:45 UTC
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sst-regions
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 pydap
+
+      # NOAA OISST v2.1 averaged over each box (boxes as on Climate Reanalyzer; longitudes in degrees east).
+      # The first run downloads 1982 to now; each year is saved as soon as it is done, so a run that is cut
+      # short continues next time. After that, each day only the current and previous year are refreshed.
+      - name: Gulf of Maine (42-45N, 66-71W)
+        continue-on-error: true
+        timeout-minutes: 40
+        run: |
+          echo "HTTP.TIMEOUT=120" > ~/.dodsrc
+          python -u scripts/build_nino34.py --lat 42 45 --lon 289 294 --out data/oisst2.1_gmaine_sst_day.json --cache data/gmaine_daily_sst.csv
+
+      - name: Gulf of Mexico (20-30N, 82-98W)
+        continue-on-error: true
+        timeout-minutes: 50
+        run: python -u scripts/build_nino34.py --lat 20 30 --lon 262 278 --out data/oisst2.1_gmex_sst_day.json --cache data/gmex_daily_sst.csv
+
+      - name: Subpolar North Atlantic (45-60N, 20-45W)
+        continue-on-error: true
+        timeout-minutes: 50
+        run: python -u scripts/build_nino34.py --lat 45 60 --lon 315 340 --out data/oisst2.1_spna_sst_day.json --cache data/spna_daily_sst.csv
+
+      - name: Atlantic hurricane region, MDR (10-20N, 20-85W)
+        continue-on-error: true
+        timeout-minutes: 70
+        run: python -u scripts/build_nino34.py --lat 10 20 --lon 275 340 --out data/oisst2.1_mdr_sst_day.json --cache data/mdr_daily_sst.csv
+
+      - name: North Atlantic (0-60N, 0-80W), every 2nd grid point
+        continue-on-error: true
+        timeout-minutes: 110
+        run: python -u scripts/build_nino34.py --lat 0 60 --lon 280 360 --stride 2 --out data/oisst2.1_natl_sst_day.json --cache data/natl_daily_sst.csv
+
+      # Not a Climate Reanalyzer box (they have none for the Pacific): same latitudes as the North Atlantic,
+      # Asia to the Americas. Land has no OISST values, so the box edges over land don't matter.
+      - name: North Pacific (0-60N, 120E-100W), every 3rd grid point
+        continue-on-error: true
+        timeout-minutes: 110
+        run: python -u scripts/build_nino34.py --lat 0 60 --lon 120 260 --stride 3 --out data/oisst2.1_npac_sst_day.json --cache data/npac_daily_sst.csv
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update regional SST data" && git pull --rebase && git push)

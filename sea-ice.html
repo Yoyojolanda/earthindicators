@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Sea ice extent tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Sea ice extent, Arctic and Antarctic">
+<meta property="og:description" content="Arctic and Antarctic sea ice compared with every year since 1978. NSIDC Sea Ice Index data.">
+<meta property="og:url" content="https://earthindicators.org/sea-ice.html">
+<meta property="og:image" content="https://earthindicators.org/og/sea-ice.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sea ice extent, Arctic and Antarctic: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Arctic and Antarctic sea ice compared with every year since 1978. NSIDC Sea Ice Index data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:320px;--ph:230px;--phs:200px;--cardw:230px;--pcols:3}
+</style></head><body><main>
+<h1>Sea ice extent tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series. The anomaly chart starts with Global only; click Arctic or Antarctic to add them.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
+<div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<div class="box"><h2 id="t5"></h2>
+ <div class="seg" id="zh">Region: <button class="nb" type="button" data-h="1">Antarctic</button><button class="nb" type="button" data-h="0">Arctic</button></div>
+ <div class="seg" id="zb">Baseline: <button class="nb" type="button" data-b="1981">1981–2010</button><button class="nb" type="button" data-b="1991">1991–2020</button></div>
+ <div class="wrap"><canvas id="c5"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Further reading: <a href="https://zacklabe.com/" target="_blank" rel="noopener">Zack Labe's climate graphics</a>, with detailed, regularly updated figures on Arctic sea ice (extent, thickness and volume), Arctic temperatures and more.</p>
+<p class="sub">Extent = total area where sea-ice concentration is at least 15%. Each value is a 5-day trailing mean of daily extent; the newest days are near-real-time and may be revised. Reference period 1981–2010, as used by NSIDC. Data: Sea Ice Index, Version 4 (NSIDC / NOAA), <a href="https://nsidc.org/data/g02135/versions/4" target="_blank" rel="noopener">nsidc.org/data/g02135</a>.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
+const REF=[1981,2010],NN=365,COL={n:'#1f6fb5',s:'#e08a00',g:THEME.clim},charts=[];
+let expName='sea-ice.jpg';
+const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
+const ord=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
+// parse NSIDC CSV -> {year:[365 values]} (calendar-date aligned, Feb 29 dropped), 5-day trailing mean
+function parse(t){const raw=new Map();let lo=Infinity,hi=-Infinity;
+ t.split(/\r?\n/).forEach(l=>{const p=l.split(','),y=+p[0],m=+p[1],d=+p[2],e=parseFloat(p[3]);
+  if(!(y>1900&&m>=1&&m<=12&&d>=1&&e>=0)||(m==2&&d==29))return;
+  const k=y*NN+MS[m-1]+d-1;raw.set(k,e);lo=Math.min(lo,k);hi=Math.max(hi,k)});
+ // trailing 5-day mean on a continuous day axis: fills the every-other-day gaps of the early (1978-87) record
+ // and runs across year boundaries; longer gaps (e.g. Dec 1987-Jan 1988) stay empty; never extends past the last real day
+ const o={};
+ for(let k=lo;k<=hi;k++){let s=0,n=0;for(let j=k-4;j<=k;j++)if(raw.has(j)){s+=raw.get(j);n++}
+  if(!n)continue;const y=Math.floor(k/NN);(o[y]=o[y]||Array(NN).fill(null))[k-y*NN]=s/n}
+ return o}
+const comb=(a,b)=>{const o={};for(const y in a)if(b[y])o[y]=a[y].map((v,i)=>v!=null&&b[y][i]!=null?v+b[y][i]:null);return o};
+function region(by,key,name){
+ const ys=Object.keys(by).map(Number).sort((a,b)=>a-b),cur=ys[ys.length-1],prior=ys.filter(y=>y<cur);
+ const cl=Array.from({length:NN},(_,i)=>{const v=ys.filter(y=>y>=REF[0]&&y<=REF[1]&&by[y][i]!=null).map(y=>by[y][i]);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null});
+ let L=-1;by[cur].forEach((v,i)=>{if(v!=null)L=i});
+ const v=by[cur][L],at=prior.filter(y=>by[y][L]!=null).map(y=>[y,by[y][L]]);
+ return{key,name,by,ys,cur,prior,cl,L,v,n:at.length+1,rank:at.filter(r=>r[1]<v).length+1,low:at.reduce((m,r)=>r[1]<m[1]?r:m),anom:v-cl[L],pct:(v-cl[L])/cl[L]*100}}
+function poly(ch,lo,hi,c){const{ctx,scales:{x,y}}=ch,ix=[];for(let i=0;i<NN;i++)if(lo[i]!=null&&hi[i]!=null)ix.push(i);
+ ctx.save();ctx.beginPath();ix.forEach((i,k)=>{const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);k?ctx.lineTo(px,py):ctx.moveTo(px,py)});
+ for(let k=ix.length-1;k>=0;k--)ctx.lineTo(x.getPixelForValue(ix[k]),y.getPixelForValue(lo[ix[k]]));
+ ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()}
+function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
+function env(id,R){
+ const A=R.prior.map(y=>R.by[y]),mn=[],mx=[],p10=[],p90=[];
+ for(let i=0;i<NN;i++){const v=A.map(r=>r[i]).filter(x=>x!=null);mn.push(v.length?Math.min(...v):null);mx.push(v.length?Math.max(...v):null);p10.push(q(v,.1));p90.push(q(v,.9))}
+ const band={id:'band',beforeDraw(ch){if(ch.isDatasetVisible(0))poly(ch,mn,mx,THEME.band1);if(ch.isDatasetVisible(2))poly(ch,p10,p90,THEME.band2)}};
+ const hl=[[R.cur-1,'#e6a23c'],[R.low[0],'#7b5ea7']].filter((h,k,a)=>R.by[h[0]]&&a.findIndex(z=>z[0]==h[0])==k);
+ const hid=['min','p10','Range of prior years (min–max)','Middle 80% of prior years'];
+ const bd=(label,data,c)=>({label,data,backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0});
+ const ds=[bd('Range of prior years (min–max)',mx,THEME.band1),bd('min',mn),bd('Middle 80% of prior years',p90,THEME.band2),bd('p10',p10),
+  {label:`${REF[0]}–${REF[1]} average`,data:R.cl,borderColor:THEME.clim,borderDash:[5,4],borderWidth:1.3,pointRadius:0}];
+ hl.forEach(([y,c])=>ds.push({label:y+(y==R.low[0]?` (lowest on ${fmtDate(R.L)})`:''),data:R.by[y],borderColor:c,borderWidth:1.4,pointRadius:0}));
+ ds.push({label:String(R.cur),data:R.by[R.cur].map((v,i)=>i<=R.L?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0});
+ charts.push(freeze(new Chart($(id),{type:'line',plugins:[band],data:{labels:[...Array(NN).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,spanGaps:true,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>!hid.includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' M km²')}}},
+  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:THEME.grid}}}}})))}
+function anom(id,Rs){
+ const ds=Rs.map(R=>{const d=[];R.ys.forEach(y=>R.by[y].forEach((v,i)=>{if(v!=null&&R.cl[i]!=null)d.push({x:y+(i+.5)/NN,y:v-R.cl[i]})}));return{label:R.name,data:d,borderColor:COL[R.key],borderWidth:1,pointRadius:0}});
+ charts.push(freeze(new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,normalized:true,interaction:{mode:'nearest',axis:'x',intersect:false},
+  plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return fmtDate(Math.min(NN-1,Math.floor((x-y)*NN)))+', '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' M km²'}}},
+  scales:{x:{type:'linear',min:Math.floor(Rs[0].ys[0]),max:Rs[0].cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Million km² vs '+REF[0]+'–'+REF[1]},grid:{color:THEME.grid}}}}}),[0,1]))}
+// ---- standard deviations from a 30-year daily mean (every year as a line)
+let ZR=null,zh=1,zb=1981;
+function zstats(r,a){const b=a+29,M=[],S=[];for(let i=0;i<NN;i++){const v=[];for(let y=a;y<=b;y++)if(r.by[y]&&r.by[y][i]!=null)v.push(r.by[y][i]);
+ const m=v.reduce((s,x)=>s+x,0)/v.length,sd=Math.sqrt(v.reduce((s,x)=>s+(x-m)**2,0)/(v.length-1));M.push(v.length>=20?m:null);S.push(v.length>=20?sd:null)}return{M,S}}
+const zof=(r,st,y,i)=>r.by[y]&&r.by[y][i]!=null&&st.M[i]!=null?(r.by[y][i]-st.M[i])/st.S[i]:null;
+function zchart(){
+ const r=ZR[zh],st=zstats(r,zb),z=y=>r.by[y].map((v,i)=>zof(r,st,y,i));
+ const prior=r.ys.filter(y=>y<r.cur&&y>r.ys[0]),minz=y=>Math.min(...z(y).filter(v=>v!=null));
+ const low=prior.reduce((b,y)=>minz(y)<minz(b)?y:b,prior[0]);
+ const hl=[[r.cur,'#d00000',3],[r.cur-1,'#e6a23c',1.6]];if(low!==r.cur-1)hl.push([low,'#7b5ea7',1.6]);
+ // bands of prior years in standard deviations (same view as the extent charts)
+ const Z=prior.map(z),mn=[],mx=[],p10=[],p90=[];
+ for(let i=0;i<NN;i++){const v=Z.map(a=>a[i]).filter(x=>x!=null);mn.push(v.length?Math.min(...v):null);mx.push(v.length?Math.max(...v):null);p10.push(q(v,.1));p90.push(q(v,.9))}
+ const band={id:'zband',beforeDraw(ch){if(ch.isDatasetVisible(0))poly(ch,mn,mx,THEME.band1);if(ch.isDatasetVisible(2))poly(ch,p10,p90,THEME.band2)}};
+ const bd=(label,data,c)=>({label,data:data.map((y,x)=>({x,y})),backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0});
+ const ds=[bd('Range of prior years (min–max)',mx,THEME.band1),bd('min',mn),bd('Middle 80% of prior years',p90,THEME.band2),bd('p10',p10)];
+ hl.forEach(([y,c,w],k)=>ds.push({label:String(y)+(y===low?' (furthest below normal)':''),data:z(y).map((v,i)=>({x:i,y:v})).filter(p=>y!==r.cur||p.x<=r.L),borderColor:c,borderWidth:w,pointRadius:0,order:-k}));
+ $('t5').textContent=`${r.name} sea-ice extent: standard deviations from the ${zb}–${zb+29} daily mean, ${r.cur} vs every prior year (${r.ys[1]}–${r.cur-1})`;
+ document.querySelectorAll('#zh .nb').forEach(b=>b.classList.toggle('on',+b.dataset.h===zh));
+ document.querySelectorAll('#zb .nb').forEach(b=>b.classList.toggle('on',+b.dataset.b===zb));
+ if(charts[4])charts[4].destroy();
+ const all=[...mn,...mx,...ds.slice(4).flatMap(d=>d.data.map(p=>p.y))].filter(v=>v!=null),ymin=Math.min(-3,Math.floor(Math.min(...all))),ymax=Math.max(3,Math.ceil(Math.max(...all)));
+ charts[4]=new Chart($('c5'),{type:'line',plugins:[band],data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+  plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>i.datasetIndex>=4,callbacks:{title:t=>fmtDate(Math.round(t[0].parsed.x)),label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(2)+' SD'}}},
+  scales:{x:{type:'linear',min:0,max:NN-1,afterBuildTicks:a=>{a.ticks=MS.map(v=>({value:v}))},ticks:{callback:v=>ML[MS.indexOf(v)]},grid:{display:false}},
+   y:{min:ymin,max:ymax,title:{display:true,text:'Standard deviations'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})}
+document.querySelectorAll('#zh .nb').forEach(b=>b.onclick=()=>{zh=+b.dataset.h;zchart()});
+document.querySelectorAll('#zb .nb').forEach(b=>b.onclick=()=>{zb=+b.dataset.b;zchart()});
+function run(nt,st){
+ const N=parse(nt),S=parse(st),R=[region(N,'n','Arctic'),region(S,'s','Antarctic'),region(comb(N,S),'g','Global')];
+ $('cards').innerHTML=R.map(r=>`<div class="card"><div class="v">${r.v.toFixed(2)} M km²</div><div class="l">${r.name} extent, ${fmtDate(r.L)}, ${r.cur}<br>${sg(r.anom)} vs average · ${r.rank==1?'':ord(r.rank)+' '}lowest of ${r.n}</div></div>`).join('');
+ R.forEach((r,k)=>$('t'+(k+1)).textContent=`${r.name} sea-ice extent: ${r.cur} vs every prior year (${r.ys[0]}–${r.cur-1})`);
+ $('t4').textContent=`Daily extent anomaly vs ${REF[0]}–${REF[1]} average, ${R[0].ys[0]}–${R[0].cur}`;
+ const sent=r=>`${r.name} extent on ${fmtDate(r.L)} is ${r.v.toFixed(2)} million km², ${Math.abs(r.anom).toFixed(2)} million km² (${Math.abs(r.pct).toFixed(1)}%) ${r.anom<0?'below':'above'} the ${REF[0]}–${REF[1]} average for this date. ${r.rank===1?`This is the lowest value for this date in the record (previous low: ${r.low[1].toFixed(2)}, ${r.low[0]}).`:`It ranks ${r.rank==1?'':ord(r.rank)+' '}lowest of ${r.n} years; the record low for this date is ${r.low[1].toFixed(2)} million km² (${r.low[0]}).`}`;
+ $('read').innerHTML=[...R.map(sent),'Extent counts every grid cell with at least 15% ice, so it overstates the area actually covered by ice. It is a consistent index for comparing years, not a measure of ice volume or thickness.','Seasonal cycles dominate the extent charts; the anomaly chart removes them, so long-term trends and unusual years stand out more clearly.',
+  (()=>{const f=(r,a)=>{const v=zof(r,zstats(r,a),r.cur,r.L);return (v>=0?'+':'−')+Math.abs(v).toFixed(1)};return `Measured in standard deviations from the normal for ${fmtDate(R[0].L)}, Arctic extent is ${f(R[0],1981)} (1981–2010) or ${f(R[0],1991)} (1991–2020), and Antarctic extent is ${f(R[1],1981)} or ${f(R[1],1991)}. The last chart shows this for every year: a standard deviation is the typical year-to-year spread for that date, so −2 is unusual and −4 is extreme. The baseline matters most for the Arctic, where 1991–2020 already includes much of the decline.`})()].map(t=>`<li>${t}</li>`).join('');
+ expName=`sea-ice-${R[0].cur}-${fmtDate(R[0].L).replace(' ','')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR=R;zchart();
+ $('exp').disabled=false}
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<5)return;siteExport([1,2,3,4,5].map(k=>[charts[k-1],'t'+k,0]),expName)};
+Promise.all(['N','S'].map(h=>fetch(`data/${h}_seaice_extent_daily_v4.0.csv`).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([n,s])=>run(n,s))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the sea ice data. Please try again later.'});
+</script></main></body></html>

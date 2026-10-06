@@ -1,0 +1,1 @@
+This site's daily values minus Climate Reanalyzer's, 16344 overlapping days (1982-2026): mean -0.0002 degC; 99.6% of days within 0.001 degC; 51 days differ by more than 0.02 degC (largest 0.332 degC).

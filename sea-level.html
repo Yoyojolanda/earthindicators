@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Sea level tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Global sea level">
+<meta property="og:description" content="How much the global ocean has risen since 1993, and how fast it is rising now. NASA satellite data.">
+<meta property="og:url" content="https://earthindicators.org/sea-level.html">
+<meta property="og:image" content="https://earthindicators.org/og/sea-level.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Global sea level: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="How much the global ocean has risen since 1993, and how fast it is rising now. NASA satellite data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:400px;--hs:300px;--ph:260px;--phs:200px}
+</style></head><body><main>
+<h1>Global mean sea level tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub" id="src"></p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const OCEAN=3.61e14,POOL=2500,charts=[];
+const sg=(x,d=1)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dlab=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
+let expName='sea-level.jpg';
+const SRC={
+ nasa:'Global mean sea level from the reference series of satellite radar altimeters (TOPEX/Poseidon, Jason-1, -2, -3 and Sentinel-6 Michael Freilich), computed weekly by NASA JPL as the area-weighted average between 66°S and 66°N, relative to the 1993 average. This page removes the average seasonal cycle (about ±0.6 cm) so the trend and year-to-year changes stand out. Rates are linear trends; the curve is a quadratic fit. Values do not include the glacial isostatic adjustment, which would add roughly 0.2–0.5 mm per year. Ocean area used for volumes: 361 million km². Data: NASA-SSH Global Mean Sea Level from Simple Gridded Sea Surface Height, version 1, PO.DAAC (<a href="https://doi.org/10.5067/NSIND-GMSV1" target="_blank" rel="noopener">doi.org/10.5067/NSIND-GMSV1</a>).',
+ noaa:'Global mean sea level from the reference series of satellite radar altimeters, about every 10 days, between 66°S and 66°N, with seasonal signals removed and an inverted-barometer correction applied (NOAA backup series, not updated since early 2025). Rates are linear trends; the curve is a quadratic fit. Values do not include the glacial isostatic adjustment (roughly 0.2–0.5 mm per year). Ocean area used for volumes: 361 million km². Altimetry data are provided by NOAA Laboratory for Satellite Altimetry (<a href="https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/" target="_blank" rel="noopener">star.nesdis.noaa.gov</a>).'};
+// NASA-SSH file: 'HDR' header lines, then year+fraction, GMSL (cm), 60-day smoothed GMSL (cm)
+function parseNasa(t){
+ const out=[];t.split(/\r?\n/).forEach(l=>{if(!l.trim()||l.startsWith('HDR'))return;const p=l.trim().split(/\s+/).map(Number);
+  if(p.length>=2&&p[0]>1990&&Math.abs(p[1])<1000)out.push({x:p[0],v:p[1]*10})});   // cm -> mm
+ // remove the mean seasonal cycle: residuals from a quadratic fit, averaged in 26 two-week bins of the year
+ const q=fit(out,2),qv=x=>q.c[0]+q.c[1]*(x-q.x0)+q.c[2]*(x-q.x0)**2,B=26,sum=Array(B).fill(0),n=Array(B).fill(0),bin=x=>Math.min(B-1,Math.floor((x%1)*B));
+ out.forEach(d=>{const b=bin(d.x);sum[b]+=d.v-qv(d.x);n[b]++});
+ return out.map(d=>({x:d.x,v:d.v-(n[bin(d.x)]?sum[bin(d.x)]/n[bin(d.x)]:0)}))}
+function parse(t){  // year, then one column per mission (mm); average the missions reporting at each time
+ const out=[];t.split(/\r?\n/).forEach(l=>{if(!l.trim()||l[0]=='#'||/^[a-z]/i.test(l))return;const p=l.split(',');const x=+p[0];
+  const v=p.slice(1).filter(s=>s.trim()!=='').map(Number).filter(isFinite);if(x>1990&&v.length)out.push({x,v:v.reduce((a,b)=>a+b,0)/v.length})});
+ return out.sort((a,b)=>a.x-b.x)}
+function fit(P,deg){ // least squares, returns coefficients for (x-x0)
+ const x0=P[0].x,n=deg+1,A=Array.from({length:n},()=>Array(n+1).fill(0));
+ P.forEach(p=>{const t=p.x-x0;for(let i=0;i<n;i++){for(let j=0;j<n;j++)A[i][j]+=t**(i+j);A[i][n]+=p.v*t**i}});
+ for(let i=0;i<n;i++){for(let k=i+1;k<n;k++){const f=A[k][i]/A[i][i];for(let j=i;j<=n;j++)A[k][j]-=f*A[i][j]}}
+ const c=Array(n);for(let i=n-1;i>=0;i--){c[i]=(A[i][n]-A[i].slice(i+1,n).reduce((s,a,j)=>s+a*c[i+1+j],0))/A[i][i]}
+ return{x0,c}}
+const rate=P=>fit(P,1).c[1];
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+const grid={color:THEME.grid};
+
+function run(t,src){
+ const D=src=='nasa'?parseNasa(t):parse(t);
+ $('src').innerHTML=SRC[src];if(D.length<500)throw new Error('data incomplete');
+ const L=D[D.length-1],first=D[0];
+ const mean=(a,b)=>{const p=D.filter(d=>d.x>=a&&d.x<b);return p.reduce((s,d)=>s+d.v,0)/p.length};
+ const y0=first.x%1<.1?Math.floor(first.x):Math.ceil(first.x),rise=mean(L.x-1,L.x+1)-mean(y0,y0+1);                   // last 12 months vs first full year
+ const all=rate(D),r10=rate(D.filter(d=>d.x>L.x-10)),rFirst=rate(D.filter(d=>d.x<first.x+10));
+ const q=fit(D,2),acc=2*q.c[2];                                                        // mm/yr²
+ const qv=x=>q.c[0]+q.c[1]*(x-q.x0)+q.c[2]*(x-q.x0)**2;
+ const volYr=r10/1000*OCEAN,poolsDay=volYr/POOL/365,big=n=>n>=1e6?(n/1e6).toFixed(1)+' million':Math.round(n).toLocaleString('en-US');
+ // smoothed curve: centered ~60-day mean
+ const sm=D.map((d,i)=>{const w=D.filter(e=>Math.abs(e.x-d.x)<=30/365.25);return{x:d.x,y:w.reduce((s,e)=>s+e.v,0)/w.length}});
+ // rolling 10-year rate, evaluated every 6 months
+ const roll=[];for(let e=first.x+10;e<=L.x+1e-6;e+=.5){const p=D.filter(d=>d.x>e-10&&d.x<=e);if(p.length>200)roll.push({x:e,y:rate(p)})}
+ // annual means and their change
+ const ann={};D.forEach(d=>{const y=Math.floor(d.x);(ann[y]=ann[y]||[]).push(d.v)});
+ const yrs=Object.keys(ann).map(Number).filter(y=>ann[y].length>=30),am=y=>ann[y].reduce((s,v)=>s+v,0)/ann[y].length;
+ const chg=yrs.slice(1).filter((y,i)=>y-1===yrs[i]).map(y=>({y,d:am(y)-am(y-1)}));
+ $('cards').innerHTML=[
+  [sg(rise/10,1)+' cm',`Rise since ${y0} (last 12 months vs ${y0})`],
+  [r10.toFixed(1)+' mm/yr',`Rate over the last 10 years`],
+  [rFirst.toFixed(1)+' mm/yr',`Rate over the first 10 years (${y0}–${y0+9})`],
+  [sg(acc,3)+' mm/yr²',`Acceleration (quadratic fit, whole record)`],
+  [big(poolsDay),`Olympic swimming pools of extra ocean volume, every day, at the 10-year rate`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Global mean sea level, ${y0-1}–${Math.floor(L.x)} (mm)`;
+ $('t2').textContent=`Rate of sea level rise, trailing 10-year trend (mm per year)`;
+ $('t3').textContent=`Change in annual mean sea level from the previous year (mm)`;
+ $('read').innerHTML=[
+  `Sea level is about ${(rise/10).toFixed(1)} cm higher than in ${y0}. Over the whole satellite record it has risen ${all.toFixed(1)} mm per year on average.`,
+  `The rise is speeding up: ${rFirst.toFixed(1)} mm per year in the first decade of measurements, ${r10.toFixed(1)} mm per year over the last ten years. At that recent rate the ocean gains about ${(volYr/1e9).toLocaleString('en-US',{maximumFractionDigits:0})} km³ of volume a year, roughly ${big(poolsDay)} Olympic swimming pools every day.`,
+  `Two things raise sea level: seawater expands as it warms (see the Ocean heat page), and meltwater from glaciers and the Greenland and Antarctic ice sheets adds water to the ocean.`,
+  `Year-to-year changes are bumpy because El Niño and La Niña move water between ocean and land: during El Niño more rain falls over the ocean and sea level jumps, during La Niña more rain falls on land and the rise pauses. The long-term trend is what matters.`,
+  `A few centimeters may sound small, but higher baseline sea level makes every storm surge and high tide reach farther inland, and the rise continues for centuries as the ocean keeps warming.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`sea-level-${Math.floor(L.x)}-${dlab(L.x).split(' ')[0]}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ const xr={type:'linear',min:Math.floor(first.x),max:Math.ceil(L.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}};
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:src=='nasa'?'Weekly values':'Every ~10 days',data:D.map(d=>({x:d.x,y:d.v})),borderColor:THEME.thin,borderWidth:1,pointRadius:0},
+   {label:'~60-day average',data:sm,borderColor:'#1f6fb5',borderWidth:2,pointRadius:0},
+   {label:'Quadratic fit (accelerating trend)',data:D.filter((d,i)=>i%6==0||i==D.length-1).map(d=>({x:d.x,y:qv(d.x)})),borderColor:'#d00000',borderWidth:2,borderDash:[6,4],pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>dlab(t[0].parsed.x),label:c=>c.dataset.label+': '+sg(c.parsed.y)+' mm'}}},
+   scales:{x:xr,y:{title:{display:true,text:'mm (relative to the record\u2019s baseline)'},grid}}}})));
+ charts.push(new Chart($('c2'),{type:'line',data:{datasets:[{label:'10-year rate',data:roll,borderColor:'#d00000',borderWidth:2.5,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>'10 years to '+dlab(t[0].parsed.x),label:c=>c.parsed.y.toFixed(2)+' mm/yr'}}},
+   scales:{x:{...xr,min:Math.floor(first.x)+10},y:{title:{display:true,text:'mm per year'},grid}}}}));
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:chg.map(c=>String(c.y)),datasets:[{label:'Change',data:chg.map(c=>c.d),backgroundColor:chg.map(c=>c.d<0?'#4f81b0':'#d98a8a')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)+' mm'}}},
+   scales:{x:{ticks:{autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'mm'},grid}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+get('NASA_SSH_GMSL_INDICATOR.txt').then(t=>run(t,'nasa')).catch(()=>get('slr_sla_gbl_free_all_66.csv').then(t=>run(t,'noaa')))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the sea level data. Please try again later.'});
+</script></main></body></html>

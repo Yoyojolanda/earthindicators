@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Ocean heat content tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Ocean heat content">
+<meta property="og:description" content="The ocean absorbs about 90% of the extra heat. How much heat the upper 2000 m have gained since the 1950s. NOAA NCEI data.">
+<meta property="og:url" content="https://earthindicators.org/ohc.html">
+<meta property="og:image" content="https://earthindicators.org/og/ohc.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ocean heat content: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The ocean absorbs about 90% of the extra heat. How much heat the upper 2000 m have gained since the 1950s. NOAA NCEI data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:400px;--hs:300px;--ph:260px;--phs:200px}
+</style></head><body><main>
+<h1>Ocean heat content tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="seg switch" id="basin" role="group" aria-label="Ocean"><span class="lbl">Show:</span> <button class="nb on" type="button" data-b="w">World</button><button class="nb" type="button" data-b="a">Atlantic</button><button class="nb" type="button" data-b="an">N. Atlantic</button><button class="nb" type="button" data-b="p">Pacific</button><button class="nb" type="button" data-b="pn">N. Pacific</button><button class="nb" type="button" data-b="i">Indian</button></div>
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Heat content of the world ocean, the Atlantic (which in NOAA's data includes the Arctic Ocean), the Pacific and the northern-hemisphere part of each, and the Indian Ocean, from the surface to 2000 m depth (published from 2005) and to 700 m depth (from 1955), as anomalies relative to NOAA's 1955–2006 climatology, in zettajoules (1 ZJ = 10²¹ joules). 3-month values cover Jan–Mar, Apr–Jun, Jul–Sep and Oct–Dec; the shaded band is ±2 standard errors. Measurements were sparse before the Argo float network reached global coverage in the mid-2000s, so early values are less certain. Heating rates are linear trends converted to watts per square meter of Earth's whole surface (510 million km²), so they can be compared with the energy imbalance page. Humanity's energy use: about 600 EJ (0.6 ZJ) per year (Energy Institute, Statistical Review of World Energy 2026). Data: NOAA National Centers for Environmental Information, Global Ocean Heat and Salt Content (<a href="https://www.ncei.noaa.gov/access/global-ocean-heat-content/" target="_blank" rel="noopener">ncei.noaa.gov</a>); Levitus et al. (2012).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const AREA=5.1e14,YR=31557600,ZJ=1e21,SEAS=[['1-3','Jan–Mar',.125],['4-6','Apr–Jun',.375],['7-9','Jul–Sep',.625],['10-12','Oct–Dec',.875]],charts=[];
+const sg=(x,d=0)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+let expName='ocean-heat.jpg';
+const BASINS={w:{f:'w0',col:1,name:'World ocean',short:'world ocean'},
+ a:{f:'a0',col:1,name:'Atlantic Ocean (incl. Arctic)',short:'Atlantic'},
+ an:{f:'a0',col:3,name:'North Atlantic (incl. Arctic)',short:'North Atlantic'},
+ p:{f:'p0',col:1,name:'Pacific Ocean',short:'Pacific'},
+ pn:{f:'p0',col:3,name:'North Pacific',short:'North Pacific'},
+ i:{f:'i0',col:1,name:'Indian Ocean',short:'Indian Ocean'}};
+let basin='w';
+// quadratic least-squares fit y = a + b·t + c·t² (t centred on the mean year); returns value and slope at any x
+function quad(P){const n=P.length,m=P.reduce((s,p)=>s+p.x,0)/n;let S=[0,0,0,0,0],T=[0,0,0];
+ P.forEach(p=>{const t=p.x-m;let tk=1;for(let k=0;k<5;k++){S[k]+=tk;if(k<3)T[k]+=tk*p.v;tk*=t}});
+ const A=[[S[0],S[1],S[2],T[0]],[S[1],S[2],S[3],T[1]],[S[2],S[3],S[4],T[2]]];
+ for(let i=0;i<3;i++){for(let j=i+1;j<3;j++){const f=A[j][i]/A[i][i];for(let k=i;k<4;k++)A[j][k]-=f*A[i][k]}}
+ const c=A[2][3]/A[2][2],b=(A[1][3]-A[1][2]*c)/A[1][1],a=(A[0][3]-A[0][1]*b-A[0][2]*c)/A[0][0];
+ return{at:x=>a+b*(x-m)+c*(x-m)**2,slope:x=>b+2*c*(x-m)}}
+// NCEI basin file: first line = labels; then year, OB, OB s.e., NH, NH s.e., SH, SH s.e. (units 10^22 J)
+const parse=t=>t.split(/\r?\n/).slice(1).map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=3&&r[0]>1900&&isFinite(r[1]));
+function slope(P){const n=P.length,mx=P.reduce((s,p)=>s+p.x,0)/n,my=P.reduce((s,p)=>s+p.v,0)/n;let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.v-my);b+=(p.x-mx)**2});return a/b}  // ZJ per year
+const wm2=zjPerYr=>zjPerYr*ZJ/YR/AREA;
+const L0=Q=>Q[Q.length-1];
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+const grid={color:THEME.grid};
+
+function run(yearT,seasT,y700T){
+ const B=BASINS[basin],c=B.col;
+ // 0-2000 m: yearly + 3-month (NOAA starts this layer in 2005); 0-700 m yearly back to 1955 for the long view
+ const Y=parse(yearT).map(r=>({y:Math.floor(r[0]),x:r[0],v:r[c]*10,e:r[c+1]*10}));          // 10^22 J -> ZJ
+ const Q=[];seasT.forEach((t,k)=>parse(t).forEach(r=>Q.push({y:Math.floor(r[0]),s:k,x:Math.floor(r[0])+SEAS[k][2],v:r[c]*10,e:r[c+1]*10})));
+ Q.sort((a,b)=>a.x-b.x);
+ const S=parse(y700T).map(r=>({y:Math.floor(r[0]),x:r[0],v:r[c]*10}));
+ const F7=quad(S),F2=quad(Q),w7a=wm2(F7.slope(1960)),w7b=wm2(F7.slope(L0(Q).x));
+ if(Y.length<10||Q.length<40||S.length<40)throw new Error('data incomplete');
+ const L=Q[Q.length-1],P=Q.find(q=>q.y===L.y-1&&q.s===L.s),lab=q=>SEAS[q.s][1]+' '+q.y;
+ const r10=slope(Q.filter(q=>q.x>L.x-10)),wm10=wm2(r10);
+ const Y0=Y[0],gain=L.v-Y0.v,yearsOfUse=gain/0.6,topY=Y.reduce((b,r)=>r.v>b.v?r:b,Y[0]);
+ const dec=[];for(let d=1960;d<=Math.floor(S[S.length-1].y/10)*10;d+=10){const pts=S.filter(q=>q.x>=d&&q.x<d+10);if(pts.length>=4)dec.push({d,label:d+'s'+(d+9>S[S.length-1].y?' (so far)':''),w:wm2(slope(pts))})}
+ const diffs=Y.slice(1).map((r,i)=>({y:r.y,d:r.v-Y[i].v}));
+ $('cards').innerHTML=[
+  [sg(L.v)+' ZJ',`Heat content anomaly, 0–2000 m, ${lab(L)}`],
+  [P?sg(L.v-P.v)+' ZJ':'–',`Change over 12 months (vs ${P?lab(P):'a year earlier'})`],
+  [wm10.toFixed(2)+' W/m²',`Heating rate over the last 10 years, spread over Earth's whole surface`],
+  [sg(gain)+' ZJ',`Heat added to the upper 2000 m since ${Y0.y}`],
+  [Math.round(yearsOfUse)+' years',`of humanity's total energy use, in heat added since ${Y0.y}`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`${B.name}: heat content, ${S[0].y}–${L.y} (ZJ vs 1955–2006)`;
+ $('t2').textContent=`${B.name}: rate of heating by decade, upper 700 m (W/m² of Earth's surface)`;
+ $('t3').textContent=`${B.name}: year-to-year change in heat content, 0–2000 m (annual means)`;
+ const lastD=dec[dec.length-1],early=S.filter(r=>r.x>=1960&&r.x<1990),wEarly=early.length>10?wm2(slope(early)):null;
+ $('read').innerHTML=[
+  `In ${lab(L)} the upper 2000 m of the ${B.short} held ${Math.abs(L.v).toFixed(0)} ZJ ${L.v>=0?'more':'less'} heat than NOAA's 1955–2006 average. Since ${Y0.y} alone it has gained about ${gain.toFixed(0)} ZJ, roughly ${Math.round(yearsOfUse)} years of all the energy humanity uses.`,
+  basin==='w'?`Over the last 10 years the ocean gained heat at about ${wm10.toFixed(2)} W/m² averaged over Earth's surface (${(r10*ZJ/YR/1e12).toFixed(0)} terawatts). The ocean takes up about 90% of the extra heat trapped by greenhouse gases, so this is the bulk of Earth's energy imbalance. It reads lower than the satellite figure on the Energy imbalance page partly because it leaves out the ocean below 2000 m, and because floats in the water and satellites in space measure in completely different ways.`
+   :`Over the last 10 years the ${B.short} gained heat at ${(r10*ZJ/YR/1e12).toFixed(0)} terawatts, or ${wm10.toFixed(2)} W/m² when spread over Earth's whole surface, the same yardstick as the World view, so the Atlantic, Pacific and Indian Ocean figures add up to the world figure. `+(basin==='i'?`Most of the Indian Ocean lies in the southern hemisphere, so it has no separate northern view here. It is connected to the Pacific through the passages between the Indonesian islands, and some of the heat the Pacific takes up flows through them; one study found the Indian Ocean took up most of the upper ocean's heat gain in 2003–2012 (Lee et al., 2015, Nature Geoscience). The sharp drop in 2016 is real: the 2015/16 El Niño weakened that flow of warm Pacific water, and changed winds brought cold deep water up, cooling mainly the southern Indian Ocean (Mayer et al., 2018, Geophysical Research Letters; NOAA AOML).`:basin[0]==='a'?`The Atlantic figures include the Arctic Ocean, as NOAA defines the basin; "North Atlantic" is its northern-hemisphere part.`:`The Pacific is the largest basin, holding about half of the world ocean's water. Its upper layer swings with El Niño and La Niña: El Niño moves heat out of the ocean into the air, La Niña lets the ocean build it back up, so year-to-year changes here are bumpier than the long-term rise. "North Pacific" is its northern-hemisphere part.`),
+  `The dashed lines are quadratic (curved) trend lines. A curve that bends upward means the heating is speeding up: fitted to the upper 700 m since ${S[0].y}, the heating rate goes from ${w7a<0.05?'close to zero':'about '+w7a.toFixed(2)+' W/m²'} in 1960 to about ${w7b.toFixed(2)} W/m² now. A trend line describes the past; it is not a forecast.`,
+  wEarly!=null&&lastD?`The longer record of the upper 700 m shows the heating speeding up: about ${wEarly.toFixed(2)} W/m² on average from 1960 to 1990, ${lastD.w.toFixed(2)} W/m² in the ${lastD.label}. Single early decades jump around because measurements were sparse then.`:'',
+  `The highest annual mean for 0–2000 m is ${sg(topY.v)} ZJ (${topY.y}). Ocean heat content changes slowly and steadily compared with surface temperature, which makes it one of the clearest indicators of ongoing warming.`,
+  `NOAA publishes the full 0–2000 m layer from 2005, once Argo profiling floats covered the globe; the upper 700 m goes back to 1955 but rests on far fewer measurements in early decades.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`ocean-heat-${L.y}-${SEAS[L.s][0]}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'0–2000 m: ±2 standard errors',data:Q.map(q=>({x:q.x,y:q.v+2*q.e})),borderWidth:0,pointRadius:0,backgroundColor:'rgba(208,0,0,.15)',fill:'+1'},
+   {label:'lower',data:Q.map(q=>({x:q.x,y:q.v-2*q.e})),borderWidth:0,pointRadius:0},
+   {label:'0–2000 m, 3-month values',data:Q.map(q=>({x:q.x,y:q.v})),borderColor:'#d00000',borderWidth:1.8,pointRadius:0},
+   {label:'0–700 m, annual means',data:S.map(r=>({x:r.x,y:r.v})),borderColor:'#1f6fb5',borderWidth:1.6,pointRadius:0},
+   {label:'0–2000 m, quadratic trend',data:Q.map(q=>({x:q.x,y:F2.at(q.x)})),borderColor:THEME.deep1,borderWidth:1.4,borderDash:[6,4],pointRadius:0},
+   {label:'0–700 m, quadratic trend',data:S.map(r=>({x:r.x,y:F7.at(r.x)})),borderColor:THEME.deep2,borderWidth:1.4,borderDash:[6,4],pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>i.text!=='lower'}},tooltip:{filter:i=>i.dataset.label!=='lower'&&!i.dataset.label.includes('±'),
+    callbacks:{title:t=>{const q=Q.find(q=>q.x===t[0].parsed.x);return q?lab(q):String(Math.floor(t[0].parsed.x))},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' ZJ'}}},
+   scales:{x:{type:'linear',min:Math.floor(S[0].x/5)*5,max:L.y+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},
+    y:{title:{display:true,text:'ZJ vs 1955–2006'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})));
+ charts.push(new Chart($('c2'),{type:'bar',data:{labels:dec.map(d=>d.label),datasets:[{label:'Heating rate',data:dec.map(d=>d.w),backgroundColor:dec.map((d,i)=>i==dec.length-1?'#d00000':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(2)+' W/m²'}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'W/m²'},grid}}}}));
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:diffs.map(d=>String(d.y)),datasets:[{label:'Change from previous year',data:diffs.map(d=>d.d),
+   backgroundColor:diffs.map(d=>d.d<0?'#4f81b0':'#d98a8a')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y,1)+' ZJ'}}},
+   scales:{x:{ticks:{autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'ZJ per year'},grid}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+function load(b){const f=BASINS[b].f;
+ return Promise.all([get(`h22-${f}-2000m.dat`),get(`h22-${f}-700m.dat`),...SEAS.map(s=>get(`h22-${f}-2000m${s[0]}.dat`))])
+  .then(([y,y7,...s])=>{basin=b;run(y,s,y7);document.querySelectorAll('#basin .nb').forEach(x=>x.classList.toggle('on',x.dataset.b===b))})}
+document.querySelectorAll('#basin .nb').forEach(x=>x.onclick=()=>load(x.dataset.b).catch(e=>{console.error(e);x.disabled=true;x.title='Data for this ocean is not available yet'}));
+load('w').catch(e=>{console.error(e);$('err').textContent='Could not load the ocean heat data. Please try again later.'});
+</script></main></body></html>

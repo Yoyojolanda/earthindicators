@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>How the numbers are made: data and methods | Earth Indicators</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="How the numbers are made: data and methods">
+<meta property="og:description" content="For every chart: the exact dataset, the files downloaded, what this site does to them, the code, and how the results are checked.">
+<meta property="og:url" content="https://earthindicators.org/methods.html">
+<meta property="og:image" content="https://earthindicators.org/og/index.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="For every chart on Earth Indicators: the exact dataset and version, the files downloaded, the processing steps, the code, and how the results are checked against published series.">
+<link rel="stylesheet" href="site.css">
+<style>
+.lead p{font-size:16px;margin:0 0 10px;max-width:46rem;line-height:1.55}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 22px;padding:0;list-style:none}
+.m{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 16px;scroll-margin-top:72px}
+.m:target{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.m h2{font-size:19px;margin:0 0 4px}
+.m .pg{font-size:14px;margin:0 0 12px;color:var(--mut)}
+.m dl{display:grid;grid-template-columns:9.5rem 1fr;gap:10px 16px;margin:0}
+.m dt{font-weight:650;font-size:14px;color:var(--mut2)}
+.m dd{margin:0;line-height:1.55;max-width:46rem;overflow-wrap:anywhere}
+.m dd p{margin:0 0 6px}.m dd p:last-child{margin:0}
+.m ul{margin:0;padding-left:1.1rem}.m li{margin:0 0 3px}
+.chk{display:block;background:var(--tint);border-radius:8px;padding:8px 10px;margin:4px 0;font-size:14px}
+.chk.none{color:var(--mut)}
+.kinds{max-width:46rem;line-height:1.55}
+.kinds dt{font-weight:650;margin:8px 0 2px}.kinds dd{margin:0 0 8px}
+@media (max-width:640px){.m{padding:12px}.m dl{grid-template-columns:1fr;gap:2px}.m dd{margin-bottom:10px}}
+</style></head><body><main>
+<nav class="nav" id="nav"></nav><script src="site.js"></script>
+
+<div class="lead">
+<h1>How the numbers are made</h1>
+<p>Every chart on this site is drawn from public data published by the agencies that measure it. This page lists, for each indicator, the exact dataset and version, the files that are downloaded, what this site does with them, how often they update, and how the results are checked.</p>
+<p>All of the code is public in the <a href="https://github.com/yoyojolanda/earthindicators">earthindicators repository on GitHub</a>. The data files the pages draw from live in its <a href="https://github.com/yoyojolanda/earthindicators/tree/main/data">data folder</a>, and every automatic update is a commit, so the full history of every number can be inspected.</p>
+</div>
+
+<dl class="kinds">
+<dt>Two kinds of series</dt>
+<dd><b>Published series, shown as published.</b> For CO₂, methane, ocean heat content, sea level, sea ice and the energy imbalance, the site downloads the agency's own file and plots its values unchanged. Anything derived from them (running means, trends, growth rates, comparisons) is calculated in your browser by the page's own script, which you can read on GitHub.</dd>
+<dd><b>Series calculated here from gridded data.</b> For El Niño, sea surface temperature and part of the air temperature record, the agencies publish maps rather than a single number per day, so this site averages the maps itself. Those calculations are checked against independently published series wherever one exists, and the results of those checks are shown below.</dd>
+</dl>
+
+<ul class="toc">
+<li><a class="nb" href="#air">Air temperature</a></li><li><a class="nb" href="#nino">El Niño</a></li><li><a class="nb" href="#sst">Sea surface temperature</a></li><li><a class="nb" href="#ohc">Ocean heat</a></li><li><a class="nb" href="#sea-level">Sea level</a></li><li><a class="nb" href="#sea-ice">Sea ice</a></li><li><a class="nb" href="#co2">CO₂</a></li><li><a class="nb" href="#ch4">Methane</a></li><li><a class="nb" href="#eei">Energy imbalance</a></li><li><a class="nb" href="#reuse">Reproducing and citing</a></li>
+</ul>
+
+<section class="m" id="air"><h2>Air temperature</h2><p class="pg">Used on: <a href="air.html">Air temperature</a>, the overview and the claims page.</p><dl>
+<dt>Dataset</dt><dd><p>Copernicus Climate Change Service (C3S), ERA5 post-processed daily statistics on single levels, variable 2 m temperature, daily mean of all 24 hourly values (UTC). DOI <a href="https://doi.org/10.24381/cds.4991cf48">10.24381/cds.4991cf48</a>. ERA5 reference: Hersbach et al. (2020), <a href="https://doi.org/10.1002/qj.3803">doi:10.1002/qj.3803</a>.</p>
+<p>World history (1940 to 18 February 2024): the daily global series published by Copernicus, <a href="https://sites.ecmwf.int/data/c3sci/era5-daily/data/era5_daily_series_2t_global_1940-2024.csv">era5_daily_series_2t_global_1940-2024.csv</a>, using only days it marks FINAL.</p></dd>
+<dt>What this site does</dt><dd><p>From 19 February 2024 onward, the daily-mean temperature field (0.25° grid) is downloaded from the Copernicus Climate Data Store and averaged over the globe with each grid cell weighted by the cosine of its latitude (its share of Earth's area), then converted from kelvin to °C. This is the same method Copernicus uses for its published series.</p>
+<p>Regions are calculated the same way over their own latitude bands: Northern and Southern Hemisphere (0–90°), Arctic and Antarctic (beyond 66.5°) and tropics (23.5°S–23.5°N). Their history is being filled in back to 1940, one month per step; a region appears on the page once 1991–2020 is complete.</p>
+<p>Every day of the year gets a 1991–2020 average (smoothed with a 5-day centred running mean); the anomaly is the day's value minus that average. "Above pre-industrial" adds Copernicus's offset of 0.88 °C (1850–1900 to 1991–2020), applied to 12-month averages only.</p></dd>
+<dt>Updates</dt><dd>Daily. ERA5 runs about 5 days behind real time. The newest 10 days are recalculated on every run, because the early-release data (ERA5T) can still be revised.</dd>
+<dt>Checks</dt><dd><p>Where this site's calculation and Copernicus's published series cover the same days, they are compared:</p>
+<span class="chk" data-f="data/era5_seam_check.txt">Loading…</span>
+<span class="chk" data-f="data/era5_overlap_check.txt">Loading…</span></dd>
+<dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_era5.py">scripts/build_era5.py</a> (world), <a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_era5_regions.py">scripts/build_era5_regions.py</a> (regions), run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-era5.yml">update-era5.yml</a> and <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-era5-regions.yml">update-era5-regions.yml</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/era5_t2_global_daily.csv">era5_t2_global_daily.csv</a> (one row per day; the <i>source</i> column says whether a value is Copernicus's published one or calculated here), <a href="data/era5_t2_global_day.json">era5_t2_global_day.json</a>, <a href="data/era5_t2_regions_daily.csv">era5_t2_regions_daily.csv</a>.</dd>
+<dt>Limitations</dt><dd>ERA5 is a reanalysis: a weather model constrained by billions of observations, not a direct measurement. Day-to-day values are reliable for the globe; for small or data-sparse regions such as the Antarctic, single days are less certain than long averages.</dd>
+</dl></section>
+
+<section class="m" id="nino"><h2>El Niño (Niño 3.4)</h2><p class="pg">Used on: <a href="nino.html">El Niño</a>.</p><dl>
+<dt>Dataset</dt><dd>NOAA 0.25° Daily Optimum Interpolation Sea Surface Temperature (OISST), version 2.1, DOI <a href="https://doi.org/10.25921/RE9P-PT57">10.25921/RE9P-PT57</a>; Huang et al. (2021), <a href="https://doi.org/10.1175/JCLI-D-20-0166.1">doi:10.1175/JCLI-D-20-0166.1</a>. Read as yearly files (<i>sst.day.mean.YYYY.nc</i>) from the <a href="https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html">NOAA PSL server</a>, which downloads only the box needed.</dd>
+<dt>What this site does</dt><dd><p>Takes every grid point in the Niño 3.4 box (5°S–5°N, 170°W–120°W) for every day since 1982 and averages them, weighted by the cosine of latitude.</p>
+<p>The anomaly is the daily value minus the 1991–2020 average for that day of the year (smoothed with a 5-day running mean). This is not NOAA's official Oceanic Niño Index, which uses 3-month means, and not the newer relative index that subtracts the tropical mean.</p></dd>
+<dt>Updates</dt><dd>Daily. The current and previous year are downloaded again on every run, because NOAA first publishes preliminary values and replaces them with final ones about two weeks later.</dd>
+<dt>Checks</dt><dd><p>Compared with the Niño 3.4 series from <a href="https://climatereanalyzer.org/clim/sst_daily/">Climate Reanalyzer</a> (University of Maine), which is calculated independently from the same NOAA data. A saved copy of their series is kept in the repository as <a href="https://github.com/yoyojolanda/earthindicators/blob/main/reference/climatereanalyzer.json">reference/climatereanalyzer.json</a>.</p>
+<span class="chk" data-f="data/nino34_check.txt">Loading…</span>
+<p>Both sites publish values rounded to 0.001 °C, so differences of 0.001 °C are rounding. The few larger differences fall in short clusters: most in the last weeks of a year, when NOAA swaps preliminary values for final ones, so the two sites probably downloaded at different moments. A cluster in early January 2012 has not been explained yet.</p></dd>
+<dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_nino34.py">scripts/build_nino34.py</a>, run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-nino34.yml">update-nino34.yml</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/nino34_daily_sst.csv">nino34_daily_sst.csv</a> (one row per day), <a href="data/oisst2.1_nino3.4_sst_day.json">oisst2.1_nino3.4_sst_day.json</a> (by year, with the 1991–2020 average).</dd>
+</dl></section>
+
+<section class="m" id="sst"><h2>Sea surface temperature</h2><p class="pg">Used on: <a href="sst.html">Sea surface temperature</a>, the overview and the claims page.</p><dl>
+<dt>Dataset</dt><dd>NOAA OISST v2.1, as for El Niño above.</dd>
+<dt>What this site does</dt><dd><p>The same script and method as Niño 3.4, applied to larger areas. Land has no SST values, so only ocean points count.</p>
+<ul><li>World: 60°S–60°N, every fourth grid point (a 1° sample)</li>
+<li>North Pacific: 0–60°N, 120°E–100°W, every third grid point</li>
+<li>North Atlantic: 0–60°N, 0–80°W, every second grid point</li>
+<li>Subpolar North Atlantic: 45–60°N, 20–45°W</li>
+<li>Atlantic hurricane region: 10–20°N, 20–85°W</li>
+<li>Gulf of Maine: 42–45°N, 66–71°W</li>
+<li>Gulf of Mexico: 20–30°N, 82–98°W</li></ul>
+<p>Except for the North Pacific, the boxes follow Climate Reanalyzer's definitions. Baseline and anomalies as for El Niño.</p></dd>
+<dt>Updates</dt><dd>Daily, with the current and previous year downloaded again on every run.</dd>
+<dt>Checks</dt><dd>The averaging code is the one checked for Niño 3.4 above. The world and regional series have not yet been compared with an independently published series; when such a comparison is added, its result will appear here.</dd>
+<dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_nino34.py">scripts/build_nino34.py</a>, run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-global.yml">update-global.yml</a> (world) and <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-sst-regions.yml">update-sst-regions.yml</a> (regions, each with its exact box).</dd>
+<dt>Data as used</dt><dd><a href="data/world_daily_sst.csv">world_daily_sst.csv</a> and <a href="data/oisst2.1_world_sst_day.json">oisst2.1_world_sst_day.json</a>; each region has the same pair of files in the <a href="https://github.com/yoyojolanda/earthindicators/tree/main/data">data folder</a>.</dd>
+<dt>Limitations</dt><dd>Sampling every second, third or fourth grid point speeds up the download for large areas; it changes the average very little but is not identical to using every point.</dd>
+</dl></section>
+
+<section class="m" id="ohc"><h2>Ocean heat content</h2><p class="pg">Used on: <a href="ohc.html">Ocean heat</a> and the <a href="eei.html">energy imbalance</a> comparison.</p><dl>
+<dt>Dataset</dt><dd>NOAA National Centers for Environmental Information (NCEI), <a href="https://www.ncei.noaa.gov/access/global-ocean-heat-content/">Global Ocean Heat and Salt Content</a>, basin time series for the world ocean (w0), Atlantic including the Arctic (a0), Pacific (p0) and Indian Ocean (i0), 0–2000 m (from 2005) and 0–700 m (from 1955), yearly and 3-monthly. Method: Levitus et al. (2012), <a href="https://doi.org/10.1029/2012GL051106">doi:10.1029/2012GL051106</a>. Files are taken from <a href="https://www.ncei.noaa.gov/data/oceans/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/">this NCEI folder</a>.</dd>
+<dt>What this site does</dt><dd>Plots NOAA's values unchanged, converted from NOAA's unit (10²² joules) to zettajoules (10²¹ J), with NOAA's ±2 standard error band. Anomalies are relative to NOAA's 1955–2006 climatology. Heating rates are least-squares linear trends, converted to watts per square metre of Earth's whole surface (510 million km²).</dd>
+<dt>Updates</dt><dd>Checked weekly; NOAA updates every three months.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-ohc.yml">update-ohc.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/ohc.html">ohc.html</a>.</dd>
+<dt>Data as used</dt><dd>The <i>h22-*.dat</i> files in the <a href="https://github.com/yoyojolanda/earthindicators/tree/main/data">data folder</a>, byte for byte as NOAA publishes them.</dd>
+<dt>Limitations</dt><dd>Measurements were sparse before the Argo floats reached global coverage in the mid-2000s, so earlier values are less certain. NOAA's estimate is at the low end of published ocean heat estimates.</dd>
+</dl></section>
+
+<section class="m" id="sea-level"><h2>Sea level</h2><p class="pg">Used on: <a href="sea-level.html">Sea level</a>.</p><dl>
+<dt>Dataset</dt><dd>NASA-SSH Global Mean Sea Level from Simple Gridded Sea Surface Height, version 1 (NASA JPL, PO.DAAC), DOI <a href="https://doi.org/10.5067/NSIND-GMSV1">10.5067/NSIND-GMSV1</a>. Backup: NOAA Laboratory for Satellite Altimetry global mean sea level (<a href="https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/">star.nesdis.noaa.gov</a>), no longer updated since early 2025.</dd>
+<dt>What this site does</dt><dd>Plots the published values. For the NASA series, the average seasonal cycle (about ±0.6 cm) is removed so the trend stands out: residuals from a quadratic fit are averaged in 26 two-week bins of the year and subtracted. Rates are linear trends; the curve is a quadratic fit. No glacial isostatic adjustment is applied.</dd>
+<dt>Updates</dt><dd>Checked weekly.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-sealevel.yml">update-sealevel.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/sea-level.html">sea-level.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/NASA_SSH_GMSL_INDICATOR.txt">NASA_SSH_GMSL_INDICATOR.txt</a>, <a href="data/slr_sla_gbl_free_all_66.csv">slr_sla_gbl_free_all_66.csv</a>, unchanged.</dd>
+</dl></section>
+
+<section class="m" id="sea-ice"><h2>Sea ice extent</h2><p class="pg">Used on: <a href="sea-ice.html">Sea ice extent</a>.</p><dl>
+<dt>Dataset</dt><dd>NSIDC / NOAA Sea Ice Index, version 4 (G02135), daily extent for the Arctic and Antarctic. Fetterer, F., K. Knowles, W. Meier et al., DOI <a href="https://doi.org/10.7265/a98x-0f50">10.7265/a98x-0f50</a>.</dd>
+<dt>What this site does</dt><dd>Extent is NSIDC's: the area where ice concentration is at least 15%. Each value shown is a 5-day trailing mean, which also fills the every-other-day gaps of the 1978–1987 record. Reference period 1981–2010, as used by NSIDC. The standard-deviation chart compares each day with the mean and spread of the same day over a 30-year reference period (1981–2010 or 1991–2020, selectable).</dd>
+<dt>Updates</dt><dd>Daily; the newest days may still be revised by NSIDC.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-seaice.yml">update-seaice.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/sea-ice.html">sea-ice.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/N_seaice_extent_daily_v4.0.csv">N_seaice_extent_daily_v4.0.csv</a>, <a href="data/S_seaice_extent_daily_v4.0.csv">S_seaice_extent_daily_v4.0.csv</a>, unchanged.</dd>
+</dl></section>
+
+<section class="m" id="co2"><h2>CO₂</h2><p class="pg">Used on: <a href="co2.html">CO₂</a>.</p><dl>
+<dt>Dataset</dt><dd>NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂, <a href="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.txt">co2_daily_mlo.txt</a> (<a href="https://gml.noaa.gov/ccgg/trends/">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</dd>
+<dt>What this site does</dt><dd>Plots NOAA's daily means unchanged; days without enough valid hourly data are gaps, never filled in. Monthly means use months with at least 10 valid days; the trend is a centred 12-month running mean. Annual growth compares each month with the same month a year earlier.</dd>
+<dt>Updates</dt><dd>Daily.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-co2.yml">update-co2.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/co2.html">co2.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/co2_daily_mlo.txt">co2_daily_mlo.txt</a>, unchanged.</dd>
+</dl></section>
+
+<section class="m" id="ch4"><h2>Methane</h2><p class="pg">Used on: <a href="ch4.html">Methane</a>.</p><dl>
+<dt>Dataset</dt><dd>NOAA Global Monitoring Laboratory, globally averaged methane at marine surface sites: monthly means <a href="https://gml.noaa.gov/webdata/ccgg/trends/ch4/ch4_mm_gl.txt">ch4_mm_gl.txt</a> and annual increases <a href="https://gml.noaa.gov/webdata/ccgg/trends/ch4/ch4_gr_gl.txt">ch4_gr_gl.txt</a>. Lan, X., K.W. Thoning and E.J. Dlugokencky (<a href="https://gml.noaa.gov/ccgg/trends_ch4/">gml.noaa.gov/ccgg/trends_ch4</a>).</dd>
+<dt>What this site does</dt><dd>Plots NOAA's monthly means, de-seasonalised trend and annual increases unchanged. Pre-industrial reference (1750): about 729 ppb (IPCC AR6).</dd>
+<dt>Updates</dt><dd>Checked daily; NOAA updates monthly. First estimates for recent months can be revised by several ppb.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-ch4.yml">update-ch4.yml</a>. Display: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/ch4.html">ch4.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/ch4_mm_gl.txt">ch4_mm_gl.txt</a>, <a href="data/ch4_gr_gl.txt">ch4_gr_gl.txt</a>, unchanged.</dd>
+</dl></section>
+
+<section class="m" id="eei"><h2>Earth's energy imbalance</h2><p class="pg">Used on: <a href="eei.html">Energy imbalance</a>.</p><dl>
+<dt>Dataset</dt><dd>NASA CERES Energy Balanced and Filled (EBAF) top-of-atmosphere monthly means, Edition 4.2.1, DOI <a href="https://doi.org/10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1">10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1</a>; Loeb et al. (2018), <a href="https://doi.org/10.1175/JCLI-D-17-0208.1">doi:10.1175/JCLI-D-17-0208.1</a>. NASA Langley Research Center, distributed by the NASA Atmospheric Science Data Center. The newest file is found through NASA's public catalogue (CMR) and downloaded with an Earthdata account; the exact file used is recorded in <a href="data/ceres_source.txt">ceres_source.txt</a>.</dd>
+<dt>What this site does</dt><dd><p>Takes NASA's own global monthly means from the file (all-sky): incoming solar, reflected shortwave and outgoing longwave radiation. Absorbed solar = incoming minus reflected; energy imbalance = absorbed solar minus outgoing longwave. Only if a file lacked NASA's global means would the script average the 1° grid itself, weighted by the cosine of latitude.</p>
+<p>Running means (12 and 48 months) end at the month shown.</p></dd>
+<dt>Updates</dt><dd>Checked daily; NASA publishes a new file about once a month, a few months behind real time.</dd>
+<dt>Checks</dt><dd>The values are NASA's own global means, not recalculated. As an independent cross-check, the page compares the total heat gain measured by the satellites with the heat gain of the upper 2000 m of the ocean from NOAA over the same 10 years.</dd>
+<dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_ceres.py">scripts/build_ceres.py</a>, run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-ceres.yml">update-ceres.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/eei.html">eei.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/ceres_ebaf_global.csv">ceres_ebaf_global.csv</a> (month, incoming, absorbed, outgoing, net, in W/m²).</dd>
+<dt>Limitations</dt><dd>The satellites measure the imbalance as a small difference between two very large flows of energy. EBAF therefore anchors the absolute level to ocean heat measurements; the changes over time come from the satellites themselves.</dd>
+</dl></section>
+
+<section class="m" id="reuse"><h2>Reproducing and citing</h2><dl>
+<dt>Run it yourself</dt><dd><p>The scripts need Python 3 with <i>numpy</i>, <i>xarray</i>, <i>netCDF4</i> and <i>pydap</i>. For example, to rebuild the Niño 3.4 series from NOAA's data:</p>
+<p><code>git clone https://github.com/yoyojolanda/earthindicators</code><br><code>cd earthindicators && python scripts/build_nino34.py --full</code></p>
+<p>The ERA5 scripts also need a free Copernicus Climate Data Store account and the <i>cdsapi</i> package; CERES and the NASA sea level file need a free NASA Earthdata account.</p></dd>
+<dt>Live numbers</dt><dd>The numbers in the "In short" boxes, on the overview and on the claims page all come from one file, <a href="https://github.com/yoyojolanda/earthindicators/blob/main/indicators.js">indicators.js</a>, so every page shows the same value.</dd>
+<dt>Data credits</dt><dd>Air temperature: generated using Copernicus Climate Change Service information; neither the European Commission nor ECMWF is responsible for any use of it. NOAA, NASA and NSIDC data are used under their terms and cited above. If you reuse a chart, please cite the underlying dataset as well as this site.</dd>
+<dt>Found a problem?</dt><dd>Please <a href="https://github.com/yoyojolanda/earthindicators/issues">open an issue on GitHub</a>.</dd>
+</dl></section>
+
+<script>
+document.querySelectorAll('.chk[data-f]').forEach(el => {
+  fetch(el.dataset.f, {cache: 'no-cache'}).then(r => { if (!r.ok) throw 0; return r.text(); })
+    .then(t => { el.textContent = t.trim().replace(/degC/g, '°C'); })
+    .catch(() => { el.textContent = 'This check has not produced a result yet.'; el.classList.add('none'); });
+});
+</script>
+</main></body></html>

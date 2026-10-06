@@ -1,0 +1,46 @@
+name: Update regional air temperature data (ERA5)
+
+on:
+  schedule:
+    - cron: "15 3 * * *"       # daily, 03:15 UTC (the global ERA5 update runs at 17:30)
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:                   # never two runs at once: they would write the same cache
+  group: era5-regions
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 cdsapi
+
+      # New days first, then history back towards 1940 for about 4.5 hours; progress is kept between runs.
+      - name: Build regional air temperature (Copernicus ERA5)
+        continue-on-error: true
+        timeout-minutes: 300
+        env:
+          CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
+          ERA5_BUDGET_MIN: "270"
+        run: |
+          printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
+          chmod 600 ~/.cdsapirc
+          python -u scripts/build_era5_regions.py
+          rm -f ~/.cdsapirc
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.cdsapirc
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update regional air temperature data" && git pull --rebase && git push)

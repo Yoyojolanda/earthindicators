@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Earth Indicators: is the climate changing? The latest data</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Earth Indicators: is the climate changing?">
+<meta property="og:description" content="Earth is warming, and every major indicator shows it. Live data from NOAA, NASA, NSIDC and Copernicus, in plain words.">
+<meta property="og:url" content="https://earthindicators.org/">
+<meta property="og:image" content="https://earthindicators.org/og/index.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Earth Indicators: is the climate changing?: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Earth is warming, and every major indicator shows it. Live data from NOAA, NASA, NSIDC and Copernicus, in plain words.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+.lead{margin:18px 0 6px}
+.lead h1{font-size:34px;line-height:1.15;letter-spacing:-.01em;margin:0 0 10px;font-weight:750}
+.lead p{font-size:16px;color:var(--fg);margin:0 0 6px}
+.lead p.sub{font-size:13px;color:var(--mut)}
+.grp{margin:26px 0 0}
+.grp h2{font-size:18px;margin:0 0 2px}
+.grp>p{margin:0 0 10px;color:var(--mut);font-size:14px;max-width:40rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;margin:0}
+.tile{display:flex;flex-direction:column;gap:3px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile:hover,.tile:focus-visible{border-color:var(--acc);outline:none}
+.tile h3{font-size:13px;margin:0;color:var(--mut);font-weight:600}
+.tile .vd{font-size:18px;font-weight:700;line-height:1.3;margin:2px 0 4px}
+.tile .num{font-size:14px;color:var(--fg)}
+.tile .num b{font-size:16px}
+.tile .s{font-size:12px;color:var(--mut)}
+.tile .spark{position:relative;height:52px;margin:6px 0 2px}
+.tile .d{font-size:11px;color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+.tile .why{font-size:13px;line-height:1.45;margin:8px 0 6px;padding-top:8px;border-top:1px solid var(--line)}
+.tile .go{font-size:13px;font-weight:600;color:var(--link);margin-top:auto}
+.tile:hover .go{text-decoration:underline}
+.foot{margin-top:28px}
+@media (max-width:600px){.lead h1{font-size:26px}.lead p{font-size:15px}}
+@media print{.tiles{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
+</style></head><body><main>
+<nav class="nav" id="nav"></nav><script src="site.js"></script>
+<header class="lead">
+<h1>Earth is warming, and every major indicator shows it.</h1>
+<p>Below is what the latest measurements say, in plain words: how much hotter it is getting, what is causing it, and what it is doing to ice and oceans. Every verdict updates itself from the newest data.</p>
+<p class="sub">Data from NOAA, NASA, NSIDC and the EU's Copernicus service. Each tile shows its source and how recent its data is. Click any tile for the full record. Heard a claim that it isn't happening? See <a href="claims.html">common claims, answered</a>.</p>
+</header>
+<div id="groups"></div>
+<p class="sub foot">Temperatures are compared with the 1991–2020 average for the same time of year; sea ice with 1981–2010. "On record" means since the measurement series began, which each tile states.</p>
+<script src="indicators.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+// ---- the story: three groups plus natural swings. Each tile: verdict, number, why it matters, link to the data page.
+const GROUPS=[
+ ['It is getting hotter','Air, sea surface and deep ocean are all warming.',[
+  ['air','air.html','Global air temperature','Copernicus ERA5','This is the warming people feel. The Paris Agreement limits of 1.5 °C and 2 °C are measured on it.'],
+  ['sst','sst.html','Sea surface temperature','NOAA OISST','Oceans cover 70% of the planet. Warmer seas feed heavier rain and stronger storms, and bleach coral reefs.'],
+  ['ohc','ohc.html','Ocean heat content','NOAA NCEI','About 90% of the extra heat trapped by greenhouse gases goes into the ocean (IPCC), so this is the steadiest sign of warming.']]],
+ ['The cause','Greenhouse gases from burning fossil fuels trap heat that would otherwise escape to space.',[
+  ['co2','co2.html','Carbon dioxide (CO₂)','NOAA Mauna Loa','The main driver of warming, mostly from coal, oil and gas. CO₂ is now higher than at any time in at least 2 million years (IPCC).'],
+  ['ch4','ch4.html','Methane (CH₄)','NOAA','The second biggest driver. It traps far more heat per molecule than CO₂ but breaks down within about a decade.'],
+  ['eei','eei.html','Earth\u2019s energy imbalance','NASA CERES','Measured from satellites: if more energy comes in than goes out, the planet must heat up. This is the warming at its source.']]],
+ ['What it is doing','Heat melts ice and expands seawater.',[
+  ['sl','sea-level.html','Global sea level','NASA','Melting ice and expanding warm water raise the sea, which makes coastal flooding and storm surges worse.'],
+  ['ice','sea-ice.html','Arctic sea ice','NSIDC','Bright ice reflects sunlight; dark open water absorbs it. Losing ice speeds up Arctic warming.']]],
+ ['Natural ups and downs','Natural cycles push temperatures up or down for a year or two, on top of the long-term trend.',[
+  ['nino','nino.html','El Niño (Niño 3.4)','NOAA OISST','El Niño years run hotter and La Niña years cooler. Knowing which phase we are in helps tell a short-term swing from the trend.']]]];
+const SRC={};
+$('groups').innerHTML=GROUPS.map(([h,p,T])=>`<section class="grp"><h2>${h}</h2><p>${p}</p><div class="tiles">`+T.map(([id,href,title,src,why])=>{SRC[id]=src;
+ return `<a class="tile" id="t-${id}" href="${href}"><h3>${title}</h3><div class="vd">Loading…</div><div class="num"></div><div class="s"></div><div class="spark"><canvas></canvas></div><div class="d"><span class="dl"></span><span class="sl"></span></div><p class="why">${why}</p><span class="go">See the data →</span></a>`}).join('')+'</div></section>').join('');
+function fill(id,{vd,v,l,s,through,spark,sparkLabel,bars}){
+ const t=$('t-'+id);
+ t.querySelector('.vd').textContent=vd;
+ t.querySelector('.num').innerHTML=`<b>${v}</b> ${l}`;t.querySelector('.s').textContent=s||'';
+ t.querySelector('.dl').textContent=`${SRC[id]}, data through ${through}`;t.querySelector('.sl').textContent=sparkLabel||'';
+ const P=spark.filter(p=>p.y!=null&&isFinite(p.y));
+ new Chart(t.querySelector('canvas'),{type:bars?'bar':'line',data:bars?{labels:P.map(p=>p.x),datasets:[{data:P.map(p=>p.y),backgroundColor:P.map((p,i)=>i==P.length-1?'#d00000':THEME.thin),barPercentage:1,categoryPercentage:.9}]}
+   :{datasets:[{data:P,borderColor:'#d00000',borderWidth:1.6,pointRadius:0,fill:true,backgroundColor:'rgba(208,0,0,.08)'}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:bars?true:false,events:[],plugins:{legend:{display:false},tooltip:{enabled:false}},
+   scales:{x:bars?{display:false}:{type:'linear',display:false,min:P[0].x,max:P[P.length-1].x},y:{display:false}}}})}
+function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').textContent='Data unavailable right now';t.querySelector('.num').textContent='The full page may still have the latest values.'}
+
+// numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes
+['air','sst','ohc','co2','ch4','eei','sl','ice','nino'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
+</script></main></body></html>

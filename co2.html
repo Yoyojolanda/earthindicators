@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>CO₂ tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Carbon dioxide (CO₂) at Mauna Loa">
+<meta property="og:description" content="Atmospheric CO₂, daily from Mauna Loa, and how fast it is rising. NOAA Global Monitoring Laboratory data.">
+<meta property="og:url" content="https://earthindicators.org/co2.html">
+<meta property="og:image" content="https://earthindicators.org/og/co2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Carbon dioxide (CO₂) at Mauna Loa: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Atmospheric CO₂, daily from Mauna Loa, and how fast it is rising. NOAA Global Monitoring Laboratory data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Atmospheric CO₂ tracker (Mauna Loa)</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences. Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],NN=365,PRE=280,charts=[];
+const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
+const dn=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);                    // continuous day number
+const ymd=n=>{const t=new Date(n*864e5);return[t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate()]};
+const fmtDay=n=>{const[y,m,d]=ymd(n);return`${ML[m-1]} ${d}, ${y}`};
+const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
+let expName='co2.jpg';
+
+function compute(t){
+ const D=new Map();
+ t.split(/\r?\n/).forEach(l=>{if(/^\s*#/.test(l))return;const p=l.trim().split(/\s+/);if(p.length<5)return;
+  const y=+p[0],m=+p[1],d=+p[2],v=parseFloat(p[4]);if(y>1900&&m>=1&&m<=12&&d>=1&&d<=31&&v>250&&v<700)D.set(dn(y,m,d),v)});
+ const days=[...D.keys()].sort((a,b)=>a-b),L=days[days.length-1],[cy,cm,cd]=ymd(L),v=D.get(L);
+ const avg=(a,b)=>{let s=0,n=0;for(let k=a;k<=b;k++)if(D.has(k)){s+=D.get(k);n++}return n?{m:s/n,n}:null};
+ // monthly means (>=10 valid days)
+ const MM=new Map(),acc=new Map();
+ days.forEach(k=>{const[y,m]=ymd(k),key=y*12+m-1,a=acc.get(key)||[0,0];a[0]+=D.get(k);a[1]++;acc.set(key,a)});
+ acc.forEach(([s,n],key)=>{if(n>=10)MM.set(key,s/n)});
+ const keys=[...acc.keys()].sort((a,b)=>a-b),k0=keys[0],k1=keys[keys.length-1];
+ // centered 12-month running mean (2x12 MA); needs all 13 months
+ const trend=[];for(let k=k0+6;k<=k1-6;k++){let s=0,ok=true;for(let j=-6;j<=6;j++){const x=MM.get(k+j);if(x==null){ok=false;break}s+=Math.abs(j)==6?x/2:x}trend.push({x:Math.floor(k/12)+(k%12+.5)/12,y:ok?s/12:null})}
+ const monthly=[];for(let k=k0;k<=k1;k++)monthly.push({x:Math.floor(k/12)+(k%12+.5)/12,y:MM.has(k)?MM.get(k):null});
+ // annual growth: mean of month-vs-same-month-last-year differences (>=6 month pairs)
+ const y0=Math.floor(k0/12),growth={};
+ for(let y=y0+1;y<=cy;y++){const d=[];for(let m=0;m<12;m++){const a=MM.get(y*12+m),b=MM.get((y-1)*12+m);if(a!=null&&b!=null)d.push(a-b)}
+  if(d.length>=6)growth[y]={g:d.reduce((s,x)=>s+x,0)/d.length,n:d.length}}
+ // per-year daily series on a day-of-year axis, 7-day trailing mean of available days (gaps > 7 days stay empty)
+ const byYear=y=>{const a=Array(NN).fill(null);for(let i=0;i<NN;i++){const m=MS.findLastIndex(s=>s<=i),k=dn(y,m+1,i-MS[m]+1);if(k>L)break;const r=avg(k-6,k);if(r)a[i]=r.m}return a};
+ const w=avg(L-29,L),wp=avg(L-365-29,L-365);
+ let hi=days[0];days.forEach(k=>{if(D.get(k)>D.get(hi))hi=k});
+ return{D,days,L,cy,cm,cd,v,w,wp,monthly,trend,growth,byYear,hi,first:days[0]}}
+
+function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
+const grid={color:THEME.grid};
+const ym=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
+
+function run(t){
+ const R=compute(t),{cy}=R,gk=R.growth[cy]?cy:cy-1,G=R.growth[gk];
+ const done=Object.keys(R.growth).map(Number).filter(y=>y<cy);
+ const last10=done.slice(-10).map(y=>R.growth[y].g),avg10=last10.reduce((s,x)=>s+x,0)/last10.length;
+ const top=done.reduce((b,y)=>R.growth[y].g>R.growth[b].g?y:b,done[0]);
+ const lastDate=fmtDay(R.L),short=lastDate.replace(/, \d+$/,'');
+ const cards=[[R.v.toFixed(2)+' ppm',`Daily mean, ${lastDate}`],
+  [R.w?R.w.m.toFixed(2)+' ppm':'–',`30-day average to ${short}`],
+  [R.w&&R.wp?sg(R.w.m-R.wp.m)+' ppm':'–',`vs the same 30 days in ${cy-1}`],
+  [G?sg(G.g)+' ppm/yr':'–',gk==cy?`Growth in ${cy} so far (${G.n} months vs ${cy-1})`:`Growth in ${gk}`],
+  [R.D.get(R.hi).toFixed(2)+' ppm',`Highest daily value on record (${fmtDay(R.hi)})`]];
+ $('cards').innerHTML=cards.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Monthly mean CO₂ and long-term trend, ${ymd(R.first)[0]}–${cy}`;
+ $('t2').textContent=`Daily CO₂: ${cy} vs recent years (7-day average)`;
+ $('t3').textContent=`Annual growth in CO₂, ${ymd(R.first)[0]+1}–${cy}`;
+ const pct=(R.w?R.w.m:R.v)/PRE*100-100;
+ $('read').innerHTML=[
+  `On ${lastDate} the daily mean at Mauna Loa was ${R.v.toFixed(2)} ppm. Over the last 30 days it averaged ${R.w.m.toFixed(2)} ppm${R.wp?`, ${Math.abs(R.w.m-R.wp.m).toFixed(2)} ppm ${R.w.m>=R.wp.m?'higher':'lower'} than the same 30 days a year earlier`:''}.`,
+  G?`${gk==cy?`So far in ${cy}`:`In ${gk}`}, CO₂ has been rising at ${G.g.toFixed(2)} ppm per year, compared with an average of ${avg10.toFixed(2)} ppm per year over the previous ${last10.length} complete years. The largest annual increase in this record is ${R.growth[top].g.toFixed(2)} ppm (${top}).`:'',
+  `CO₂ at Mauna Loa peaks around May and bottoms out around late September or October, as Northern Hemisphere vegetation takes up carbon in summer and releases it in winter. Compare the same dates across years rather than consecutive months.`,
+  `The current level is about ${pct.toFixed(0)}% above the pre-industrial level of roughly ${PRE} ppm.`,
+  `Single days can swing by a ppm or more with weather and air-mass changes; the 30-day and monthly averages are more reliable for comparisons.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`co2-${cy}-${short.replace(' ','')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // 1. Keeling curve
+ const x0=ymd(R.first)[0];
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Monthly mean',data:R.monthly,borderColor:'#7fa7cc',borderWidth:1.2,pointRadius:0},
+   {label:'Trend (12-month running mean)',data:R.trend,borderColor:'#d00000',borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>ym(t[0].parsed.x),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' ppm'}}},
+   scales:{x:{type:'linear',min:x0,max:cy+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
+ // 2. this year vs recent years
+ const COL=[['#d00000',3],['#e6a23c',1.4],['#7b5ea7',1.4],['#5a9e6f',1.4],['#4f81b0',1.4]];
+ const ds2=COL.map(([c,w],k)=>({label:String(cy-k),data:R.byYear(cy-k),borderColor:c,borderWidth:w,pointRadius:0,order:k}));
+ ds2.push({label:`${cy-10} (10 years earlier)`,data:R.byYear(cy-10),borderColor:THEME.mut,borderDash:[5,4],borderWidth:1.3,pointRadius:0,order:9});
+ charts.push(freeze(new Chart($('c2'),{type:'line',data:{labels:[...Array(NN).keys()],datasets:ds2},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' ppm')}}},
+   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
+ // 3. annual growth
+ const ys=Object.keys(R.growth).map(Number);
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:ys.map(String),datasets:[{label:'Annual growth',data:ys.map(y=>R.growth[y].g),
+   backgroundColor:ys.map(y=>y==cy?'#d00000':y==top?'#7b5ea7':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,
+   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const y=ys[c.dataIndex],g=R.growth[y];return sg(g.g)+' ppm/yr'+(y==cy?` (so far, ${g.n} months)`:g.n<12?` (${g.n} months with data)`:'')}}}},
+   scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'ppm per year'},grid}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+fetch('data/co2_daily_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the CO₂ data. Please try again later.'});
+</script></main></body></html>

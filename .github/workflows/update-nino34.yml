@@ -1,0 +1,31 @@
+name: Update Nino 3.4 data
+
+on:
+  schedule:
+    - cron: "30 14 * * *"     # daily, 14:30 UTC
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 pydap
+      - name: Build data
+        timeout-minutes: 300
+        run: |
+          echo "HTTP.TIMEOUT=120" > ~/.dodsrc
+          python -u scripts/build_nino34.py --compare reference/climatereanalyzer.json --check-out data/nino34_check.txt
+      - name: Commit changes
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update Nino 3.4 data" && git push)

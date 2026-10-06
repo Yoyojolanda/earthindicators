@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Earth's energy imbalance tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Earth&#x27;s energy imbalance">
+<meta property="og:description" content="How much more energy Earth absorbs than it sends back to space, measured by NASA CERES satellites.">
+<meta property="og:url" content="https://earthindicators.org/eei.html">
+<meta property="og:image" content="https://earthindicators.org/og/eei.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Earth&#x27;s energy imbalance: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="How much more energy Earth absorbs than it sends back to space, measured by NASA CERES satellites.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+.btab{border-collapse:collapse;width:100%;font-size:15px}.btab td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.btab td.v{text-align:right;font-weight:600;white-space:nowrap}.btab tr.tot td{border-top:2px solid var(--fg);font-weight:700}.btab .s{display:block;font-size:13px;color:var(--mut);font-weight:400}
+:root{--h:400px;--hs:300px;--ph:260px;--phs:200px}
+.seg{display:inline-flex;gap:6px;margin:0 0 8px;font-size:13px;align-items:center;color:var(--mut)}
+.seg .nb{padding:3px 10px}.seg .nb.on{border-color:var(--acc);color:var(--acc)}
+</style></head><body><main>
+<h1>Earth's energy imbalance (NASA CERES)</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<div class="box" id="persp"><h2 id="tp"></h2><div class="cards" id="pcards" style="margin:4px 0 0"></div>
+<p id="hansen" style="margin:10px 0 0;font-size:14px"></p>
+<p class="sub" style="margin:8px 0 0">Based on the imbalance over the last 12 months, about <span id="ptw"></span> terawatts. Hiroshima bomb ≈ 63 TJ (15 kilotons of TNT). Humanity's total energy use: 600 EJ in 2025 (Energy Institute, Statistical Review of World Energy 2026). Global electricity demand: 31,779 TWh in 2025 (Ember, Global Electricity Review 2026). Olympic pool: 2,500 m³ of water heated from 20 °C to 100 °C. World population 8.2 billion; microwave oven 1,200 W. Hansen quote: TED talk “Why I must speak out about climate change”, 2012.</p></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2>
+ <div class="seg">Running mean: <button class="nb" data-w="12">12 months</button><button class="nb on" data-w="48">48 months</button></div>
+ <div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<div class="box" id="budget" hidden><h2>Where does the heat go? Satellites compared with the ocean</h2>
+<p class="sub" style="margin:0 0 10px">The satellites measure how much energy Earth gains in total. Most of it should turn up in the ocean, which floats measure from the surface down to 2000 m. Both over the same 10 years, <span id="bwin"></span>:</p>
+<table class="btab"><tbody id="btab"></tbody></table>
+<p class="sub" id="bnote" style="margin:10px 0 0"></p></div>
+<p class="sub">Energy imbalance = absorbed solar radiation (incoming minus reflected sunlight) minus outgoing longwave (heat) radiation, at the top of the atmosphere, averaged over the whole Earth (510 million km²). Positive means Earth is gaining heat. Running means end at the month shown. CERES EBAF anchors the absolute level of the imbalance to ocean heat content measurements; changes over time come from the satellite observations themselves. Monthly values are published with a lag of a few months and may be revised. Data: NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://ceres.larc.nasa.gov/data/" target="_blank" rel="noopener">ceres.larc.nasa.gov</a>), NASA Langley Research Center, distributed by the NASA Atmospheric Science Data Center.</p>
+<p class="sub">Further reading: <a href="https://doi.org/10.1093/oxfclm/kgad008" target="_blank" rel="noopener">Hansen et al. (2023), “Global warming in the pipeline”, Oxford Open Climate Change</a>, with Leon Simons among the co-authors. They argue that the cut in aerosol pollution, especially the sulfur rules for shipping, is a large part of why the imbalance has grown so fast, and that warming is speeding up as a result. Other scientists think they overestimate the aerosol effect; the debate is about how large it is, not whether it exists.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const AREA=5.1e14,charts=[],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const sg=(x,d=2)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const mlab=s=>{const[y,m]=s.split('-');return ML[m-1]+' '+y};
+const span=(a,b)=>`${a.replace('-','/')}–${b.replace('-','/')}`;
+let expName='energy-imbalance.jpg',D,win=48;
+
+function parse(t){const r=[];t.trim().split(/\r?\n/).slice(1).forEach(l=>{const p=l.split(',');if(p.length>=5&&/^\d{4}-\d{2}$/.test(p[0]))r.push({m:p[0],asr:+p[2],olr:+p[3],net:+p[4]})});return r}
+const run=(a,w)=>a.map((_,i)=>i+1<w?null:a.slice(i+1-w,i+1).reduce((s,x)=>s+x,0)/w);  // trailing mean
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+
+function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
+const grid={color:THEME.grid};
+const xYears=labels=>({ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>{const[y,m]=labels[i].split('-');return m=='01'&&+y%2==0?y:''}},grid:{display:false}});
+
+// left-to-right gradient, soft white -> red
+function gradFill(c){const{ctx,chartArea:a}=c.chart;if(!a)return'rgba(208,0,0,.25)';
+ const g=ctx.createLinearGradient(a.left,0,a.right,0);g.addColorStop(0,THEME.fill0);g.addColorStop(1,'rgba(208,0,0,.55)');return g}
+// vertical double-headed arrows between ASR and OLR at the first and last point, with the imbalance next to them
+const gapArrows=notes=>({id:'gapArrows',afterDatasetsDraw(ch){
+ const{ctx,scales:{x,y}}=ch;if(!ch.isDatasetVisible(0)||!ch.isDatasetVisible(1))return;
+ notes.forEach(({i,side,text,sub})=>{
+  const a=ch.data.datasets[0].data[i],o=ch.data.datasets[1].data[i];if(a==null||o==null)return;
+  const px=x.getPixelForValue(i)+(side=='right'?6:-6),y1=y.getPixelForValue(a),y2=y.getPixelForValue(o),h=5,dir=y2>y1?1:-1;
+  ctx.save();ctx.strokeStyle=ctx.fillStyle=THEME.ink;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(px,y1+dir*h);ctx.lineTo(px,y2-dir*h);ctx.stroke();
+  [[y1,dir],[y2,-dir]].forEach(([yy,d])=>{ctx.beginPath();ctx.moveTo(px,yy);ctx.lineTo(px-h,yy+d*h*1.6);ctx.lineTo(px+h,yy+d*h*1.6);ctx.closePath();ctx.fill()});
+  const my=(y1+y2)/2,tx=side=='right'?px+9:px-9;ctx.textAlign=side=='right'?'left':'right';ctx.textBaseline='middle';
+  ctx.font='700 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';ctx.fillText(text,tx,my-8);
+  ctx.font='12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';ctx.fillStyle=THEME.mut;ctx.fillText(sub,tx,my+9);
+  ctx.restore()})}});
+function chart1(){
+ const labels=D.map(r=>r.m),A=run(D.map(r=>r.asr),win),O=run(D.map(r=>r.olr),win),i0=win-1;
+ $('t1').textContent=`Absorbed sunlight vs outgoing heat radiation (${win}-month running means)`;
+ if(charts[0])charts[0].destroy();
+ const L=labels.slice(i0);
+ const k=L.length-1,lab=D.map(r=>r.m),gv=j=>A[i0+j]-O[i0+j];
+ const notes=[{i:0,side:'right',text:sg(gv(0))+' W/m²',sub:span(lab[0],lab[win-1])},
+              {i:k,side:'left',text:sg(gv(k))+' W/m²',sub:span(lab[D.length-win],lab[D.length-1])}];
+ charts[0]=freeze(new Chart($('c1'),{type:'line',plugins:[gapArrows(notes)],data:{labels:L,datasets:[
+   {label:'Absorbed solar radiation (ASR)',data:A.slice(i0),borderColor:THEME.ink,borderWidth:2.5,pointRadius:0,fill:'+1',backgroundColor:gradFill},
+   {label:'Outgoing longwave radiation (OLR)',data:O.slice(i0),borderColor:'#d00000',borderWidth:2.5,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>`${win} months to ${mlab(t[0].label)}`,label:c=>c.dataset.label.replace(/ \(.*/,'')+': '+c.parsed.y.toFixed(2)+' W/m²',
+     footer:t=>t.length==2?'Imbalance: '+sg(t[0].parsed.y-t[1].parsed.y)+' W/m²':''}}},
+   scales:{x:xYears(L),y:{title:{display:true,text:'W/m²'},grid}}}}));
+ document.querySelectorAll('.seg .nb').forEach(b=>b.classList.toggle('on',+b.dataset.w==win))}
+
+// ---- heat budget: CERES total vs NOAA ocean heat 0-2000 m, over the same 10 years
+// shares outside the upper 2000 m of ocean from von Schuckmann et al. (2023): deep ocean ~9%, land ~6%, ice ~4%, air ~1%
+function budget(o){
+ const from=o.winFrom,to=o.winTo,M=D.filter(r=>{const[y,m]=r.m.split('-').map(Number),x=y+(m-.5)/12;return x>from&&x<=to});
+ if(M.length<100)return;                                   // CERES does not cover the whole window yet
+ const sat=mean(M.map(r=>r.net)),ocean=o.rateNum,other=0.20*sat,gap=sat-ocean-other;
+ const row=(l,s,v,c='')=>`<tr class="${c}"><td>${l}<span class="s">${s}</span></td><td class="v">${v}</td></tr>`;
+ $('bwin').textContent=o.winLabel;
+ $('btab').innerHTML=row('Total heat gained by Earth','measured by satellites (NASA CERES)',sg(sat)+' W/m²')+
+  row('Ocean, surface to 2000 m','measured by floats and ships (NOAA NCEI)',sg(ocean)+' W/m²')+
+  row('Expected elsewhere','ocean below 2000 m (about 9% of the total), land (6%), melting ice (4%) and air (1%): about 20% of the total',sg(other)+' W/m²')+
+  row('Not accounted for',`${Math.round(Math.abs(gap)/sat*100)}% of the total`,sg(gap)+' W/m²','tot');
+ $('bnote').innerHTML=`The two measurements agree on the big picture: Earth is gaining energy, and most of it goes into the ocean. ${Math.abs(gap)<0.1?'The remaining difference is small.':`The difference of about ${Math.abs(gap).toFixed(2)} W/m² most likely reflects the limits of both methods rather than heat going missing:`} NOAA's estimate for the upper 2000 m is at the low end of published ocean heat estimates (other analyses, such as the Chinese Academy of Sciences' IAP dataset, find more heat in the ocean), and the satellites measure the imbalance as a small difference between two very large flows of energy, so their absolute level is calibrated against ocean measurements in the first place. Differences of a few tenths of a W/m² are within the uncertainty of today's methods. Shares from <a href="https://essd.copernicus.org/articles/15/1675/2023/">von Schuckmann et al. (2023)</a>; ocean data from the <a href="ohc.html">Ocean heat page</a>.`;
+ $('budget').hidden=false}
+
+function build(t){
+ D=parse(t);if(D.length<60)throw new Error('too few months');
+ const N=D.length,net=D.map(r=>r.net);
+ // remove the seasonal cycle (Earth-Sun distance) from the monthly values: subtract each calendar month's record mean, add back the overall mean
+ const cm={};D.forEach(r=>{const m=r.m.slice(5);(cm[m]=cm[m]||[]).push(r.net)});const all=mean(net);
+ const netDS=D.map(r=>r.net-mean(cm[r.m.slice(5)])+all);
+ const labels=D.map(r=>r.m),n12=run(net,12),n48=run(net,48);
+ const first48=mean(net.slice(0,48)),last48=n48[N-1],last12=n12[N-1],last=D[N-1].m;
+ const dA=mean(D.slice(-48).map(r=>r.asr))-mean(D.slice(0,48).map(r=>r.asr)),dO=mean(D.slice(-48).map(r=>r.olr))-mean(D.slice(0,48).map(r=>r.olr));
+ // calendar-year means, complete years only
+ const yrs={};D.forEach(r=>{const y=r.m.slice(0,4);(yrs[y]=yrs[y]||[]).push(r.net)});
+ const Y=Object.keys(yrs).filter(y=>yrs[y].length==12),YV=Y.map(y=>mean(yrs[y])),top=Y[YV.indexOf(Math.max(...YV))];
+ const tw=last12*AREA/1e12;
+ $('cards').innerHTML=[
+  [sg(last12)+' W/m²',`Imbalance, last 12 months (${span(D[N-12].m,last)})`],
+  [sg(last48)+' W/m²',`Imbalance, last 48 months (${span(D[N-48].m,last)})`],
+  [sg(first48)+' W/m²',`Imbalance, first 48 months (${span(D[0].m,D[47].m)})`],
+  [(last48/first48).toFixed(1)+'×','48-month imbalance now vs first 48 months'],
+  ['≈ '+Math.round(tw).toLocaleString('en-US')+' TW',`Extra heat Earth is taking up (last 12 months)`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ // putting the heat in perspective (constants: see the note under the cards)
+ const P=last12*AREA,fmt=(x,d=0)=>x.toLocaleString('en-US',{maximumFractionDigits:d,minimumFractionDigits:d});
+ const hps=P/6.3e13,human=P/(600e18/31.557e6),elec=P/(31779e12/8766),pools=P/(2.5e6*4186*80),micro=P/8.2e9/1200;
+ $('tp').textContent=`What ${sg(last12)} W/m² means`;
+ $('ptw').textContent=fmt(P/1e12);
+ $('pcards').innerHTML=[
+  [fmt(hps,hps<10?1:0)+' per second','Hiroshima bombs’ worth of energy (≈ '+fmt(hps*86400/1e6,1)+' million a day)'],
+  [fmt(human)+'×','all the energy humanity uses: oil, coal, gas, nuclear and renewables combined'],
+  [fmt(elec)+'×','all the electricity used worldwide'],
+  [fmt(Math.round(pools/10)*10)+' pools/s','Olympic swimming pools brought from 20 °C to boiling, every second'],
+  [fmt(micro)+' microwaves','running nonstop, for every person on Earth']
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('hansen').textContent=`When James Hansen introduced the Hiroshima comparison in his 2012 TED talk, Earth's energy imbalance was about 0.6 W/m²: roughly 20 times humanity's energy use, or 400,000 Hiroshima bombs a day. Today the imbalance is ${sg(last12)} W/m², ${(last12/0.6).toFixed(1)} times what Hansen described: ${fmt(human)} times humanity's (now larger) energy use, or about ${fmt(hps*86400/1e6,1)} million Hiroshima bombs a day.`;
+ $('t2').textContent=`Earth's energy imbalance, ${mlab(D[0].m)}–${mlab(last)}`;
+ $('t3').textContent=`Annual mean energy imbalance (complete calendar years)`;
+ $('read').innerHTML=[
+  `Over the last 12 months (to ${mlab(last)}) Earth absorbed ${last12.toFixed(2)} W/m² more energy than it radiated back to space. Spread over the whole planet that is about ${Math.round(tw).toLocaleString('en-US')} terawatts of heat, most of which ends up in the oceans.`,
+  `The 48-month average imbalance is ${sg(last48)} W/m², ${(last48/first48).toFixed(1)} times the ${sg(first48)} W/m² of the first 48 months of the record (${span(D[0].m,D[47].m)}).`,
+  `Between those two periods, absorbed sunlight rose by ${dA.toFixed(2)} W/m² while outgoing heat radiation rose by ${dO.toFixed(2)} W/m². Earth reflects less sunlight than it used to (fewer low clouds, less snow and ice), and the extra heat it radiates as it warms has not kept pace.`,
+  `The highest calendar-year imbalance in the record is ${sg(Math.max(...YV))} W/m² (${top}).`,
+  `Raw monthly values swing by about ±8 W/m² over the year because Earth is closest to the Sun in January and farthest in July; the monthly line in the second chart has that seasonal cycle removed. Even then, single months vary with clouds, weather and El Niño, so the running means are the more reliable guide to the trend.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`energy-imbalance-${last}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c&&c.destroy());
+ chart1();
+ charts[1]=freeze(new Chart($('c2'),{type:'line',data:{labels,datasets:[
+   {label:'Monthly (seasonal cycle removed)',data:netDS,borderColor:THEME.thin,borderWidth:1,pointRadius:0},
+   {label:'12-month running mean',data:n12,borderColor:'#e08a00',borderWidth:2,pointRadius:0},
+   {label:'48-month running mean',data:n48,borderColor:'#d00000',borderWidth:2.5,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>mlab(t[0].label),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':sg(c.parsed.y)+' W/m²')}}},
+   scales:{x:xYears(labels),y:{title:{display:true,text:'W/m² (positive = heat gain)'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ charts[2]=new Chart($('c3'),{type:'bar',data:{labels:Y,datasets:[{label:'Annual mean',data:YV,backgroundColor:Y.map(y=>y==Y[Y.length-1]?'#d00000':y==top?'#7b5ea7':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)+' W/m²'}}},
+   scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'W/m²'},grid}}}});
+ $('exp').disabled=false}
+
+document.querySelectorAll('.seg .nb').forEach(b=>b.onclick=()=>{win=+b.dataset.w;chart1()});
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+fetch('data/ceres_ebaf_global.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(build)
+ .then(()=>(window.EI?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='indicators.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})))
+ .then(()=>window.EI.get('ohc')).then(budget).catch(e=>console.warn('budget not shown',e))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the CERES data. Please try again later.'});
+</script></main></body></html>

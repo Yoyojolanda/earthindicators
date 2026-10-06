@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Methane tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Methane in the atmosphere">
+<meta property="og:description" content="Global atmospheric methane and its yearly growth. NOAA Global Monitoring Laboratory data.">
+<meta property="og:url" content="https://earthindicators.org/ch4.html">
+<meta property="og:image" content="https://earthindicators.org/og/ch4.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Methane in the atmosphere: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Global atmospheric methane and its yearly growth. NOAA Global Monitoring Laboratory data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Atmospheric methane (CH₄) tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Globally averaged methane at marine surface sites, in parts per billion (ppb). Monthly means are centered on the middle of each month; the trend has the average seasonal cycle removed. Annual increases are NOAA's own figures (the change in the trend from January 1 of one year to the next). Recent months are preliminary, and NOAA notes that first estimates can be too high by several ppb. Pre-industrial (1750) level: about 729 ppb (IPCC AR6). Data: Lan, X., K.W. Thoning and E.J. Dlugokencky, Trends in globally-averaged CH₄, N₂O and SF₆ determined from NOAA Global Monitoring Laboratory measurements (<a href="https://gml.noaa.gov/ccgg/trends_ch4/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends_ch4</a>).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],PRE=729,charts=[];
+const sg=(x,d=1)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const rows=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l)).map(l=>l.trim().split(/\s+/).map(Number));
+let expName='methane.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+const grid={color:THEME.grid};
+
+function run(mmT,grT){
+ // monthly: year month decimal average average_unc trend trend_unc
+ const M=rows(mmT).filter(r=>r.length>=6&&r[0]>1900&&r[3]>0).map(r=>({y:r[0],m:r[1],x:r[2],v:r[3],t:r[5]}));
+ // annual increase: year increase uncertainty
+ const G=rows(grT).filter(r=>r.length>=2&&r[0]>1900).map(r=>({y:r[0],g:r[1]}));
+ if(M.length<200||G.length<20)throw new Error('data incomplete');
+ const L=M[M.length-1],P=M[M.length-13],cy=L.y,lab=r=>ML[r.m-1]+' '+r.y;
+ const d12=L.t-P.t,lastG=G[G.length-1];
+ const prev10=G.slice(-11,-1),avg10=prev10.reduce((s,r)=>s+r.g,0)/prev10.length;
+ const top=G.reduce((b,r)=>r.g>b.g?r:b,G[0]);
+ const plat=G.filter(r=>r.y>=2000&&r.y<=2006),platAvg=plat.length?plat.reduce((s,r)=>s+r.g,0)/plat.length:null;
+ $('cards').innerHTML=[
+  [L.v.toFixed(1)+' ppb',`Global monthly mean, ${lab(L)}`],
+  [sg(d12)+' ppb',`Increase over the last 12 months (trend, ${lab(P)}–${lab(L)})`],
+  [sg(lastG.g)+' ppb',`Annual increase in ${lastG.y} (NOAA)`],
+  [(L.t/PRE).toFixed(2)+'×','Times the pre-industrial level (about 729 ppb in 1750)'],
+  [top.g.toFixed(1)+' ppb',`Largest annual increase on record (${top.y})`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Global monthly mean methane and trend, ${M[0].y}–${cy}`;
+ $('t2').textContent=`Annual increase in methane, ${G[0].y}–${lastG.y}`;
+ $('t3').textContent=`Methane through the year: ${cy} vs the previous four years`;
+ $('read').innerHTML=[
+  `In ${lab(L)} the global average was ${L.v.toFixed(1)} ppb, ${((L.t/PRE-1)*100).toFixed(0)}% above the pre-industrial level. Over the last 12 months the trend rose ${d12.toFixed(1)} ppb.`,
+  `In ${lastG.y} methane rose ${lastG.g.toFixed(1)} ppb, compared with an average of ${avg10.toFixed(1)} ppb per year over the previous ${prev10.length} years. The largest increase in the record is ${top.g.toFixed(1)} ppb (${top.y}).`,
+  platAvg!=null&&platAvg<3?`Growth nearly stalled between 2000 and 2006 (an average of ${platAvg.toFixed(1)} ppb per year) before picking up again from 2007. Scientists still debate how much of the renewed rise comes from wetlands and agriculture versus fossil fuels.`:'',
+  `Methane traps far more heat per ton than CO₂ but breaks down in about a decade, so over 20 years a ton of methane warms roughly 80 times as much as a ton of CO₂ (IPCC AR6). That makes cutting methane one of the fastest ways to slow warming.`,
+  `Methane is lowest in the northern summer, when sunlight drives the chemistry that breaks it down, and highest in the northern winter; the bottom chart shows that cycle.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`methane-${cy}-${String(L.m).padStart(2,'0')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // 1. monthly mean and trend
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Monthly mean',data:M.map(r=>({x:r.x,y:r.v})),borderColor:'#7fa7cc',borderWidth:1.2,pointRadius:0},
+   {label:'Trend (seasonal cycle removed)',data:M.map(r=>({x:r.x,y:r.t})),borderColor:'#d00000',borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const r=M.find(q=>q.x===t[0].parsed.x);return r?lab(r):''},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' ppb'}}},
+   scales:{x:{type:'linear',min:Math.floor(M[0].x),max:cy+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'ppb'},grid}}}})));
+ // 2. annual increase
+ charts.push(new Chart($('c2'),{type:'bar',data:{labels:G.map(r=>String(r.y)),datasets:[{label:'Annual increase',data:G.map(r=>r.g),
+   backgroundColor:G.map(r=>r===lastG?'#d00000':r===top?'#7b5ea7':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)+' ppb'}}},
+   scales:{x:{ticks:{autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'ppb per year'},grid}}}}));
+ // 3. through the year, last five years
+ const COL=[['#d00000',3],['#e6a23c',1.6],['#7b5ea7',1.6],['#5a9e6f',1.6],['#4f81b0',1.6]];
+ const ds3=COL.map(([c,w],k)=>{const y=cy-k,a=Array(12).fill(null);M.filter(r=>r.y===y).forEach(r=>a[r.m-1]=r.v);
+   return{label:String(y),data:a,borderColor:c,backgroundColor:c,borderWidth:w,pointRadius:k?2:3,order:k}});
+ charts.push(freeze(new Chart($('c3'),{type:'line',data:{labels:ML,datasets:ds3},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(1)+' ppb')}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'ppb'},grid}}}})));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+Promise.all(['ch4_mm_gl.txt','ch4_gr_gl.txt'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([a,b])=>run(a,b))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the methane data. Please try again later.'});
+</script></main></body></html>

@@ -1,0 +1,237 @@
+/* Shared styles for every tracker page. Page-specific sizes are set per page with CSS variables:
+   --h / --hs     chart heights on screen (normal / short charts)
+   --ph / --phs   chart heights when printing
+   --pcols        number of cards per row when printing */
+:root{color-scheme:light;--bg:#fff;--fg:#1c1c1c;--mut:#555;--card:#fff;--line:#ddd;--acc:#d00000;--ink:#332b19;--mut2:#6b6252;--mut3:#8a8170;--rule:#e6e1d6;--rule2:#eee9de;--tint:#f3efe6;--tint2:#ece6d9;--panel:#fbf9f4;--edge:#d9d2c3;--edge2:#cfc6b4;--link:#1f5fa8;--link2:#174a85;--tipbg:#fbf4e2;--tipedge:#ecdcae;--tipfg:#4a3b00;--curbg:#fbeaea;--shadow:rgba(51,43,25,.12);--shadow2:rgba(51,43,25,.08);--blue:#f4f7fb;--blueedge:#d5e0ec;--hl:#fff4c2;--hledge:#e3c45c;--hlfg:#4a3b00;--hledge2:#b8941c;--disbg:#eee;--disfg:#999;--disbg2:#f5f5f5;--disfg2:#aaa;--grey:#888;--ochre:#a77f17;--band1:#dce6f0;--swatch:#bbb;--band2:#a9c0d8;--onink:#fff;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* dark theme: chosen in the header (data-theme="dark"), or automatic when the device is set to dark and the reader has not chosen light */
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14120e;--fg:#e9e4d8;--mut:#a8a090;--card:#1d1a15;--line:#3a352c;--acc:#ff5b4f;--ink:#ede6d6;--mut2:#b3aa98;--mut3:#958c7b;--rule:#2f2b23;--rule2:#2a261f;--tint:#2a261f;--tint2:#363027;--panel:#191612;--edge:#3d372d;--edge2:#4a4337;--link:#86b6f2;--link2:#aecdf6;--tipbg:#2a2312;--tipedge:#5a4a1e;--tipfg:#ecd9a0;--curbg:#3a1e1c;--shadow:rgba(0,0,0,.5);--shadow2:rgba(0,0,0,.4);--blue:#181f2a;--blueedge:#2c3a50;--hl:#3b3214;--hledge:#7a6524;--hlfg:#f0d77a;--hledge2:#c9a640;--disbg:#2a2722;--disfg:#777;--disbg2:#2a2722;--disfg2:#777;--grey:#8a8478;--ochre:#c9a640;--band1:#26313e;--swatch:#4a5566;--band2:#3b4f66;--onink:#14120e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14120e;--fg:#e9e4d8;--mut:#a8a090;--card:#1d1a15;--line:#3a352c;--acc:#ff5b4f;--ink:#ede6d6;--mut2:#b3aa98;--mut3:#958c7b;--rule:#2f2b23;--rule2:#2a261f;--tint:#2a261f;--tint2:#363027;--panel:#191612;--edge:#3d372d;--edge2:#4a4337;--link:#86b6f2;--link2:#aecdf6;--tipbg:#2a2312;--tipedge:#5a4a1e;--tipfg:#ecd9a0;--curbg:#3a1e1c;--shadow:rgba(0,0,0,.5);--shadow2:rgba(0,0,0,.4);--blue:#181f2a;--blueedge:#2c3a50;--hl:#3b3214;--hledge:#7a6524;--hlfg:#f0d77a;--hledge2:#c9a640;--disbg:#2a2722;--disfg:#777;--disbg2:#2a2722;--disfg2:#777;--grey:#8a8478;--ochre:#c9a640;--band1:#26313e;--swatch:#4a5566;--band2:#3b4f66;--onink:#14120e}}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 16px;font-size:13px}
+a{color:var(--link)}
+
+/* navigation */
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.nb{font:inherit;font-size:13px;line-height:1.5;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none;display:inline-block}
+.nb:hover{border-color:var(--acc)}
+.nb.off,.nb:disabled{background:var(--disbg);color:var(--disfg);cursor:default;pointer-events:none}
+.nb.cur{border-color:var(--acc);color:var(--acc);background:var(--card);cursor:default;pointer-events:none}
+
+/* export button: its own row under the navigation, styled as an action */
+.tools{display:flex;justify-content:flex-end;margin:-4px 0 14px;padding-top:10px;border-top:1px solid var(--line)}
+.act{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;font-weight:600;line-height:1.5;padding:6px 14px;border-radius:8px;
+ border:1px solid var(--link);background:var(--link);color:var(--onink);cursor:pointer}
+.act:hover{background:var(--link2);border-color:var(--link2)}
+.act:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.act:disabled{background:var(--disbg);border-color:var(--line);color:var(--disfg);cursor:default}
+
+/* "Common claims" nav button: stands out from the page links */
+.nb.nb-claims{display:inline-flex;align-items:center;gap:6px;background:var(--hl);border-color:var(--hledge);color:var(--tipfg);font-weight:600}
+.nb.nb-claims:hover{border-color:var(--hledge2)}
+.nb.nb-claims.cur{border-color:var(--acc);color:var(--acc)}
+
+/* "In short" box at the top of data pages (text in inshort.js) */
+.inshort{background:var(--blue);border:1px solid var(--blueedge);border-radius:12px;padding:12px 16px;margin:0 0 16px}
+.inshort h2{font-size:15px;margin:0 0 6px}
+.inshort p{margin:0 0 8px;max-width:48rem;line-height:1.55}
+.inshort .live{font-weight:600}
+.inshort .na{font-weight:normal;color:var(--mut)}
+.inshort .rel{font-size:14px;margin:0 0 8px}
+.inshort .rel span{color:var(--mut)}
+.inshort .rel ul{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 16px}
+.inshort .stamp{font-size:12px;color:var(--mut);margin:0}
+
+/* "Tip: click any legend entry…" lines: a visible note instead of small grey text */
+.hint{font-size:14px;color:var(--tipfg);background:var(--tipbg);border:1px solid var(--tipedge);border-left:4px solid var(--ochre);border-radius:8px;padding:8px 12px;margin:0 0 14px}
+
+/* cards, boxes, charts */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--cardw,170px),1fr));gap:10px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.card .v{font-size:22px;font-weight:700}
+.card .l{font-size:12px;color:var(--mut)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.box h2{font-size:15px;margin:0 0 8px}
+.wrap{position:relative;height:var(--h,400px)}
+.wrap.s{height:var(--hs,300px)}
+#read{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 6px 36px}   /* left room for the bullets */
+#read li{margin:6px 0}
+#err{color:var(--acc)}
+.hide{display:none}
+
+/* chart legends (drawn as HTML by site.js): a left-aligned grid, click to show/hide */
+.lgd{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:2px 14px;margin:0 0 6px;font-size:12px;color:var(--mut)}
+.lgd button{all:unset;display:flex;align-items:center;gap:7px;cursor:pointer;line-height:1.35;padding:2px 0;min-width:0}
+.lgd button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.lgd .sw{flex:0 0 22px;height:0;border-top:3px solid var(--grey)}
+.lgd .bx{flex:0 0 22px;height:11px;border-radius:2px}
+.lgd .tx{overflow:hidden;text-overflow:ellipsis}
+.lgd .off{opacity:.38;text-decoration:line-through}
+
+/* small segmented button groups above a chart (e.g. region / baseline / window toggles) */
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px;margin:0 14px 8px 0;font-size:13px;align-items:center;color:var(--mut)}
+.seg .nb{padding:3px 10px}
+.seg .nb.on{border-color:var(--acc);color:var(--acc)}
+/* page-level switch (e.g. World / Atlantic / North Atlantic on the ocean heat page): one joined control, easy to spot */
+.seg.switch{display:flex;align-items:center;gap:0;margin:0 0 16px;font-size:15px;color:var(--fg);overflow-x:auto;padding-bottom:2px}
+.seg.switch .nb{white-space:nowrap;flex:none}
+.seg.switch .lbl{font-weight:600;margin-right:10px}
+.seg.switch .nb{font-size:15px;padding:8px 16px;border-radius:0;margin-left:-1px;background:var(--card);border-color:var(--edge2);color:var(--ink)}
+.seg.switch .nb:first-of-type{border-radius:8px 0 0 8px;margin-left:0}
+.seg.switch .nb:last-of-type{border-radius:0 8px 8px 0}
+.seg.switch .nb:hover{background:var(--tint);position:relative;z-index:1}
+.seg.switch .nb.on{background:var(--ink);border-color:var(--ink);color:var(--onink);position:relative;z-index:2}
+.seg.switch .nb:disabled{color:var(--disfg2);background:var(--disbg2)}
+@media (max-width:600px){.seg.switch{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;overflow:visible}.seg.switch .lbl{grid-column:1/-1;margin:0}
+ .seg.switch .nb,.seg.switch .nb:first-of-type,.seg.switch .nb:last-of-type{border-radius:8px;margin:0;padding:8px 4px;font-size:14px;text-align:center}}
+
+/* back-to-top button */
+/* sits just right of the content column (1000px wide, centred) where there is room; otherwise in the corner */
+#totop{position:fixed;right:max(calc(16px + env(safe-area-inset-right,0px)),calc((100vw - 1000px)/2 - 56px));bottom:calc(16px + env(safe-area-inset-bottom,0px));
+ width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);
+ font:600 20px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:50;
+ opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,transform .2s,visibility .2s}
+#totop.show{opacity:1;visibility:visible;transform:none}
+#totop:hover{border-color:var(--acc);color:var(--acc)}
+
+/* small screens */
+@media (max-width:600px){
+ main{padding:14px 10px 32px}
+ h1{font-size:19px}
+ .card .v{font-size:19px}
+ .box{padding:10px 8px}
+ .wrap{height:calc(var(--h,400px)*.85)}
+ .wrap.s{height:calc(var(--hs,300px)*.85)}
+ .lgd{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+}
+
+/* printing */
+@media print{
+ :root,:root[data-theme="dark"],:root:not([data-theme="light"]){--bg:#fff!important;--fg:#1c1c1c!important;--mut:#555!important;--card:#fff!important;--line:#ddd!important;--acc:#d00000!important;--ink:#332b19!important;--mut2:#6b6252!important;--mut3:#8a8170!important;--rule:#e6e1d6!important;--rule2:#eee9de!important;--tint:#f3efe6!important;--tint2:#ece6d9!important;--panel:#fbf9f4!important;--edge:#d9d2c3!important;--edge2:#cfc6b4!important;--link:#1f5fa8!important;--link2:#174a85!important;--tipbg:#fbf4e2!important;--tipedge:#ecdcae!important;--tipfg:#4a3b00!important;--curbg:#fbeaea!important;--shadow:rgba(51,43,25,.12)!important;--shadow2:rgba(51,43,25,.08)!important;--blue:#f4f7fb!important;--blueedge:#d5e0ec!important;--hl:#fff4c2!important;--hledge:#e3c45c!important;--hlfg:#4a3b00!important;--hledge2:#b8941c!important;--disbg:#eee!important;--disfg:#999!important;--disbg2:#f5f5f5!important;--disfg2:#aaa!important;--grey:#888!important;--ochre:#a77f17!important;--onink:#fff!important;color-scheme:light}
+ html.charts-dark canvas{filter:invert(1) hue-rotate(180deg)}   /* dark-mode charts printed on white */
+ .nav,.tools,#err,.hint,.seg,#totop,.inshort .rel{display:none}
+ .inshort{break-inside:avoid}
+ *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ @page{margin:11mm}
+ main{padding:0;max-width:none;zoom:.75}
+ .seg.switch,.site-foot .foot-nav{display:none!important}   /* controls make no sense on paper; chart titles name the region */
+ h1{margin:4px 0 8px}
+ .site-head{margin-bottom:6px;padding-bottom:4px}
+ .cards{margin:8px 0;grid-template-columns:repeat(var(--pcols,5),1fr)}
+ .wrap{height:var(--ph,280px)}
+ .wrap.s{height:var(--phs,200px)}
+ .box{margin-bottom:6px;padding-top:8px;padding-bottom:8px;break-inside:avoid}
+ .box h2{margin-bottom:4px}
+ #read,.sub{break-inside:auto}
+ #read{padding:2px 14px 2px 32px}
+ #read li{margin:2px 0}
+ .wrap canvas{width:100%!important;height:100%!important}
+}
+
+/* site name typeface: Poiret One (Google Fonts, SIL Open Font License), served from this site */
+@font-face{font-family:"Poiret One";src:url(fonts/PoiretOne-Regular.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+
+/* site header: logo + name + tagline, with the menu beside it (inserted by site.js) */
+.site-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;
+ margin:0 0 16px;padding:0 0 12px;border-bottom:1px solid var(--rule)}
+.site-head .brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.site-head img{height:56px;width:auto;flex:none}   /* same height as the name + tagline block (36 + 2 + 18) */
+.site-head .wm{display:block;width:max-content;font-family:"Poiret One",system-ui,sans-serif;font-size:32px;font-weight:400;line-height:36px;color:var(--ink)}
+.site-head .tag{display:block;width:max-content;font-size:13px;line-height:18px;color:var(--mut2);margin-top:2px;white-space:nowrap}   /* letter-spacing set by site.js to match the name's width */
+
+/* theme button (auto / light / dark) at the end of the header */
+.theme-btn{background:none;border:1px solid transparent;border-radius:8px;color:var(--mut2);padding:6px;cursor:pointer;line-height:0;margin-left:-12px}
+.theme-btn:hover{border-color:var(--rule);color:var(--ink)}
+@media print{.theme-btn{display:none}}
+
+/* menu: Overview, Indicators (dropdown), Common claims */
+.menu{display:flex;align-items:center;gap:4px;margin-left:auto}
+.menu a,.dd-btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;
+ background:none;border:0;padding:8px 10px;border-radius:6px;cursor:pointer;line-height:1.2}
+.menu a:hover,.dd-btn:hover{background:var(--tint)}
+.menu a[aria-current="page"],.dd-btn.on{color:var(--acc);box-shadow:inset 0 -2px 0 var(--acc);border-radius:0}
+.menu a.m-claims{font-weight:600}
+.dd{position:relative}
+.dd-btn svg{transition:transform .15s}
+.dd.open .dd-btn svg{transform:rotate(180deg)}
+.dd-list{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:210px;padding:6px;background:var(--card);
+ border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px var(--shadow)}
+.dd.open .dd-list{display:block}
+/* on computers with a mouse, the dropdown also opens on hover (touch screens keep tap-to-open) */
+@media (hover:hover) and (min-width:861px){
+ .dd:hover .dd-list,.dd:focus-within .dd-list{display:block}
+ .dd:hover .dd-btn svg{transform:rotate(180deg)}
+ .dd-list::before{content:"";position:absolute;left:0;right:0;top:-8px;height:8px}   /* bridges the gap so the menu stays open while the mouse moves down */
+}
+.dd-list a{display:flex;padding:7px 10px;border-radius:6px}
+.dd-list a[aria-current="page"]{box-shadow:none;border-radius:6px;background:var(--curbg)}
+.dd-label{display:none}
+.burger{display:none;background:none;border:0;padding:8px;margin:-8px -8px -8px 0;color:var(--ink);cursor:pointer;border-radius:6px}
+.burger:hover{background:var(--tint)}
+
+/* slim header that slides in when scrolling up (built by site.js from the same markup) */
+.mini-wrap{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--card);border-bottom:1px solid var(--rule);
+ box-shadow:0 2px 10px var(--shadow2);transform:translateY(-110%);transition:transform .22s ease;padding-top:env(safe-area-inset-top,0px)}
+.mini-wrap.show{transform:none}
+.site-head.mini{max-width:1000px;margin:0 auto;padding:6px 16px;border-bottom:0;box-sizing:border-box}
+.site-head.mini img{height:30px}
+.site-head.mini .wm{font-size:22px;line-height:26px}
+.site-head.mini .tag{display:none}
+.site-head.mini .menu a,.site-head.mini .dd-btn{padding-top:6px;padding-bottom:6px}
+.site-head.mini.open{max-height:calc(100vh - 20px);overflow:auto}
+
+/* narrow screens: hamburger button; the menu opens as a full-width list under the header */
+@media (max-width:860px){
+ .burger{display:block;order:3}
+ .theme-btn{order:2;margin-left:auto}
+ .menu{order:4}
+ .menu{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;gap:0;padding-top:4px}
+ .site-head.open .menu{display:flex}
+ .menu a,.dd-btn{padding:10px 4px;font-size:16px}
+ .menu a[aria-current="page"]{box-shadow:none}
+ .dd-btn{display:none}
+ .dd-list{display:block;position:static;min-width:0;padding:4px 0 4px 14px;border:0;border-left:2px solid var(--rule);border-radius:0;box-shadow:none;margin:2px 0 6px 4px}
+ .dd-label{display:block;font-size:12px;color:var(--mut2);padding:6px 4px 2px}
+ .dd-list a{padding:8px 4px}
+ .dd-list a[aria-current="page"]{background:none;color:var(--acc)}
+}
+@media (max-width:520px){.site-head img{height:48px}.site-head .wm{font-size:27px;line-height:30px}.site-head .tag{font-size:12px;line-height:16px}}
+
+/* the old row of page buttons now only holds the export button until site.js moves it; hide it when empty */
+.nav:empty{display:none}
+
+/* footer */
+.site-foot{margin:40px 0 0;padding:14px 0 0;border-top:1px solid var(--rule);font-size:13px;color:var(--mut2)}
+.site-foot p{margin:0 0 4px}
+.site-foot a{color:inherit}
+.foot-nav{display:grid;grid-template-columns:minmax(150px,1fr) 3fr;gap:8px 32px;margin:0 0 18px;padding:0 0 16px;border-bottom:1px solid var(--rule2)}
+.foot-nav h2{font-size:12px;font-weight:600;color:var(--mut3);margin:0 0 6px}
+.foot-nav div{display:flex;flex-direction:column;gap:2px}
+.foot-nav .ind{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 24px;align-content:start}
+.foot-nav .ind h2{grid-column:1/-1}
+.foot-nav a{color:var(--ink);text-decoration:none;font-size:14px;padding:3px 0}
+.foot-nav a:hover{color:var(--acc);text-decoration:underline}
+.foot-nav a[aria-current="page"]{color:var(--acc)}
+@media (max-width:600px){.foot-nav{grid-template-columns:1fr}.foot-nav .ind{grid-template-columns:1fr 1fr}}
+@media print{.foot-nav{display:none}}
+
+/* wilting dandelions in the left margin, only where there is a margin (wide screens), never in print */
+@media (min-width:1280px){
+ /* stuck to the left edge of the window; full window height where the margin is wide enough, otherwise as large
+    as the margin allows, never cropped and never overlapping the content. The drawing is 177 x 503 (width = 35.2% of height). */
+ body::before{--dw:min(35.2vh,calc((100vw - 1000px)/2 - 16px));content:"";position:fixed;left:0;bottom:0;height:100vh;width:var(--dw);
+  background:url(img/dying-dandy.svg) no-repeat left bottom/contain;opacity:.5;filter:saturate(.75);pointer-events:none;z-index:0}
+}
+html[data-theme="dark"] body::before{opacity:.42;filter:saturate(.7) brightness(2.1)}
+@media (prefers-color-scheme:dark){html:not([data-theme="light"]) body::before{opacity:.42;filter:saturate(.7) brightness(2.1)}}
+@media print{body::before{display:none}.site-head{border-bottom:0}.menu,.burger,.mini-wrap{display:none}}
+
+/* "Data and method" line on data pages (site.js) */
+.how{border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:0 0 16px;font-size:14px}
+.how h2{font-size:14px;margin:0 0 4px}
+.how p{margin:0 0 6px;max-width:48rem;line-height:1.5}
+.how .links{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0}
+@media print{.how .links{display:none}}

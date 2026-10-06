@@ -1,0 +1,33 @@
+name: Update methane data
+
+on:
+  schedule:
+    - cron: "15 15 * * *"      # daily check; NOAA updates around the 5th of each month
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download NOAA GML global methane
+        run: |
+          mkdir -p data
+          for f in ch4_mm_gl.txt ch4_gr_gl.txt; do
+            # download to a temp file first, so a failed download never replaces good data
+            curl -fsSL --retry 3 --retry-delay 20 -o "data/$f.tmp" "https://gml.noaa.gov/webdata/ccgg/trends/ch4/$f"
+            n=$(grep -vc '^#' "data/$f.tmp")
+            echo "$f: $n data lines"
+            [ "$n" -gt 30 ]
+            mv "data/$f.tmp" "data/$f"
+          done
+          tail -1 data/ch4_mm_gl.txt
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update methane data" && git pull --rebase && git push)
