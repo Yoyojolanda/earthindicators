@@ -47,8 +47,11 @@ def retry(what, fn, tries=4):
 def open_ds(dataset_id, variables, pole):
     import copernicusmarine as cm
     lo, hi = POLES[pole]
+    # Copernicus stores each dataset twice: chunked as maps ("geo-series") and as long series per
+    # location ("time-series"). We always read whole maps, so force the map layout; otherwise the
+    # tool may pick the time-series copy and download years of data to get one day.
     return retry(f"open {dataset_id}", lambda: cm.open_dataset(
-        dataset_id=dataset_id, variables=variables,
+        dataset_id=dataset_id, variables=variables, service="arco-geo-series",
         minimum_latitude=lo, maximum_latitude=hi))
 
 
@@ -163,6 +166,7 @@ def run_cs2smos(path, max_days):
             if done >= max_days:
                 print("  day budget reached; continuing next run", flush=True)
                 break
+            t0 = time.time()
             sub = retry(f"load {d}", lambda: ds.sel(time=d).load())
             if "time" in sub.dims:
                 sub = sub.isel(time=0)
@@ -174,6 +178,7 @@ def run_cs2smos(path, max_days):
                                "volume_unc": f"{vol(sub['sea_ice_thickness_uncertainty'].values, c, area):.3f}",
                                "area": f"{float((c * area).sum()) / 1e6:.3f}"}
             done += 1
+            print(f"  {d}: {rows[(d, pole)]['volume']} thousand km3 ({time.time() - t0:.0f} s)", flush=True)
             if n % 5 == 0:
                 save_cache(path, rows, C_FIELDS)
         save_cache(path, rows, C_FIELDS)
