@@ -1,0 +1,25 @@
+GLORYS seam check, 2026-10-06: same months from both systems
+north 2025-08-01  reanalysis   4.657  real-time   2.165  diff -2.492 thousand km3
+north 2025-09-01  reanalysis   3.990  real-time   2.318  diff -1.672 thousand km3
+north 2025-10-01  reanalysis   5.167  real-time   3.109  diff -2.058 thousand km3
+north 2025-11-01  reanalysis   7.578  real-time   4.816  diff -2.762 thousand km3
+north 2025-12-01  reanalysis  10.460  real-time   7.474  diff -2.986 thousand km3
+north 2026-01-01  reanalysis  13.815  real-time  10.524  diff -3.291 thousand km3
+north 2026-02-01  reanalysis  16.583  real-time  13.356  diff -3.227 thousand km3
+north 2026-03-01  reanalysis  18.381  real-time  15.600  diff -2.781 thousand km3
+north 2026-04-01  reanalysis  18.933  real-time  16.920  diff -2.013 thousand km3
+north 2026-05-01  reanalysis  17.171  real-time  16.384  diff -0.787 thousand km3
+north 2026-06-01  reanalysis  13.003  real-time  12.072  diff -0.931 thousand km3
+north 2026-07-01  reanalysis   7.681  real-time   5.479  diff -2.202 thousand km3
+south 2025-08-01  reanalysis  13.228  real-time   9.767  diff -3.461 thousand km3
+south 2025-09-01  reanalysis  14.235  real-time  11.277  diff -2.958 thousand km3
+south 2025-10-01  reanalysis  13.389  real-time  11.323  diff -2.066 thousand km3
+south 2025-11-01  reanalysis  10.219  real-time   9.511  diff -0.708 thousand km3
+south 2025-12-01  reanalysis   4.947  real-time   4.618  diff -0.329 thousand km3
+south 2026-01-01  reanalysis   1.782  real-time   1.475  diff -0.307 thousand km3
+south 2026-02-01  reanalysis   0.950  real-time   0.901  diff -0.049 thousand km3
+south 2026-03-01  reanalysis   1.081  real-time   0.971  diff -0.110 thousand km3
+south 2026-04-01  reanalysis   2.656  real-time   1.716  diff -0.940 thousand km3
+south 2026-05-01  reanalysis   5.271  real-time   3.415  diff -1.856 thousand km3
+south 2026-06-01  reanalysis   8.285  real-time   5.478  diff -2.807 thousand km3
+south 2026-07-01  reanalysis  11.383  real-time   7.643  diff -3.740 thousand km3
