@@ -16,8 +16,9 @@ Each run adds the newest days and, at the same time, spends its time budget fill
 towards 1940. Several months are requested from Copernicus at once (ERA5_PARALLEL, default 8), because almost all
 of the time is spent waiting in the CDS queue. Months can come back in any order; each is saved only once every
 newer month is in, so the cache never has gaps. Progress is saved after every month, so the backfill continues
-over many runs. Requests still open when a run stops keep running at Copernicus, which caches the results for
-about two days, so the next run gets those months back almost at once.
+over many runs. Every request sent to Copernicus is recorded with its ID in data/era5_open_requests.json (committed
+with the data). The next run reattaches to those requests instead of sending them again, so each month has at most
+one request in Copernicus's queue and keeps its place in line from one run to the next.
 
 Outputs
   data/era5_t2_regions_daily.csv   cache: date + one column per region
@@ -27,7 +28,7 @@ Outputs
 
 Needs ~/.cdsapirc (url + key).
 """
-import csv, json, os, shutil, sys, tempfile, threading, time, zipfile
+import csv, hashlib, json, os, shutil, sys, tempfile, threading, time, zipfile
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import date, timedelta
 
@@ -47,6 +48,38 @@ BUDGET = float(os.environ.get("ERA5_BUDGET_MIN", "270")) * 60   # stop sending n
 GRACE = 20 * 60                                                   # then wait at most this long for open ones
 PARALLEL = int(os.environ.get("ERA5_PARALLEL", "8"))              # history months requested at the same time
 PROCESS = threading.Lock()
+OPEN_FILE = "data/era5_open_requests.json"   # {key: {"id": request id, "label": "2019-01", "sent": "2026-10-06T13:15"}}
+OPEN, OPEN_LOCK = {}, threading.Lock()
+POLL = float(os.environ.get("ERA5_POLL_S", "60"))                 # seconds between status checks of a waiting request
+
+
+def open_load():
+    if os.path.exists(OPEN_FILE):
+        OPEN.update(json.load(open(OPEN_FILE)))
+    old = time.strftime("%Y-%m-%dT%H:%M", time.gmtime(time.time() - 3 * 86400))
+    for k in [k for k, v in OPEN.items() if v.get("sent", "") < old]:    # forget requests older than 3 days
+        del OPEN[k]
+
+
+def open_set(key, value=None):
+    with OPEN_LOCK:
+        if value is None:
+            OPEN.pop(key, None)
+        else:
+            OPEN[key] = value
+        with open(OPEN_FILE + ".tmp", "w") as fh:
+            json.dump(OPEN, fh, indent=1, sort_keys=True)
+        os.replace(OPEN_FILE + ".tmp", OPEN_FILE)
+
+
+def make_client():
+    """Copernicus's datastores client, with the url and key from ~/.cdsapirc (written by the workflow)."""
+    from ecmwf.datastores import Client
+    cfg = {}
+    for line in open(os.path.expanduser("~/.cdsapirc")):
+        if ":" in line:
+            k, v = line.split(":", 1); cfg[k.strip()] = v.strip()
+    return Client(url=cfg["url"], key=cfg["key"], progress=False)
 
 
 def load_cache():
@@ -98,18 +131,44 @@ def region_means(ds):
 
 
 def fetch_month(client, days):
-    """Regional means for a list of days within one month; drops the newest days if they are not available yet."""
+    """Regional means for a list of days within one month; drops the newest days if they are not available yet.
+    Reattaches to a request a previous run left open for exactly the same days, instead of sending a new one."""
     days = sorted(days)
     y, mth = days[0].year, days[0].month
     while days:
         req = {"product_type": "reanalysis", "variable": ["2m_temperature"],
                "year": f"{y}", "month": [f"{mth:02d}"], "day": [f"{d.day:02d}" for d in days],
                "daily_statistic": "daily_mean", "time_zone": "utc+00:00", "frequency": "1_hourly"}
+        key = hashlib.sha1(json.dumps(req, sort_keys=True).encode()).hexdigest()[:16]
+        label = f"{y}-{mth:02d}" + ("" if days[0].day == 1 and len(days) >= 28 else f" ({days[0].day}-{days[-1].day})")
         for attempt in range(3):
             tmp = tempfile.mkdtemp()     # a month is ~100+ MB: always delete it again, or the runner's disk fills up
             try:
+                remote, rid = None, OPEN.get(key, {}).get("id")
+                if rid:
+                    try:
+                        remote = client.get_remote(rid)
+                        if remote.status in ("failed", "rejected", "dismissed"):
+                            remote = None
+                        else:
+                            print(f"    {label}: reattached to request {rid[:8]} ({remote.status})", flush=True)
+                    except Exception:
+                        remote = None
+                    if remote is None:
+                        open_set(key)
+                if remote is None:
+                    remote = client.submit(DATASET, req)
+                    open_set(key, {"id": remote.request_id, "label": label, "sent": time.strftime("%Y-%m-%dT%H:%M", time.gmtime())})
+                while True:
+                    st = remote.status
+                    if st == "successful":
+                        break
+                    if st in ("failed", "rejected", "dismissed"):
+                        open_set(key); raise RuntimeError(f"request {st}")
+                    time.sleep(POLL)
                 path = os.path.join(tmp, "t2m")
-                client.retrieve(DATASET, req).download(path)
+                client.download_results(remote.request_id, path)
+                open_set(key)
                 with PROCESS:            # download in parallel, average one month at a time (each needs ~1 GB of memory)
                     ds = open_nc(path)
                     try:
@@ -118,7 +177,7 @@ def fetch_month(client, days):
                         ds.close()
             except Exception as e:
                 msg = str(e)
-                print(f"    request failed ({msg[:200]})", flush=True)
+                print(f"    {label}: request failed ({msg[:200]})", flush=True)
                 if any(k in msg.lower() for k in ("not available", "no data", "invalid", "none of the data")):
                     break
                 time.sleep(30 * (attempt + 1))
@@ -179,11 +238,13 @@ def overlap_check(rows):
 
 
 def main():
-    import cdsapi
     t0 = time.time()
     os.makedirs("data", exist_ok=True)
     rows = load_cache()
-    client = cdsapi.Client(quiet=True, progress=False)
+    client = make_client()               # one client is shared by all threads (it only makes independent HTTP calls)
+    open_load()
+    if OPEN:
+        print(f"{len(OPEN)} requests left open by earlier runs: " + ", ".join(sorted(v['label'] for v in OPEN.values())), flush=True)
     last_ok = date.today() - timedelta(LAG)
 
     lock = threading.Lock()                # the newest-days thread and the history loop both write the cache
@@ -210,11 +271,8 @@ def main():
     th = threading.Thread(target=newest, daemon=True); th.start()
 
     # 2. history, newest month first, several requests at once while the time budget lasts
-    local = threading.local()
-    def work(days):                       # one CDS client per thread
-        if not hasattr(local, "c"):
-            local.c = cdsapi.Client(quiet=True, progress=False)
-        return fetch_month(local.c, days)
+    def work(days):
+        return fetch_month(client, days)
     used = lambda: f"{(time.time() - t0) / 60:.0f} min used"
     ex = ThreadPoolExecutor(PARALLEL)
     open_, results, nxt, keep, failed = {}, {}, 0, 0, False
@@ -227,7 +285,7 @@ def main():
             break
         finished, _ = wait(open_, timeout=max(1, BUDGET + GRACE - (time.time() - t0)), return_when=FIRST_COMPLETED)
         if not finished:
-            print(f"  time is up; {len(open_)} requests left open at Copernicus (cached there for the next run)", flush=True)
+            print(f"  time is up; {len(open_)} requests left open at Copernicus; the next run reattaches to them", flush=True)
             break
         for f in finished:
             i = open_.pop(f)

@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install numpy xarray netCDF4 cdsapi
+      - run: pip install numpy xarray netCDF4 ecmwf-datastores-client
 
       # New days first, then history back towards 1940 for about 4.5 hours; progress is kept between runs.
       - name: Build regional air temperature (Copernicus ERA5)
