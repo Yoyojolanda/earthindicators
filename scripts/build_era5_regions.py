@@ -12,8 +12,12 @@ region with cos(latitude) weights. Regions as defined by Climate Reanalyzer:
   tropics    Tropics               23.5 S to 23.5 N
   world      World                 (only used to check this calculation against Copernicus's published series)
 
-Each run first adds the newest days, then spends the remaining time budget filling in history, one month at
-a time, going back towards 1940. Progress is saved after every month, so the backfill continues over many runs.
+Each run first adds the newest days, then spends the remaining time budget filling in history, going back
+towards 1940. Several months are requested from Copernicus at once (ERA5_PARALLEL, default 8), because almost all
+of the time is spent waiting in the CDS queue. Months can come back in any order; each is saved only once every
+newer month is in, so the cache never has gaps. Progress is saved after every month, so the backfill continues
+over many runs. Requests still open when a run stops keep running at Copernicus, which caches the results for
+about two days, so the next run gets those months back almost at once.
 
 Outputs
   data/era5_t2_regions_daily.csv   cache: date + one column per region
@@ -23,7 +27,8 @@ Outputs
 
 Needs ~/.cdsapirc (url + key).
 """
-import csv, json, os, sys, tempfile, time, zipfile
+import csv, json, os, shutil, sys, tempfile, threading, time, zipfile
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import date, timedelta
 
 import numpy as np
@@ -38,7 +43,10 @@ OVERLAP = "data/era5_overlap_check.txt"
 FIRST = date(1940, 1, 1)
 CLIM = (1991, 2020)
 LAG, REFETCH = 5, 10
-BUDGET = float(os.environ.get("ERA5_BUDGET_MIN", "270")) * 60   # seconds of work per run, leaves time to commit
+BUDGET = float(os.environ.get("ERA5_BUDGET_MIN", "270")) * 60   # stop sending new requests after this many seconds
+GRACE = 20 * 60                                                   # then wait at most this long for open ones
+PARALLEL = int(os.environ.get("ERA5_PARALLEL", "8"))              # history months requested at the same time
+PROCESS = threading.Lock()
 
 
 def load_cache():
@@ -97,17 +105,25 @@ def fetch_month(client, days):
         req = {"product_type": "reanalysis", "variable": ["2m_temperature"],
                "year": f"{y}", "month": [f"{mth:02d}"], "day": [f"{d.day:02d}" for d in days],
                "daily_statistic": "daily_mean", "time_zone": "utc+00:00", "frequency": "1_hourly"}
-        path = os.path.join(tempfile.mkdtemp(), "t2m")
         for attempt in range(3):
+            tmp = tempfile.mkdtemp()     # a month is ~100+ MB: always delete it again, or the runner's disk fills up
             try:
+                path = os.path.join(tmp, "t2m")
                 client.retrieve(DATASET, req).download(path)
-                return region_means(open_nc(path))
+                with PROCESS:            # download in parallel, average one month at a time (each needs ~1 GB of memory)
+                    ds = open_nc(path)
+                    try:
+                        return region_means(ds)
+                    finally:
+                        ds.close()
             except Exception as e:
                 msg = str(e)
                 print(f"    request failed ({msg[:200]})", flush=True)
-                if any(k in msg.lower() for k in ("not available", "no data", "invalid")):
+                if any(k in msg.lower() for k in ("not available", "no data", "invalid", "none of the data")):
                     break
                 time.sleep(30 * (attempt + 1))
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
         print(f"    retrying without {days[-1]}", flush=True)
         days = days[:-1]
     return {}
@@ -179,26 +195,67 @@ def main():
         print(f"new: {y}-{m:02d} ({len(days)} days)", flush=True)
         rows.update(fetch_month(client, days)); save_cache(rows)
 
-    # 2. history, newest month first, while the time budget lasts
-    while time.time() - t0 < BUDGET:
-        first = min(rows)
-        prev = date(first.year, first.month, 1) - timedelta(1)
-        missing = [d for d in month_days(first.year, first.month, first) if d not in rows]
-        if missing:                                    # finish a partly filled month first
-            target = missing
-        elif prev < FIRST:
-            print("history complete back to 1940", flush=True); break
-        else:
-            target = month_days(prev.year, prev.month, prev)
-        print(f"history: {target[0]:%Y-%m} ({(time.time() - t0) / 60:.0f} min used)", flush=True)
-        got = fetch_month(client, target)
-        if not got:
-            print("  no data returned; stopping for this run", flush=True); break
-        rows.update(got); save_cache(rows)
+    # 2. history, newest month first, several requests at once while the time budget lasts
+    targets = history_targets(rows)
+    if not targets:
+        print("history complete back to 1940", flush=True)
+    local = threading.local()
+    def work(days):                       # one CDS client per thread
+        if not hasattr(local, "c"):
+            local.c = cdsapi.Client(quiet=True, progress=False)
+        return fetch_month(local.c, days)
+    used = lambda: f"{(time.time() - t0) / 60:.0f} min used"
+    ex = ThreadPoolExecutor(PARALLEL)
+    open_, results, nxt, keep, failed = {}, {}, 0, 0, False
+    while True:
+        while not failed and nxt < len(targets) and len(open_) < PARALLEL and time.time() - t0 < BUDGET:
+            open_[ex.submit(work, targets[nxt])] = nxt
+            print(f"history: requested {targets[nxt][0]:%Y-%m} ({used()}, {len(open_)} open)", flush=True)
+            nxt += 1
+        if not open_:
+            break
+        finished, _ = wait(open_, timeout=max(1, BUDGET + GRACE - (time.time() - t0)), return_when=FIRST_COMPLETED)
+        if not finished:
+            print(f"  time is up; {len(open_)} requests left open at Copernicus (cached there for the next run)", flush=True)
+            break
+        for f in finished:
+            i = open_.pop(f)
+            try:
+                got = f.result()
+            except Exception as e:
+                print(f"  {targets[i][0]:%Y-%m} failed: {e}", flush=True); got = {}
+            results[i] = got
+            print(f"  received {targets[i][0]:%Y-%m}: {len(got)} days ({used()})", flush=True)
+        while keep in results:           # save in order, newest first, so the cache never has a gap
+            got = results.pop(keep)
+            if not got:
+                print(f"  no data for {targets[keep][0]:%Y-%m}; nothing older is saved this run", flush=True)
+                failed = True; break
+            rows.update(got); save_cache(rows); keep += 1
+        if failed:
+            break
+    ex.shutdown(wait=False, cancel_futures=True)
+    print(f"history: saved {keep} months this run", flush=True)
 
     print(f"cache: {min(rows)} to {max(rows)}", flush=True)
     write_jsons(rows)
     overlap_check(rows)
+    sys.stdout.flush()
+    os._exit(0)                          # don't wait for threads still blocked on open CDS requests
+
+
+def history_targets(rows):
+    """Months still to fetch, newest first: the rest of a partly filled oldest month, then every month back to 1940."""
+    first = min(rows)
+    out = []
+    missing = [d for d in month_days(first.year, first.month, first) if d not in rows]
+    if missing:
+        out.append(missing)
+    d = date(first.year, first.month, 1) - timedelta(1)
+    while d >= FIRST:
+        out.append(month_days(d.year, d.month, d))
+        d = date(d.year, d.month, 1) - timedelta(1)
+    return out
 
 
 if __name__ == "__main__":

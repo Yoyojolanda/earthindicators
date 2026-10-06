@@ -2,7 +2,8 @@ name: Update regional air temperature data (ERA5)
 
 on:
   schedule:
-    - cron: "15 3 * * *"       # daily, 03:15 UTC (the global ERA5 update runs at 17:30)
+    - cron: "15 1,7,13,19 * * *"   # 4x a day while the history is being filled in (concurrency below keeps runs from overlapping);
+                                   # once it reaches 1940, once a day ("15 3 * * *") is enough
   workflow_dispatch:           # lets you run it manually from the Actions tab
 
 permissions:
@@ -30,6 +31,7 @@ jobs:
         env:
           CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
           ERA5_BUDGET_MIN: "270"
+          ERA5_PARALLEL: "8"         # history months requested from Copernicus at the same time
         run: |
           printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
           chmod 600 ~/.cdsapirc
