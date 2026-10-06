@@ -1,0 +1,1 @@
+World yearly averages from ERA5 monthly averages minus those from the daily series, 86 years (1940-2025): mean +0.0001 degC, largest difference 0.0002 degC.
