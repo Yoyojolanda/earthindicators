@@ -1,0 +1,44 @@
+name: Update monthly air temperature data (ERA5)
+
+on:
+  schedule:
+    - cron: "45 4 * * *"       # daily check, 04:45 UTC; only downloads when a new month or missing years are due
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: era5-monthly
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 cdsapi
+
+      - name: Build monthly air temperature (Copernicus ERA5 monthly averages)
+        continue-on-error: true
+        timeout-minutes: 320
+        env:
+          CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
+        run: |
+          printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
+          chmod 600 ~/.cdsapirc
+          python -u scripts/build_era5_monthly.py
+          rm -f ~/.cdsapirc
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.cdsapirc
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update monthly air temperature data" && git pull --rebase && git push)

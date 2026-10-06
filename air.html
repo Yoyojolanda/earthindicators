@@ -169,18 +169,18 @@ document.querySelectorAll('#region .nb').forEach(x=>{if(x.dataset.r==='world')re
  fetch('data/'+REGIONS[x.dataset.r].f,{method:'HEAD'}).then(r=>{if(!r.ok)throw 0}).catch(()=>{x.disabled=true;x.title='The history for this region is still being downloaded from Copernicus'})});
 load('world').catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script><script>
-// ---- warming rate by region: linear trend of annual means since 1979, from the daily files (no need to wait for the regional JSONs)
+// ---- warming rate by region: linear trend of yearly means since 1979, from ERA5 monthly averages (data/era5_t2_regions_monthly.csv)
 (function(){
  const START=1979, NAMES={arctic:'Arctic',nh:'Northern Hemisphere',world:'World',tropics:'Tropics',sh:'Southern Hemisphere',antarctic:'Antarctic'},
-  ORDER=['arctic','nh','world','tropics','sh','antarctic'], txt=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.text()});
- Promise.all([txt('data/era5_t2_global_daily.csv'),txt('data/era5_t2_regions_daily.csv')]).then(([g,rg])=>{
-  const S={},add=(k,d,v)=>{const y=+d.slice(0,4),a=((S[k]??={})[y]??=[0,0]);a[0]+=v;a[1]++};
-  g.trim().split('\n').slice(1).forEach(l=>{const p=l.split(',');add('world',p[0],+p[1])});   // Copernicus series + this site's newer days
-  const L=rg.trim().split('\n'),H=L[0].split(',');
-  L.slice(1).forEach(l=>{const p=l.split(',');H.forEach((h,i)=>{if(i&&h!=='world'&&p[i]!=='')add(h,p[0],+p[i])})});
-  const full=(k,y)=>S[k]&&S[k][y]&&S[k][y][1]>=365;
+  ORDER=['arctic','nh','world','tropics','sh','antarctic'];
+ fetch('data/era5_t2_regions_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  const S={},L=t.trim().split('\n'),H=L[0].split(',');
+  L.slice(1).forEach(l=>{const p=l.split(','),y=+p[0].slice(0,4),m=+p[0].slice(5,7),d=new Date(y,m,0).getDate();   // weight = days in month
+   H.forEach((h,i)=>{if(i&&p[i]!==''){const a=((S[h]??={})[y]??=[0,0,0]);a[0]+=+p[i]*d;a[1]+=d;a[2]++}})});
+  const wait=[];
+  const full=(k,y)=>S[k]&&S[k][y]&&S[k][y][2]===12;
   let END=new Date().getFullYear();while(END>START&&!full('world',END))END--;          // last complete year
-  const rate={},wait=[];
+  const rate={};
   ORDER.forEach(k=>{const P=[];for(let y=START;y<=END;y++){if(!full(k,y))break;P.push([y,S[k][y][0]/S[k][y][1]])}
    if(P.length<END-START+1){wait.push(NAMES[k]);return}
    const n=P.length,mx=P.reduce((s,p)=>s+p[0],0)/n,my=P.reduce((s,p)=>s+p[1],0)/n;let a=0,b=0;
@@ -192,8 +192,8 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
    options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'+'+c.parsed.y.toFixed(2)+' °C per decade'}}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'°C per decade'},grid:{color:THEME.grid}}}}});
   const w=rate.world,x=k=>k in rate?` The ${NAMES[k]} has warmed about ${(rate[k]/w).toFixed(1)} times as fast as the world as a whole.`:'';
-  document.getElementById('n5').textContent=`Straight-line trend through the yearly averages of daily ERA5 2 m temperature, ${START}–${END}. ${START} is the usual starting point for such comparisons: from then on, satellites observe the whole globe, including the polar regions.`+
-   x('arctic')+(wait.length?` Still being calculated back to ${START}: ${wait.join(', ')}. Their bars appear here automatically once that is done.`:'');
+  document.getElementById('n5').textContent=`Straight-line trend through the yearly averages of ERA5 2 m temperature (from Copernicus's monthly averages), ${START}–${END}. ${START} is the usual starting point for such comparisons: from then on, satellites observe the whole globe, including the polar regions.`+
+   x('arctic')+(wait.length?` Not yet available back to ${START}: ${wait.join(', ')}.`:'');
   document.getElementById('b5').hidden=false;
  }).catch(e=>console.error('warming rates:',e));
 })();
