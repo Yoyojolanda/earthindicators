@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo, land (Greenland + Antarctica ice mass)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -174,6 +174,14 @@ const LOAD={
   return{src:'NOAA NCEI',vd:`${ph}, ${n} month${n==1?'':'s'} in a row`,now:sg(L.v),a12:sg(a12),months:String(n),sign:L.v<0?'negative':'positive',date:dt,through:dt,
    tile:{v:sg(L.v),l:`PDO index, ${dt}`,s:`12-month average ${sg(a12)}. Beyond ±1 counts as strong.`,spark:run,sparkLabel:`12-month average, ${Math.floor(run[0].x)}–${L.y}`}}}),
 
+ // land ice: NASA JPL GRACE/GRACE-FO mass of Greenland and Antarctica (Gt), relative to the first 12 months; 362 Gt = 1 mm of sea level
+ land:()=>Promise.all([get('grace_greenland.txt'),get('grace_antarctica.txt')]).then(([g,a])=>{
+  const P=t=>{const R=t.split(/\r?\n/).map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&p[0]>2000&&p[0]<2200&&isFinite(p[1]));const z=mean(R.slice(0,12).map(p=>p[1]));return R.map(p=>({x:p[0],y:p[1]-z}))};
+  const G=P(g),A=P(a),T=G.map(p=>{const q=A.find(r=>Math.abs(r.x-p.x)<.02);return q?{x:p.x,y:p.y+q.y}:null}).filter(Boolean);
+  const L=T[T.length-1],y=Math.floor(L.x),dt=`${ML[Math.min(11,Math.floor((L.x-y)*12))]} ${y}`,rate=-slope(T),mm=-L.y/362,fmt=n=>Math.round(n).toLocaleString('en-US');
+  return{src:'NASA GRACE',vd:`Losing about ${fmt(rate)} billion tonnes of ice a year`,rate:fmt(rate)+' Gt',mm:mm.toFixed(1)+' mm',gl:fmt(-G[G.length-1].y)+' Gt',an:fmt(-A[A.length-1].y)+' Gt',date:dt,through:dt,
+   tile:{v:'+'+mm.toFixed(1)+' mm',l:`sea-level rise from Greenland and Antarctica since 2002–03, to ${dt}`,s:`Together about ${fmt(rate)} Gt of ice a year. 362 Gt raises the sea by 1 mm.`,spark:T.filter((p,i)=>i%2==0),sparkLabel:`ice mass, ${Math.floor(T[0].x)}–${y}`}}}),
+
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);
   const run=n.map((_,i)=>i<11?null:{x:i,y:mean(n.slice(i-11,i+1))}).filter(Boolean);
@@ -182,7 +190,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

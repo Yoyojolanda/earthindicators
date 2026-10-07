@@ -44,6 +44,13 @@ window.IN_SHORT = {
     ],
     claims: ['natural-cycles', 'stopped-1998'],
   },
+  'land-ice.html': {
+    text: [
+      'Greenland and Antarctica hold most of the world\'s fresh water as ice. Since 2002 the GRACE satellites have weighed them every month by measuring their pull on gravity. Unlike sea ice, ice that melts or slides off land adds water to the ocean and raises sea level.',
+      'Latest ({land.date}): {land.vd}. Since 2002–03 Greenland has lost about {land.gl} and Antarctica about {land.an}, together adding {land.mm} to global sea level.',
+    ],
+    claims: ['sea-level', 'antarctic-ice'],
+  },
   'pdo.html': {
     text: [
       'The Pacific Decadal Oscillation (PDO) is a slow, El Niño-like swing in the North Pacific. In its warm (positive) phase the water along North America runs warm; in its cool (negative) phase the reverse. Phases last years to decades and nudge global temperatures and weather around the Pacific.',

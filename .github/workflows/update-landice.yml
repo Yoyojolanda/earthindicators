@@ -1,0 +1,55 @@
+name: Update land ice data
+
+on:
+  schedule:
+    - cron: "5 16 * * *"       # daily check; NASA JPL adds a month every month or two
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # NASA JPL GRACE/GRACE-FO mascon time series: Greenland and Antarctica ice mass (needs the Earthdata login
+      # secrets, like sea level). The file name changes with every update, so ask NASA's public catalogue (CMR)
+      # for the newest file of each dataset first, then download it.
+      - name: Download GRACE ice sheet mass (NASA JPL)
+        continue-on-error: true
+        env:
+          EDL_USER: ${{ secrets.EARTHDATA_USERNAME }}
+          EDL_PASS: ${{ secrets.EARTHDATA_PASSWORD }}
+        run: |
+          mkdir -p data
+          printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc
+          chmod 600 ~/.netrc
+          for pair in greenland:GREENLAND antarctica:ANTARCTICA; do
+            name=${pair%%:*}; short="${pair##*:}_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4"
+            url=$(curl -fsSL --retry 3 "https://cmr.earthdata.nasa.gov/search/granules.json?short_name=$short&sort_key=-start_date&page_size=20" | python3 -c "
+          import json, sys
+          links = [l['href'] for e in json.load(sys.stdin)['feed']['entry'] for l in e.get('links', [])
+                   if 'podaac-ops-cumulus-protected' in l.get('href', '') and l['href'].endswith('.txt')]
+          print(sorted(links)[-1] if links else '')") || true
+            [ -n "$url" ] || { echo "::warning::no file found in the catalogue for $short"; continue; }
+            echo "$name: $url"
+            f="data/grace_${name}.txt"
+            if curl -fL --retry 3 --netrc -c /tmp/edl_cookies -b /tmp/edl_cookies -o "$f.tmp" "$url"; then
+              n=$(grep -cE '^ *20[0-9]{2}\.[0-9]+ ' "$f.tmp" || true)
+              echo "--- $n monthly rows; first and last:"; grep -E '^ *20[0-9]{2}\.' "$f.tmp" | sed -n '1p;$p'
+              if [ "$n" -gt 150 ]; then mv "$f.tmp" "$f"; echo "$url" > "data/grace_${name}_source.txt"; else echo "::warning::$f looks too short"; fi
+            fi
+            rm -f "$f.tmp"
+          done
+          rm -f ~/.netrc /tmp/edl_cookies
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.netrc data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update land ice data" && git pull --rebase && git push)

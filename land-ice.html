@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Land ice tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Land ice: Greenland and Antarctica">
+<meta property="og:description" content="How much ice Greenland and Antarctica are losing, weighed from space by NASA's GRACE satellites since 2002, and what it means for sea level.">
+<meta property="og:url" content="https://earthindicators.org/land-ice.html">
+<meta property="og:image" content="https://earthindicators.org/og/land-ice.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Land ice: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="How much ice Greenland and Antarctica are losing, weighed from space by NASA's GRACE satellites since 2002, and what it means for sea level.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Land ice tracker: Greenland and Antarctica</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">The GRACE (2002–2017) and GRACE Follow-On (since 2018) satellites measure tiny changes in Earth's gravity; less ice means slightly less pull. The values are mass changes in gigatonnes (1 Gt = 1 billion tonnes, about 1 km³ of water), shown here relative to the first 12 months of the record. Between the two missions there is a gap of about a year (mid-2017 to mid-2018). Sea-level equivalent: 362 Gt of ice spread over the world's oceans raises sea level by about 1 mm. Yearly change = the average of one year minus the average of the year before, for years with at least ten months of data. Mountain glaciers are not included yet. Data: NASA JPL GRACE/GRACE-FO mascon time series, release 06.3 version 04: Greenland (<a href="https://doi.org/10.5067/TEMSC-GT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-GT634</a>) and Antarctica (<a href="https://doi.org/10.5067/TEMSC-AT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-AT634</a>).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[],GT_MM=362;
+const grid={color:THEME.grid},mean=a=>a.reduce((s,x)=>s+x,0)/a.length,fmt=n=>Math.round(n).toLocaleString('en-US').replace('-','−');
+const lab=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
+const slope=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+const COL={g:'#1f6fb5',a:'#7b5ea7',t:'#d00000'};
+let expName='land-ice.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+// JPL file: header lines (HDR ...), then rows: decimal year, mass anomaly (Gt), 1-sigma uncertainty (Gt)
+const parse=t=>{const R=t.split(/\r?\n/).map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&p[0]>2000&&p[0]<2200&&isFinite(p[1]));
+ const z=mean(R.slice(0,12).map(p=>p[1]));return R.map(p=>({x:p[0],y:p[1]-z,u:p[2]}))};
+function yearly(S){const by={};S.forEach(p=>(by[Math.floor(p.x)]=by[Math.floor(p.x)]||[]).push(p.y));
+ const Y={};Object.keys(by).forEach(y=>{if(by[y].length>=10)Y[y]=mean(by[y])});
+ return Object.keys(Y).map(Number).filter(y=>Y[y-1]!=null).map(y=>({y,d:Y[y]-Y[y-1]}))}
+function run(gT,aT){
+ const G=parse(gT),A=parse(aT);if(G.length<150||A.length<150)throw new Error('data incomplete');
+ // combined: months present in both (matched to the nearest 0.02 year)
+ const T=G.map(p=>{const q=A.find(r=>Math.abs(r.x-p.x)<.02);return q?{x:p.x,y:p.y+q.y}:null}).filter(Boolean);
+ const gL=G[G.length-1],aL=A[A.length-1],tL=T[T.length-1],last=lab(Math.max(gL.x,aL.x));
+ const gr=slope(G),ar=slope(A),tr=slope(T),g10=slope(G.filter(p=>p.x>gL.x-10)),a10=slope(A.filter(p=>p.x>aL.x-10));
+ const GY=yearly(G),AY=yearly(A),yrs=[...new Set([...GY,...AY].map(r=>r.y))].sort((a,b)=>a-b);
+ const worst=GY.reduce((b,r)=>r.d<b.d?r:b,GY[0]);
+ $('cards').innerHTML=[
+  [fmt(gL.y)+' Gt',`Greenland ice mass change since 2002–03, to ${lab(gL.x)}`],
+  [fmt(aL.y)+' Gt',`Antarctica ice mass change since 2002–03, to ${lab(aL.x)}`],
+  [fmt(-tr)+' Gt',`lost per year by both together (trend, ${Math.floor(T[0].x)}–${Math.floor(tL.x)})`],
+  [(-tL.y/GT_MM).toFixed(1)+' mm',`added to global sea level since 2002–03 by the two ice sheets`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Ice sheet mass change since 2002–03, Greenland and Antarctica, to ${last}`;
+ $('t2').textContent=`Sea-level rise from Greenland and Antarctica together, ${Math.floor(T[0].x)}–${Math.floor(tL.x)}`;
+ $('t3').textContent=`Yearly change in ice mass, ${yrs[0]}–${yrs[yrs.length-1]}`;
+ $('read').innerHTML=[
+  `Since 2002–03 Greenland has lost about ${fmt(-gL.y)} gigatonnes of ice and Antarctica about ${fmt(-aL.y)} (to ${lab(gL.x)}). On average that is ${fmt(-gr)} Gt a year for Greenland and ${fmt(-ar)} Gt a year for Antarctica; over the last 10 years, ${fmt(-g10)} and ${fmt(-a10)}.`,
+  `Together the two ice sheets have added about ${(-tL.y/GT_MM).toFixed(1)} mm to global sea level since 2002–03, roughly ${(-tr/GT_MM).toFixed(1)} mm a year. Mountain glaciers and the expansion of warming seawater add more; see the sea level page for the total.`,
+  `A gigatonne is a billion tonnes: about a cubic kilometre of water. Greenland's yearly loss would cover a country the size of the Netherlands (about 41,500 km²) in roughly ${(-gr/41.5).toFixed(0)} metres of water.`,
+  worst?`Melt varies a lot from year to year with summer weather. Greenland's biggest loss in this record (yearly averages) was in ${worst.y}: ${fmt(-worst.d)} Gt.`:'',
+  `Ice sheets react slowly but keep going: once warmed, they can lose mass for centuries, and the sea-level rise they cause is effectively permanent on human timescales.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`land-ice-${lab(Math.max(gL.x,aL.x)).replace(' ','-')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // breaks the line across the gap between the two missions
+ const gap=S=>{const o=[];S.forEach((p,i)=>{if(i&&p.x-S[i-1].x>.25)o.push({x:(p.x+S[i-1].x)/2,y:null});o.push({x:p.x,y:p.y})});return o};
+ const tip={callbacks:{title:t=>lab(t[0].parsed.x)}};
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Greenland',data:gap(G),borderColor:COL.g,borderWidth:2,pointRadius:0},
+   {label:'Antarctica',data:gap(A),borderColor:COL.a,borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{...tip,callbacks:{...tip.callbacks,label:c=>c.dataset.label+': '+fmt(c.parsed.y)+' Gt'}}},
+   scales:{x:{type:'linear',min:2002,max:Math.ceil(gL.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Gigatonnes vs 2002–03'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})));
+ charts.push(freeze(new Chart($('c2'),{type:'line',data:{datasets:[
+   {label:'Greenland and Antarctica together',data:gap(T).map(p=>({x:p.x,y:p.y==null?null:-p.y/GT_MM})),borderColor:COL.t,borderWidth:2,pointRadius:0,fill:'origin',backgroundColor:'rgba(208,0,0,.08)'}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{display:false},tooltip:{...tip,callbacks:{...tip.callbacks,label:c=>'+'+c.parsed.y.toFixed(1)+' mm'}}},
+   scales:{x:{type:'linear',min:2002,max:Math.ceil(tL.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'mm of sea-level rise'},grid}}}})));
+ const pick=(R,y)=>{const r=R.find(q=>q.y===y);return r?r.d:null};
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:yrs.map(String),datasets:[
+   {label:'Greenland',data:yrs.map(y=>pick(GY,y)),backgroundColor:COL.g},
+   {label:'Antarctica',data:yrs.map(y=>pick(AY,y)),backgroundColor:COL.a}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'no data':(c.parsed.y>0?'+':'−')+fmt(Math.abs(c.parsed.y))+' Gt')}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'Gigatonnes per year'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+Promise.all(['grace_greenland.txt','grace_antarctica.txt'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([g,a])=>run(g,a))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the land ice data. Please try again later.'});
+</script></main></body></html>
