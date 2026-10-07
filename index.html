@@ -28,7 +28,7 @@
 .lead p.sub{font-size:13px;color:var(--mut)}
 .grp{margin:26px 0 0}
 .grp h2{font-size:18px;margin:0 0 2px}
-.grp>p{margin:0 0 10px;color:var(--mut);font-size:14px;max-width:40rem}
+.grp>p{margin:0 0 10px;color:var(--mut);font-size:14px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;margin:0}
 .tile{display:flex;flex-direction:column;gap:3px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .tile:hover,.tile:focus-visible{border-color:var(--acc);outline:none}
@@ -43,14 +43,14 @@
 .tile .go{font-size:13px;font-weight:600;color:var(--link);margin-top:auto}
 .tile:hover .go{text-decoration:underline}
 .tile.wide{grid-column:1/-1}
-.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 18px;margin:8px 0 2px}
-.mini div{display:flex;flex-direction:column;gap:1px}
-.mini b{font-size:20px;line-height:1.2}
-.mini span{font-size:13px;line-height:1.35}
-.mini small{font-size:11px;color:var(--mut)}
+.slowgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 18px;margin:8px 0 2px}
+.slowgrid div{display:flex;flex-direction:column;gap:1px}
+.slowgrid b{font-size:20px;line-height:1.2}
+.slowgrid span{font-size:13px;line-height:1.35}
+.slowgrid small{font-size:11px;color:var(--mut)}
 .foot{margin-top:28px}
 @media (max-width:600px){.lead h1{font-size:26px}.lead p{font-size:15px}}
-@media print{.tiles{grid-template-columns:repeat(3,1fr)}.mini{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
+@media print{.tiles{grid-template-columns:repeat(3,1fr)}.slowgrid{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
 </style></head><body><main>
 <nav class="nav" id="nav"></nav><script src="site.js"></script>
 <header class="lead">
@@ -107,7 +107,7 @@ const SLOW=[
  ['rli',r=>[r.pct,`Red List Index since ${r.y0}: ${r.vd.toLowerCase()}`]],
  ['trees',r=>[r.now,'of tree cover lost in a year']],
  ['blossom',r=>[r.earlier,'earlier cherry blossom in Kyoto than before 1850']]];
-$('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Slow signals</h2><p>Some important measurements come only once a year or less often, months to years after the fact. Each number below says how recent it is.</p><div class="tiles"><a class="tile wide" href="slow.html"><h3>Emissions, ocean acidity, Atlantic currents, species, forests and blossom</h3><div class="mini">`
+$('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Slow signals</h2><p>Some important measurements come only once a year or less often, months to years after the fact.<br>Each number below says how recent it is.</p><div class="tiles"><a class="tile wide" href="slow.html"><h3>Emissions, ocean acidity, Atlantic currents, species, forests and blossom</h3><div class="slowgrid">`
  +SLOW.map(([id])=>`<div id="m-${id}"><b>…</b><span>${EI.NAMES[id]}</span><small></small></div>`).join('')
  +`</div><p class="why">These change slowly and are counted carefully, so they arrive late. Together they show the causes and the slower, longer-lasting effects: what we emit, what the ocean absorbs, and what happens to living things.</p><span class="go">See the slow signals →</span></a></div></section>`);
 SLOW.forEach(([id,f])=>EI.get(id).then(r=>{const [v,l]=f(r),m=$('m-'+id);m.querySelector('b').textContent=v;m.querySelector('span').textContent=l;m.querySelector('small').textContent=`${r.src}, data for ${r.through}`})
