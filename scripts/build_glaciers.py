@@ -55,11 +55,22 @@ def choose(inputs):
 
 def open_all(path):
     import xarray as xr
+    print(f"  downloaded {os.path.getsize(path):,} bytes; zip: {zipfile.is_zipfile(path)}", flush=True)
     files = [path]
     if zipfile.is_zipfile(path):
-        d = tempfile.mkdtemp(); zipfile.ZipFile(path).extractall(d)
-        files = sorted(glob.glob(os.path.join(d, "**", "*.nc"), recursive=True))
-    print(f"  {len(files)} netCDF file(s): {[os.path.basename(f) for f in files[:5]]}", flush=True)
+        d = tempfile.mkdtemp()
+        def unpack(z, where):                            # also unpacks zips inside the zip
+            z.extractall(where)
+            for n in z.namelist():
+                print(f"    in zip: {n}", flush=True)
+                q = os.path.join(where, n)
+                if zipfile.is_zipfile(q):
+                    unpack(zipfile.ZipFile(q), q + "_unzipped")
+        unpack(zipfile.ZipFile(path), d)
+        files = sorted(f for f in glob.glob(os.path.join(d, "**", "*"), recursive=True)
+                       if os.path.isfile(f) and not zipfile.is_zipfile(f)
+                       and f.lower().rsplit(".", 1)[-1] in ("nc", "nc4", "netcdf", "cdf", "h5"))
+    print(f"  {len(files)} data file(s): {[os.path.basename(f) for f in files[:5]]}{' ...' if len(files) > 5 else ''}", flush=True)
     return [xr.open_dataset(f) for f in files]
 
 
