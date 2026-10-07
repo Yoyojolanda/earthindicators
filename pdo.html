@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>PDO tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="The Pacific Decadal Oscillation (PDO)">
+<meta property="og:description" content="The Pacific Decadal Oscillation, a slow El Niño-like swing in the North Pacific, monthly since 1854. NOAA NCEI data.">
+<meta property="og:url" content="https://earthindicators.org/pdo.html">
+<meta property="og:image" content="https://earthindicators.org/og/pdo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Pacific Decadal Oscillation (PDO): latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The Pacific Decadal Oscillation, a slow El Niño-like swing in the North Pacific, monthly since 1854. NOAA NCEI data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Pacific Decadal Oscillation (PDO) tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">The PDO index describes the main pattern of sea surface temperature in the North Pacific (north of 20°N). Positive (warm) phase: cooler water in the central North Pacific and warmer water along the North American coast; negative (cool) phase: the reverse. The index has no units; values beyond ±1 are strong. The 12-month average smooths out short swings. Data: NOAA NCEI Pacific Decadal Oscillation index, based on NOAA's Extended Reconstructed Sea Surface Temperature (ERSST) (<a href="https://www.ncei.noaa.gov/access/monitoring/pdo/" target="_blank" rel="noopener">ncei.noaa.gov/access/monitoring/pdo</a>).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[];
+const grid={color:THEME.grid},lab=r=>ML[r.m-1]+' '+r.y,mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const sg=(x,d=2)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d),POS='#d06a4e',NEG='#4f81b0';
+let expName='pdo.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+// NOAA NCEI file: one row per year, the year and 12 monthly values; 99.99 = missing
+const parse=t=>{const M=[];t.split(/\r?\n/).forEach(l=>{const p=l.trim().split(/\s+/);if(!/^\d{4}$/.test(p[0]))return;p.slice(1,13).forEach((v,k)=>{const n=+v;if(isFinite(n)&&Math.abs(n)<99)M.push({y:+p[0],m:k+1,x:+p[0]+(k+.5)/12,v:n})})});return M};
+function run(t){
+ const M=parse(t);if(M.length<1500)throw new Error('data incomplete');
+ const L=M[M.length-1],cy=L.y,run12=M.map((r,i)=>i<11?null:{x:r.x,y:mean(M.slice(i-11,i+1).map(q=>q.v))}).filter(Boolean),a12=run12[run12.length-1].y;
+ const phase=v=>v>=1?'strongly positive (warm)':v>0?'positive (warm)':v<=-1?'strongly negative (cool)':'negative (cool)';
+ // streak: consecutive months with the same sign as the latest month
+ let n=0;for(let i=M.length-1;i>=0&&Math.sign(M[i].v)===Math.sign(L.v);i--)n++;
+ const low=M.reduce((b,r)=>r.v<b.v?r:b,M[0]),high=M.reduce((b,r)=>r.v>b.v?r:b,M[0]);
+ const lowR=[...run12].sort((a,b)=>a.y-b.y),r12rank=lowR.findIndex(p=>p===run12[run12.length-1])+1;
+ // decade averages (complete decades, plus the current one so far)
+ const dec={};M.forEach(r=>{const d=Math.floor(r.y/10)*10;(dec[d]=dec[d]||[]).push(r.v)});
+ const D=Object.keys(dec).map(Number).map(d=>({d,v:mean(dec[d]),part:dec[d].length<120}));
+ $('cards').innerHTML=[
+  [sg(L.v),`PDO index, ${lab(L)}: ${phase(L.v)}`],
+  [sg(a12),`12-month average to ${lab(L)}`],
+  [n+' months',`in a row ${L.v<0?'negative':'positive'}, through ${lab(L)}`],
+  [sg(low.v),`Lowest month on record, ${lab(low)} (record since ${M[0].y})`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Pacific Decadal Oscillation, ${M[0].y}–${cy}: monthly and 12-month average`;
+ $('t2').textContent=`The last ten years, month by month`;
+ $('t3').textContent=`Average PDO by decade, ${D[0].d}s–${D[D.length-1].d}s`;
+ const r12txt=a12<0?(r12rank<=3?`, the ${['lowest','second lowest','third lowest'][r12rank-1]} 12-month average in the record`:''):'';
+ $('read').innerHTML=[
+  `In ${lab(L)} the PDO index was ${sg(L.v)}, ${phase(L.v)}, and it has been ${L.v<0?'negative':'positive'} for ${n} months in a row. The 12-month average is ${sg(a12)}${r12txt}.`,
+  `The PDO is like a slow cousin of El Niño: it describes how sea surface temperatures in the North Pacific are arranged, and phases can last for years to decades. It is partly driven by El Niño and La Niña themselves, so the two often move together.`,
+  `A negative (cool) phase tends to hold global temperatures a little lower and is linked to drought in the southwestern United States and to marine heatwaves in the western North Pacific; a positive phase tends to do the opposite. Like El Niño, the PDO moves heat around; it does not add heat to the planet, so it shapes the ups and downs on top of the long-term warming.`,
+  `Lowest month on record: ${sg(low.v)} (${lab(low)}); highest: ${sg(high.v)} (${lab(high)}).`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`pdo-${cy}-${String(L.m).padStart(2,'0')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // 1. full record: monthly bars coloured by sign, 12-month average line
+ charts.push(freeze(new Chart($('c1'),{data:{datasets:[
+   {type:'line',label:'12-month average',data:run12,borderColor:THEME.clim,borderWidth:1.8,pointRadius:0,order:1},
+   {type:'bar',label:'Monthly',data:M.map(r=>({x:r.x,y:r.v})),backgroundColor:M.map(r=>r.v>=0?POS:NEG),barThickness:1,order:2}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>true}},tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)}}},
+   scales:{x:{type:'linear',min:M[0].y,max:cy+1,ticks:{stepSize:20,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'PDO index'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})));
+ // 2. last ten years
+ const R=M.slice(-120);
+ charts.push(new Chart($('c2'),{type:'bar',data:{labels:R.map(lab),datasets:[{label:'Monthly',data:R.map(r=>r.v),backgroundColor:R.map((r,i)=>i==R.length-1?'#d00000':r.v>=0?POS:NEG)}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'PDO index'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ // 3. decades
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:D.map((r,i)=>r.d+'s'+(!r.part?'':i==D.length-1?' (so far)':` (from ${M[0].y})`)),datasets:[{label:'Decade average',data:D.map(r=>r.v),backgroundColor:D.map(r=>r.v>=0?POS:NEG)}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'PDO index'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+fetch('data/pdo_ncei.dat').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the PDO data. Please try again later.'});
+</script></main></body></html>

@@ -52,7 +52,7 @@
 </dl>
 
 <ul class="toc">
-<li><a class="nb" href="#air">Air temperature</a></li><li><a class="nb" href="#nino">El Niño</a></li><li><a class="nb" href="#sst">Sea surface temperature</a></li><li><a class="nb" href="#ohc">Ocean heat</a></li><li><a class="nb" href="#sea-level">Sea level</a></li><li><a class="nb" href="#sea-ice">Sea ice</a></li><li><a class="nb" href="#co2">CO₂</a></li><li><a class="nb" href="#ch4">Methane</a></li><li><a class="nb" href="#eei">Energy imbalance</a></li><li><a class="nb" href="#reuse">Reproducing and citing</a></li>
+<li><a class="nb" href="#air">Air temperature</a></li><li><a class="nb" href="#nino">El Niño</a></li><li><a class="nb" href="#pdo">PDO</a></li><li><a class="nb" href="#sun">The Sun</a></li><li><a class="nb" href="#sst">Sea surface temperature</a></li><li><a class="nb" href="#ohc">Ocean heat</a></li><li><a class="nb" href="#sea-level">Sea level</a></li><li><a class="nb" href="#sea-ice">Sea ice</a></li><li><a class="nb" href="#co2">CO₂</a></li><li><a class="nb" href="#ch4">Methane</a></li><li><a class="nb" href="#eei">Energy imbalance</a></li><li><a class="nb" href="#reuse">Reproducing and citing</a></li>
 </ul>
 
 <section class="m" id="air"><h2>Air temperature</h2><p class="pg">Used on: <a href="air.html">Air temperature</a>, the overview and the claims page.</p><dl>
@@ -84,6 +84,20 @@
 <p>Both sites publish values rounded to 0.001 °C, so differences of 0.001 °C are rounding. The few larger differences fall in short clusters: most in the last weeks of a year, when NOAA swaps preliminary values for final ones, so the two sites probably downloaded at different moments. A cluster in early January 2012 has not been explained yet.</p></dd>
 <dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_nino34.py">scripts/build_nino34.py</a>, run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-nino34.yml">update-nino34.yml</a>.</dd>
 <dt>Data as used</dt><dd><a href="data/nino34_daily_sst.csv">nino34_daily_sst.csv</a> (one row per day), <a href="data/oisst2.1_nino3.4_sst_day.json">oisst2.1_nino3.4_sst_day.json</a> (by year, with the 1991–2020 average).</dd>
+</dl></section>
+<section class="m" id="pdo"><h2>Pacific Decadal Oscillation (PDO)</h2><p class="pg">Used on: <a href="pdo.html">PDO</a>.</p><dl>
+<dt>Dataset</dt><dd>NOAA NCEI Pacific Decadal Oscillation index, monthly from 1854, based on NOAA's Extended Reconstructed Sea Surface Temperature (ERSST): ERSST anomalies are projected onto the PDO pattern found by regressing them against the Mantua PDO index. NCEI is moving its indices from ERSST version 5 to version 6; the download uses version 6 when it is complete and current, otherwise version 5, and records which in <a href="data/pdo_source.txt">pdo_source.txt</a>.</dd>
+<dt>What this site does</dt><dd>Shows NOAA's monthly values unchanged. Calculated here: the 12-month running average, the decade averages and the run of months with the same sign.</dd>
+<dt>Updates</dt><dd>Daily check; NOAA adds a month early in the following month.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-sun-pdo.yml">update-sun-pdo.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/pdo.html">pdo.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/pdo_ncei.dat">pdo_ncei.dat</a>, unchanged.</dd>
+</dl></section>
+<section class="m" id="sun"><h2>The Sun (solar cycle)</h2><p class="pg">Used on: <a href="sun.html">The Sun</a>.</p><dl>
+<dt>Dataset</dt><dd>WDC-SILSO, Royal Observatory of Belgium, Brussels: International Sunspot Number, version 2 (<a href="https://doi.org/10.24414/qnza-ac80">doi:10.24414/qnza-ac80</a>), monthly means from 1749 and 13-month smoothed values. Licence CC BY-NC 4.0.</dd>
+<dt>What this site does</dt><dd>Shows SILSO's values unchanged and marks values SILSO flags as provisional. Calculated here: cycle minima (the lowest smoothed value within five years on either side), each cycle's maximum, cycle numbers (counted from cycle 25, which began at the minimum of late 2019), yearly averages, and the comparison with global temperature (yearly averages of the ERA5 series from the air temperature page, relative to 1991–2020).</dd>
+<dt>Updates</dt><dd>Daily check; SILSO publishes the provisional value for a month on its first day of the next month and finalises values quarterly.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-sun-pdo.yml">update-sun-pdo.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/sun.html">sun.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/SN_m_tot_V2.0.csv">SN_m_tot_V2.0.csv</a>, <a href="data/SN_ms_tot_V2.0.csv">SN_ms_tot_V2.0.csv</a>, unchanged.</dd>
 </dl></section>
 
 <section class="m" id="sst"><h2>Sea surface temperature</h2><p class="pg">Used on: <a href="sst.html">Sea surface temperature</a>, the overview and the claims page.</p><dl>

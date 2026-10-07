@@ -31,6 +31,8 @@
     ['claims.html',    'Common claims', 'nb-claims'],   // third field: extra class for a nav button that stands out
     ['air.html',       'Air temp'],
     ['nino.html',      'El Niño'],
+    ['pdo.html',       'PDO'],
+    ['sun.html',       'The Sun'],
     ['sst.html',       'Sea surface temp'],
     ['ohc.html',       'Ocean heat'],
     ['sea-level.html', 'Sea level'],
@@ -193,6 +195,10 @@
       'NOAA\'s daily values are shown unchanged; monthly means, trend and growth are calculated by this page.', ['co2.html'], 'data/co2_daily_mlo.txt'],
     'ch4.html': ['NOAA Global Monitoring Laboratory, globally averaged marine surface methane.',
       'NOAA\'s monthly means, trend and annual increases are shown unchanged.', ['ch4.html'], 'data/ch4_mm_gl.txt'],
+    'pdo.html': ['NOAA NCEI Pacific Decadal Oscillation index, based on ERSST.',
+      'NOAA\'s monthly values are shown unchanged; the 12-month and decade averages are calculated by this page.', ['pdo.html'], 'data/pdo_ncei.dat'],
+    'sun.html': ['WDC-SILSO, Royal Observatory of Belgium, International Sunspot Number version 2 (<a href="https://doi.org/10.24414/qnza-ac80">doi:10.24414/qnza-ac80</a>).',
+      'SILSO\'s monthly and 13-month smoothed values are shown unchanged; cycle minima and maxima and the yearly averages are calculated by this page.', ['sun.html'], ['data/SN_m_tot_V2.0.csv', 'data/SN_ms_tot_V2.0.csv']],
     'eei.html': ['NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://doi.org/10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1">doi:10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1</a>).',
       'NASA\'s own global monthly means; the imbalance is absorbed solar minus outgoing longwave radiation. Running means are calculated by this page.', ['scripts/build_ceres.py'], 'data/ceres_ebaf_global.csv'],
   };

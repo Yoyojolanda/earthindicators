@@ -44,6 +44,20 @@ window.IN_SHORT = {
     ],
     claims: ['natural-cycles', 'stopped-1998'],
   },
+  'pdo.html': {
+    text: [
+      'The Pacific Decadal Oscillation (PDO) is a slow, El Niño-like swing in the North Pacific. In its warm (positive) phase the water along North America runs warm; in its cool (negative) phase the reverse. Phases last years to decades and nudge global temperatures and weather around the Pacific.',
+      'Latest ({pdo.date}): {pdo.now}. {pdo.vd}. The 12-month average is {pdo.a12}. Like El Niño, the PDO moves heat around; it does not add heat to the planet.',
+    ],
+    claims: ['natural-cycles'],
+  },
+  'sun.html': {
+    text: [
+      'The Sun\'s activity rises and falls over a cycle of about 11 years, tracked by counting sunspots since the 1700s. At solar maximum the Sun gives off about 0.1% more energy, worth roughly 0.1 °C of global temperature.',
+      'Latest ({sun.date}): sunspot number {sun.now}. {sun.vd}. The Sun has not become more active since the 1950s while the planet warmed, so it cannot explain the warming.',
+    ],
+    claims: ['natural-cycles'],
+  },
   'sst.html': {
     text: [
       'The average temperature of the ocean surface between 60°S and 60°N, measured by satellites, ships and buoys. Oceans cover 70% of the planet. Warmer seas feed heavier rain and stronger storms, and bleach coral reefs.',

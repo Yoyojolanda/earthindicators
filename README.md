@@ -9,6 +9,8 @@ Each page shows one of Earth's vital signs, updated automatically from the agenc
 | Global air temperature | Copernicus ERA5 |
 | Sea surface temperature | NOAA OISST |
 | El Niño (Niño 3.4) | NOAA OISST |
+| Pacific Decadal Oscillation | NOAA NCEI |
+| Solar cycle (sunspots) | WDC-SILSO, Royal Observatory of Belgium |
 | Ocean heat content | NOAA NCEI |
 | Sea level | NASA |
 | Sea ice extent | NSIDC Sea Ice Index |
@@ -31,7 +33,7 @@ Each page shows one of Earth's vital signs, updated automatically from the agenc
 
 The files in `data/` are of two kinds:
 
-- **Agency files, unchanged**: CO₂ and methane (NOAA GML), ocean heat content (`h22-*.dat`, NOAA NCEI), sea level (NASA-SSH, NOAA LSA), sea ice extent (NSIDC Sea Ice Index v4). Derived numbers (trends, running means, growth rates) are calculated in the browser by each page's own script.
+- **Agency files, unchanged**: CO₂ and methane (NOAA GML), ocean heat content (`h22-*.dat`, NOAA NCEI), sea level (NASA-SSH, NOAA LSA), sea ice extent (NSIDC Sea Ice Index v4), PDO (NOAA NCEI), sunspot numbers (WDC-SILSO). Derived numbers (trends, running means, growth rates) are calculated in the browser by each page's own script.
 - **Series calculated here** from gridded agency data:
   - `scripts/build_nino34.py`: El Niño and sea surface temperature, area-weighted averages of NOAA OISST v2.1 (`*_daily_sst.csv`, `oisst2.1_*_sst_day.json`).
   - `scripts/build_era5.py` and `build_era5_regions.py`: air temperature from Copernicus ERA5 (`era5_*`). In `era5_t2_global_daily.csv` the `source` column marks each day as Copernicus's published value (`c3s`) or calculated here (`cds`).

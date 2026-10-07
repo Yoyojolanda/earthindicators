@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -153,6 +153,27 @@ const LOAD={
   return{src:'NOAA',vd:g[1]>0?`${x}× pre-industrial, and still rising`:`${x}× pre-industrial`,now:L[3].toFixed(0)+' ppb',x:x+'×',rise:g[1].toFixed(1)+' ppb',riseYear:g[0],date:dt,through:dt,
    tile:{v:L[3].toFixed(0)+' ppb',l:`global monthly mean, ${dt}`,s:`Rose ${g[1].toFixed(1)} ppb in ${g[0]}. Pre-industrial: about 729 ppb.`,spark:M.map(r=>({x:r[2],y:r[5]})),sparkLabel:`trend, ${M[0][0]}–${L[0]}`}}}),
 
+ // sun: WDC-SILSO sunspot number, monthly and 13-month smoothed; cycles found from the smoothed minima (as on sun.html)
+ sun:()=>Promise.all([get('SN_m_tot_V2.0.csv'),get('SN_ms_tot_V2.0.csv')]).then(([a,b])=>{
+  const P=t=>t.split(/\r?\n/).map(l=>l.split(';').map(s=>s.trim())).filter(p=>p.length>=4&&+p[0]>1700&&+p[3]>=0).map(p=>({y:+p[0],m:+p[1],x:+p[2],v:+p[3],prov:p[6]==='0'}));
+  const M=P(a),S=P(b),L=M[M.length-1],SL=S[S.length-1],lb=r=>`${ML[r.m-1]} ${r.y}`;
+  const mins=[];S.forEach((r,i)=>{const w=S.slice(Math.max(0,i-60),i+61);if(i>=12&&i<S.length-12&&r.v===Math.min(...w.map(q=>q.v))&&(!mins.length||i-mins[mins.length-1]>84))mins.push(i)});
+  const i0=mins[mins.length-1],seg=S.slice(i0),pk=seg.reduce((q,r)=>r.v>q.v?r:q,seg[0]),done=seg.indexOf(pk)<seg.length-6;
+  const c25=mins.findIndex(i=>S[i].y===2019||S[i].y===2020),n=c25<0?null:25+(mins.length-1-c25),cname=n?`Solar cycle ${n}`:'The current solar cycle';
+  const yAgo=S[S.length-13],trend=SL.v<yAgo.v-5?'declining':SL.v>yAgo.v+5?'rising':'steady';
+  const vd=done?`${cname} is past its peak; activity ${trend}`:`${cname}: activity ${trend}, highest so far ${pk.v.toFixed(0)}`;
+  return{src:'WDC-SILSO',vd,now:L.v.toFixed(0),date:lb(L)+(L.prov?' (provisional)':''),through:lb(L),smooth:SL.v.toFixed(0),sdate:lb(SL),cycle:cname,peak:pk.v.toFixed(0),peakDate:lb(pk),
+   tile:{v:L.v.toFixed(0),l:`sunspot number, ${lb(L)}${L.prov?' (provisional)':''}`,s:`13-month smoothed: ${SL.v.toFixed(0)} (${lb(SL)}). ${done?'Cycle maximum':'Highest so far'}: ${pk.v.toFixed(0)} (${lb(pk)}).`,
+    spark:S.filter(r=>r.y>=1976).map(r=>({x:r.x,y:r.v})),sparkLabel:`smoothed, ${1976}–${SL.y}`}}}),
+
+ // PDO: NOAA NCEI index, one row per year with 12 monthly values (99.99 = missing)
+ pdo:()=>get('pdo_ncei.dat').then(t=>{const M=[];t.split(/\r?\n/).forEach(l=>{const p=l.trim().split(/\s+/);if(!/^\d{4}$/.test(p[0]))return;p.slice(1,13).forEach((v,k)=>{const x=+v;if(isFinite(x)&&Math.abs(x)<99)M.push({y:+p[0],m:k+1,x:+p[0]+(k+.5)/12,v:x})})});
+  const L=M[M.length-1],dt=`${ML[L.m-1]} ${L.y}`,a12=mean(M.slice(-12).map(r=>r.v));let n=0;for(let i=M.length-1;i>=0&&Math.sign(M[i].v)===Math.sign(L.v);i--)n++;
+  const ph=L.v>=1?'Strongly positive (warm) phase':L.v>0?'Positive (warm) phase':L.v<=-1?'Strongly negative (cool) phase':'Negative (cool) phase';
+  const run=M.map((r,i)=>i<11?null:{x:r.x,y:mean(M.slice(i-11,i+1).map(q=>q.v))}).filter(p=>p&&p.x>=L.y-40);
+  return{src:'NOAA NCEI',vd:`${ph}, ${n} month${n==1?'':'s'} in a row`,now:sg(L.v),a12:sg(a12),months:String(n),sign:L.v<0?'negative':'positive',date:dt,through:dt,
+   tile:{v:sg(L.v),l:`PDO index, ${dt}`,s:`12-month average ${sg(a12)}. Beyond ±1 counts as strong.`,spark:run,sparkLabel:`12-month average, ${Math.floor(run[0].x)}–${L.y}`}}}),
+
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);
   const run=n.map((_,i)=>i<11?null:{x:i,y:mean(n.slice(i-11,i+1))}).filter(Boolean);
@@ -161,7 +182,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

@@ -11,6 +11,8 @@ const PAGES = {
   air:         { id: 'air',  title: 'Global air temperature', big: r => r.pre12.replace(/^(\d)/, '+$1'), label: () => 'last 12 months, above pre-industrial (1850–1900)' },
   sst:         { id: 'sst',  title: 'Sea surface temperature' },
   nino:        { id: 'nino', title: 'El Niño and La Niña (Niño 3.4)' },
+  pdo:         { id: 'pdo',  title: 'Pacific Decadal Oscillation (PDO)' },
+  sun:         { id: 'sun',  title: 'The Sun: solar cycle' },
   ohc:         { id: 'ohc',  title: 'Ocean heat content' },
   'sea-level': { id: 'sl',   title: 'Global sea level' },
   'sea-ice':   { id: 'ice',  title: 'Arctic sea ice extent' },

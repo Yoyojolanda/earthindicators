@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Solar cycle tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="The Sun: the 11-year solar cycle">
+<meta property="og:description" content="The Sun's 11-year activity cycle from the international sunspot number since 1749, compared with global temperature. WDC-SILSO data.">
+<meta property="og:url" content="https://earthindicators.org/sun.html">
+<meta property="og:image" content="https://earthindicators.org/og/sun.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Sun: the 11-year solar cycle: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The Sun's 11-year activity cycle from the international sunspot number since 1749, compared with global temperature. WDC-SILSO data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>The Sun: solar cycle tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">The sunspot number counts dark spots and spot groups on the Sun, combined from observatories worldwide into one international series. It is the longest running scientific record of the Sun, and it rises and falls with the Sun's magnetic activity and, slightly, with its energy output. Monthly means; the 13-month smoothed value is the standard way to date a cycle's minimum and maximum, so it ends about six months before the latest month. Recent values are provisional. Global temperature: yearly averages of Copernicus ERA5 (see the air temperature page), compared with 1991–2020. Data: WDC-SILSO, Royal Observatory of Belgium, Brussels, International Sunspot Number version 2 (<a href="https://doi.org/10.24414/qnza-ac80" target="_blank" rel="noopener">doi:10.24414/qnza-ac80</a>), CC BY-NC 4.0.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[];
+const grid={color:THEME.grid},lab=r=>ML[r.m-1]+' '+r.y,mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+let expName='sun.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+// SILSO csv: year;month;decimal year;value;std dev;observations;definitive(1)/provisional(0); -1 = missing
+const silso=t=>t.split(/\r?\n/).map(l=>l.split(';').map(s=>s.trim())).filter(p=>p.length>=4&&+p[0]>1700&&+p[3]>=0)
+ .map(p=>({y:+p[0],m:+p[1],x:+p[2],v:+p[3],prov:p[6]==='0'}));
+// cycle minima: lowest smoothed value within 5 years on either side (cycles last about 9 to 14 years)
+function minima(S){const out=[];S.forEach((r,i)=>{const w=S.slice(Math.max(0,i-60),i+61);if(i>=12&&i<S.length-12&&r.v===Math.min(...w.map(q=>q.v))&&(!out.length||i-out[out.length-1]>84))out.push(i)});return out}
+function run(mT,sT,eT){
+ const M=silso(mT),S=silso(sT);
+ if(M.length<3000||S.length<3000)throw new Error('data incomplete');
+ const L=M[M.length-1],SL=S[S.length-1],cy=L.y;
+ // cycles: from each minimum to the next; numbered so that the one starting December 2019 is 25
+ const mins=minima(S),c25=mins.findIndex(i=>S[i].y===2019||S[i].y===2020);
+ const cyc=mins.map((i,k)=>{const j=k+1<mins.length?mins[k+1]:S.length,seg=S.slice(i,j),pk=seg.reduce((b,r)=>r.v>b.v?r:b,seg[0]);return{n:c25<0?null:25-(c25-k),start:S[i],peak:pk,seg,done:k+1<mins.length}});
+ const cur=cyc[cyc.length-1],prev=cyc[cyc.length-2];
+ const peakNow=cur.peak,peakDone=cur.seg.indexOf(peakNow)<cur.seg.length-6;   // a peak counts once 6 smoothed months follow it
+ // yearly sunspot numbers and ERA5 global temperature (complete years)
+ const yr={};M.forEach(r=>(yr[r.y]=yr[r.y]||[]).push(r.v));
+ const Y=Object.keys(yr).map(Number).filter(y=>yr[y].length==12).map(y=>({y,v:mean(yr[y])}));
+ const tY={};eT.trim().split(/\r?\n/).slice(1).forEach(l=>{const p=l.split(',');(tY[p[0].slice(0,4)]=tY[p[0].slice(0,4)]||[]).push(+p[1])});
+ const T=Object.keys(tY).map(Number).filter(y=>tY[y].length>=365).map(y=>({y,v:mean(tY[y])}));
+ const ref=mean(T.filter(r=>r.y>=1991&&r.y<=2020).map(r=>r.v));T.forEach(r=>r.a=r.v-ref);
+ const y0=T[0].y,Ys=Y.filter(r=>r.y>=y0),Yl=Ys[Ys.length-1].y;
+ // two 30-year windows ending with the last complete year, for the "is it the Sun?" comparison
+ const win=(a,b,A)=>mean(A.filter(r=>r.y>=a&&r.y<=b).map(r=>r.a!=null?r.a:r.v)),e=Math.min(Yl,T[T.length-1].y);
+ const s1=win(e-59,e-30,Ys),s2=win(e-29,e,Ys),t1=win(e-59,e-30,T),t2=win(e-29,e,T);
+ $('cards').innerHTML=[
+  [L.v.toFixed(0),`Monthly sunspot number, ${lab(L)}${L.prov?' (provisional)':''}`],
+  [SL.v.toFixed(0),`13-month smoothed, ${lab(SL)} (the standard cycle measure)`],
+  [peakNow.v.toFixed(0),`${cur.n?'Cycle '+cur.n:'Current cycle'} ${peakDone?'maximum':'highest so far'} (smoothed), ${lab(peakNow)}`],
+  [prev.peak.v.toFixed(0),`${prev.n?'Cycle '+prev.n:'Previous cycle'} maximum (smoothed), ${lab(prev.peak)}`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Sunspot number, ${M[0].y}–${cy}: monthly and 13-month smoothed`;
+ $('t2').textContent=`The Sun and global temperature, ${y0}–${Yl}: yearly averages`;
+ $('t3').textContent=`${cur.n?'Cycle '+cur.n:'The current cycle'} compared with the previous five, months since each cycle's minimum`;
+ const big=Math.max(...cyc.filter(c=>c.done).slice(-3).map(c=>c.peak.v));
+ $('read').innerHTML=[
+  `In ${lab(L)} the monthly sunspot number was ${L.v.toFixed(0)}${L.prov?' (provisional)':''}. ${cur.n?'Solar cycle '+cur.n:'The current cycle'} began at the minimum of ${lab(cur.start)}; ${peakDone?`its smoothed maximum was ${peakNow.v.toFixed(0)} in ${lab(peakNow)}`:`its highest smoothed value so far is ${peakNow.v.toFixed(0)} (${lab(peakNow)})`}, compared with ${prev.peak.v.toFixed(0)} for ${prev.n?'cycle '+prev.n:'the previous cycle'} (${lab(prev.peak)}).`,
+  `The Sun's activity rises and falls over a cycle of about 11 years (9 to 14). At solar maximum the Sun gives off about 0.1% more energy than at minimum; studies estimate this moves global temperature by roughly 0.1 °C between the two.`,
+  `Over the last 30 complete years (${e-29}–${e}) the average sunspot number was ${s2.toFixed(0)}, ${s2<s1?'lower':'higher'} than the ${s1.toFixed(0)} of the 30 years before (${e-59}–${e-30}). Over the same periods, global temperature ${t2>t1?'rose':'changed'} by ${(t2-t1).toFixed(2)} °C. ${s2<s1&&t2>t1?'The Sun got slightly less active while the planet warmed, so the Sun cannot explain the warming.':''}`,
+  `Satellites have measured the Sun's energy output directly since 1978; it follows the sunspot cycle and shows no upward trend. The warming instead matches the build-up of greenhouse gases (see the CO₂ and energy imbalance pages).`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`sun-${cy}-${String(L.m).padStart(2,'0')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // 1. full record
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Monthly',data:M.map(r=>({x:r.x,y:r.v})),borderColor:'#e3b25e',borderWidth:.8,pointRadius:0},
+   {label:'13-month smoothed',data:S.map(r=>({x:r.x,y:r.v})),borderColor:'#d00000',borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(0)}}},
+   scales:{x:{type:'linear',min:M[0].y,max:cy+1,ticks:{stepSize:25,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'Sunspot number'},grid}}}})));
+ // 2. sunspots (bars, left) and temperature (line, right)
+ charts.push(new Chart($('c2'),{data:{labels:Ys.map(r=>String(r.y)),datasets:[
+   {type:'line',label:'Global temperature vs 1991–2020 (ERA5)',data:Ys.map(r=>{const t=T.find(q=>q.y===r.y);return t?t.a:null}),borderColor:'#d00000',borderWidth:2,pointRadius:0,yAxisID:'t',order:1},
+   {type:'bar',label:'Yearly sunspot number',data:Ys.map(r=>r.v),backgroundColor:'rgba(227,178,94,.7)',yAxisID:'s',order:2}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.dataset.label.split(' (')[0]+': '+(c.parsed.y==null?'–':c.datasetIndex==0?(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(2)+' °C':c.parsed.y.toFixed(0))}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},s:{position:'left',min:0,title:{display:true,text:'Sunspot number'},grid},
+    t:{position:'right',title:{display:true,text:'°C vs 1991–2020'},grid:{display:false}}}}}));
+ // 3. this cycle vs the previous five, aligned at each minimum
+ const C=['#d00000','#e6a23c','#7b5ea7','#5a9e6f','#4f81b0','#999'],shown=cyc.slice(-6).reverse();
+ charts.push(freeze(new Chart($('c3'),{type:'line',data:{datasets:shown.map((c,k)=>({label:(c.n?'Cycle '+c.n:'Cycle')+` (from ${c.start.y})`,
+   data:c.seg.map((r,i)=>({x:i,y:r.v})),borderColor:C[k],borderWidth:k?1.5:3,pointRadius:0,order:k}))},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>`${t[0].parsed.x} months (${(t[0].parsed.x/12).toFixed(1)} years) after minimum`,label:c=>c.dataset.label+': '+c.parsed.y.toFixed(0)}}},
+   scales:{x:{type:'linear',min:0,max:Math.max(...shown.map(c=>c.seg.length)),ticks:{stepSize:12,callback:v=>v/12+' yr'},grid:{display:false}},y:{min:0,title:{display:true,text:'Smoothed sunspot number'},grid}}}})));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+Promise.all(['SN_m_tot_V2.0.csv','SN_ms_tot_V2.0.csv','era5_t2_global_daily.csv'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([a,b,c])=>run(a,b,c))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the sunspot data. Please try again later.'});
+</script></main></body></html>

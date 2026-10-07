@@ -1,0 +1,72 @@
+name: Update solar cycle and PDO data
+
+on:
+  schedule:
+    - cron: "45 15 * * *"      # daily check; SILSO and NOAA both update once a month
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sunspot number, WDC-SILSO (Royal Observatory of Belgium): monthly means and 13-month smoothed values.
+      # Semicolon-separated: year;month;decimal year;value;std dev;observations;definitive(1)/provisional(0)
+      - name: Download sunspot numbers (SILSO)
+        continue-on-error: true
+        run: |
+          mkdir -p data
+          for f in SN_m_tot_V2.0.csv SN_ms_tot_V2.0.csv; do
+            ok=0
+            for base in https://www.sidc.be/SILSO/DATA https://sidc.be/SILSO/DATA; do
+              # download to a temp file first, so a failed download never replaces good data
+              if curl -fsSL --retry 3 --retry-delay 20 -o "data/$f.tmp" "$base/$f"; then
+                n=$(grep -c ';' "data/$f.tmp" || true)
+                echo "$f from $base: $n lines; last: $(tail -1 "data/$f.tmp")"
+                if [ "$n" -gt 3000 ]; then mv "data/$f.tmp" "data/$f"; ok=1; break; fi
+              fi
+            done
+            rm -f "data/$f.tmp"
+            [ $ok -eq 1 ] || { echo "::warning::$f not updated"; }
+          done
+
+      # Pacific Decadal Oscillation, NOAA NCEI (based on ERSST). One row per year: year and 12 monthly values,
+      # 99.99 = missing. NCEI is moving its indices from ERSST v5 to v6, so try v6 first and keep whichever file
+      # is complete and current; the URL used is written to data/pdo_source.txt.
+      - name: Download PDO index (NOAA NCEI)
+        continue-on-error: true
+        run: |
+          mkdir -p data
+          for u in https://www.ncei.noaa.gov/pub/data/cmb/ersst/v6/index/ersst.v6.pdo.dat \
+                   https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.pdo.dat; do
+            curl -fsSL --retry 3 --retry-delay 20 -o data/pdo.tmp "$u" || { echo "not available: $u"; continue; }
+            # complete = at least 150 year rows; current = has a value within the last 4 months
+            if python3 - data/pdo.tmp << 'PY'
+          import sys, datetime
+          rows = [l.split() for l in open(sys.argv[1]) if l.split() and l.split()[0].isdigit() and len(l.split()[0]) == 4]
+          last = None
+          for r in rows:
+              for m, v in enumerate(r[1:13], 1):
+                  if abs(float(v)) < 99:
+                      last = (int(r[0]), m)
+          t = datetime.date.today(); age = (t.year * 12 + t.month) - (last[0] * 12 + last[1]) if last else 999
+          print(f"{len(rows)} years, last value {last}, {age} months old")
+          sys.exit(0 if len(rows) >= 150 and age <= 4 else 1)
+          PY
+            then mv data/pdo.tmp data/pdo_ncei.dat; echo "$u" > data/pdo_source.txt; echo "using $u"; break
+            else echo "skipping $u (incomplete or not current)"; fi
+          done
+          rm -f data/pdo.tmp
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update solar cycle and PDO data" && git pull --rebase && git push)

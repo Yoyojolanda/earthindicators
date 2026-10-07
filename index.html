@@ -70,8 +70,10 @@ const GROUPS=[
  ['What it is doing','Heat melts ice and expands seawater.',[
   ['sl','sea-level.html','Global sea level','NASA','Melting ice and expanding warm water raise the sea, which makes coastal flooding and storm surges worse.'],
   ['ice','sea-ice.html','Arctic sea ice','NSIDC','Bright ice reflects sunlight; dark open water absorbs it. Losing ice speeds up Arctic warming.']]],
- ['Natural ups and downs','Natural cycles push temperatures up or down for a year or two, on top of the long-term trend.',[
-  ['nino','nino.html','El Niño (Niño 3.4)','NOAA OISST','El Niño years run hotter and La Niña years cooler. Knowing which phase we are in helps tell a short-term swing from the trend.']]]];
+ ['Natural ups and downs','Natural cycles push temperatures up or down for a year or two, or slowly over decades, on top of the long-term trend.',[
+  ['nino','nino.html','El Niño (Niño 3.4)','NOAA OISST','El Niño years run hotter and La Niña years cooler. Knowing which phase we are in helps tell a short-term swing from the trend.'],
+  ['pdo','pdo.html','Pacific Decadal Oscillation','NOAA NCEI','A slower, El Niño-like swing in the North Pacific that lasts years to decades. It shifts heat around, nudging global temperatures and regional weather.'],
+  ['sun','sun.html','The Sun (solar cycle)','WDC-SILSO','The Sun\u2019s output rises and falls every 11 years or so, worth about 0.1 °C. It has not increased since the 1950s, so it cannot explain the warming.']]]];
 const SRC={};
 $('groups').innerHTML=GROUPS.map(([h,p,T])=>`<section class="grp"><h2>${h}</h2><p>${p}</p><div class="tiles">`+T.map(([id,href,title,src,why])=>{SRC[id]=src;
  return `<a class="tile" id="t-${id}" href="${href}"><h3>${title}</h3><div class="vd">Loading…</div><div class="num"></div><div class="s"></div><div class="spark"><canvas></canvas></div><div class="d"><span class="dl"></span><span class="sl"></span></div><p class="why">${why}</p><span class="go">See the data →</span></a>`}).join('')+'</div></section>').join('');
@@ -88,5 +90,5 @@ function fill(id,{vd,v,l,s,through,spark,sparkLabel,bars}){
 function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').textContent='Data unavailable right now';t.querySelector('.num').textContent='The full page may still have the latest values.'}
 
 // numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes
-['air','sst','ohc','co2','ch4','eei','sl','ice','nino'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
+['air','sst','ohc','co2','ch4','eei','sl','ice','nino','pdo','sun'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
 </script></main></body></html>
