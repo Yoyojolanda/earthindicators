@@ -1,0 +1,57 @@
+name: Backfill regional air temperature (ARCO-ERA5)
+
+# Manual only. Fills the regional ERA5 history back to 1940 from Google's ARCO-ERA5 copy (scripts/backfill_era5_arco.py),
+# ten years at a time, newest first. After each chunk the new days are added to GitHub's copy of the cache with
+# merge_era5_regions.py (which also rebuilds the published JSON files), so a regular Copernicus run going on at the
+# same time loses nothing, and a stopped backfill simply continues from where it got to when run again.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Oldest day to fill"
+        default: "1940-01-01"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: era5-arco-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray zarr gcsfs dask netCDF4
+      - name: Fill in history, ten years at a time
+        env:
+          ARCO_FROM: ${{ inputs.from }}
+          ARCO_YEARS: "10"
+          ARCO_OUT: /tmp/ours
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          push_chunk() {
+            for i in 1 2 3; do
+              git fetch -q origin main
+              git reset -q --hard origin/main
+              python scripts/merge_era5_regions.py /tmp/ours
+              git add data
+              git diff --cached --quiet && return 0
+              git commit -q -m "Regional air temperature: history from ARCO-ERA5" && git push -q && return 0
+              sleep 20
+            done
+            return 1
+          }
+          while true; do
+            rm -rf /tmp/ours
+            python -u scripts/backfill_era5_arco.py && rc=0 || rc=$?
+            [ $rc -eq 3 ] && exit 0          # reached the oldest day
+            [ $rc -ne 0 ] && exit $rc
+            push_chunk || exit 1
+          done
