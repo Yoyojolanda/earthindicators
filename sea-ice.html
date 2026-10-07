@@ -42,7 +42,7 @@
  <div class="seg" id="vh">Region: <button class="nb" type="button" data-p="north">Arctic</button><button class="nb" type="button" data-p="south">Antarctic</button></div>
  <div class="wrap"><canvas id="c6"></canvas></div>
  <p class="sub" id="vnote"></p></div>
-<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul><ul id="vread" style="margin-top:0"></ul>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Further reading: <a href="https://zacklabe.com/" target="_blank" rel="noopener">Zack Labe's climate graphics</a>, with detailed, regularly updated figures on Arctic sea ice (extent, thickness and volume), Arctic temperatures and more.</p>
 <p class="sub">Extent = total area where sea-ice concentration is at least 15%. Each value is a 5-day trailing mean of daily extent; the newest days are near-real-time and may be revised. Reference period 1981–2010, as used by NSIDC. Data: Sea Ice Index, Version 4 (NSIDC / NOAA), <a href="https://nsidc.org/data/g02135/versions/4" target="_blank" rel="noopener">nsidc.org/data/g02135</a>.</p>
 <p class="sub">Volume = thickness × ice concentration × area, summed over the polar ocean. Model: Mercator Ocean's GLORYS12 global ocean reanalysis (monthly, 1993 to about two months ago), which combines an ocean and sea-ice model with observations, much as ERA5 does for the atmosphere. Satellite: ice thickness from ESA's CryoSat-2 radar altimeter merged with SMOS (thin ice), sampled weekly. Radar cannot see through summer melt ponds, so the satellite record covers only the cold season (Arctic October–April, Antarctic roughly April–October). The shaded band adds up the uncertainty of every grid cell, a cautious upper bound. Antarctic thickness is harder to measure: heavy snow pushes the ice down and floods it. Data: Copernicus Marine Service, <a href="https://data.marine.copernicus.eu/" target="_blank" rel="noopener">data.marine.copernicus.eu</a>.</p>
@@ -55,6 +55,8 @@ const REF=[1981,2010],NN=365,COL={n:'#1f6fb5',s:'#e08a00',g:THEME.clim},charts=[
 let expName='sea-ice.jpg';
 const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
 const ord=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+let EXT_LI=[],V_LI=[];   // Interpretation bullets: extent (run) and volume (vtext) arrive separately
+const readAll=()=>{$('read').innerHTML=[...EXT_LI,...V_LI].map(t=>`<li>${t}</li>`).join('')};
 const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
 // parse NSIDC CSV -> {year:[365 values]} (calendar-date aligned, Feb 29 dropped), 5-day trailing mean
 function parse(t){const raw=new Map();let lo=Infinity,hi=-Infinity;
@@ -132,8 +134,8 @@ function run(nt,st){
  R.forEach((r,k)=>$('t'+(k+1)).textContent=`${r.name} sea-ice extent: ${r.cur} vs every prior year (${r.ys[0]}–${r.cur-1})`);
  $('t4').textContent=`Daily extent anomaly vs ${REF[0]}–${REF[1]} average, ${R[0].ys[0]}–${R[0].cur}`;
  const sent=r=>`${r.name} extent on ${fmtDate(r.L)} is ${r.v.toFixed(2)} million km², ${Math.abs(r.anom).toFixed(2)} million km² (${Math.abs(r.pct).toFixed(1)}%) ${r.anom<0?'below':'above'} the ${REF[0]}–${REF[1]} average for this date. ${r.rank===1?`This is the lowest value for this date in the record (previous low: ${r.low[1].toFixed(2)}, ${r.low[0]}).`:`It ranks ${r.rank==1?'':ord(r.rank)+' '}lowest of ${r.n} years; the record low for this date is ${r.low[1].toFixed(2)} million km² (${r.low[0]}).`}`;
- $('read').innerHTML=[...R.map(sent),'Extent counts every grid cell with at least 15% ice, so it overstates the area actually covered by ice. It is a consistent index for comparing years, not a measure of ice volume or thickness.','Seasonal cycles dominate the extent charts; the anomaly chart removes them, so long-term trends and unusual years stand out more clearly.',
-  (()=>{const f=(r,a)=>{const v=zof(r,zstats(r,a),r.cur,r.L);return (v>=0?'+':'−')+Math.abs(v).toFixed(1)};return `Measured in standard deviations from the normal for ${fmtDate(R[0].L)}, Arctic extent is ${f(R[0],1981)} (1981–2010) or ${f(R[0],1991)} (1991–2020), and Antarctic extent is ${f(R[1],1981)} or ${f(R[1],1991)}. The last chart shows this for every year: a standard deviation is the typical year-to-year spread for that date, so −2 is unusual and −4 is extreme. The baseline matters most for the Arctic, where 1991–2020 already includes much of the decline.`})()].map(t=>`<li>${t}</li>`).join('');
+ EXT_LI=[...R.map(sent),'Extent counts every grid cell with at least 15% ice, so it overstates the area actually covered by ice. It is a consistent index for comparing years, not a measure of ice volume or thickness.','Seasonal cycles dominate the extent charts; the anomaly chart removes them, so long-term trends and unusual years stand out more clearly.',
+  (()=>{const f=(r,a)=>{const v=zof(r,zstats(r,a),r.cur,r.L);return (v>=0?'+':'−')+Math.abs(v).toFixed(1)};return `Measured in standard deviations from the normal for ${fmtDate(R[0].L)}, Arctic extent is ${f(R[0],1981)} (1981–2010) or ${f(R[0],1991)} (1991–2020), and Antarctic extent is ${f(R[1],1981)} or ${f(R[1],1991)}. The last chart shows this for every year: a standard deviation is the typical year-to-year spread for that date, so −2 is unusual and −4 is extreme. The baseline matters most for the Arctic, where 1991–2020 already includes much of the decline.`})()];readAll();
  expName=`sea-ice-${R[0].cur}-${fmtDate(R[0].L).replace(' ','')}.jpg`;
  $('out').classList.remove('hide');
  charts.splice(0).forEach(c=>c.destroy());
@@ -195,7 +197,7 @@ function vtext(){
  const N=vstats('north'),S=vstats('south'),r=x=>Math.round(100*x)+'%';
  if(N.med!=null||S.med!=null)li.push(`Volume comes from a model that combines physics with observations (GLORYS12, from 1993), checked against satellite measurements (CryoSat-2 + SMOS, cold season only). Where both exist, the satellite value is typically ${N.med!=null?r(N.med)+' of the model value in the Arctic':''}${N.med!=null&&S.med!=null?' and ':''}${S.med!=null?r(S.med)+' in the Antarctic':''}. Antarctic thickness is harder to measure: heavy snow pushes the ice down and floods it.`);
  li.push('Extent shows how much ocean the ice covers; volume adds how thick it is. Thinner ice melts out more easily, so volume can fall faster than extent, as it has in the Arctic.');
- $('vread').innerHTML=li.map(t=>`<li>${t}</li>`).join('')}
+ V_LI=li;readAll()}
 document.querySelectorAll('#vh .nb').forEach(b=>b.onclick=()=>{vp=b.dataset.p;vchart()});
 Promise.all(['glorys','cs2smos'].map(k=>fetch(`data/seaice_volume_${k}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
  .then(([g,s])=>{VD={g:csvRows(g),s:csvRows(s)};vchart();vtext()}).catch(e=>console.error('volume data',e));
