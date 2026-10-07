@@ -1,0 +1,1 @@
+{"product_version": "wgms_fog_2023_09"}
