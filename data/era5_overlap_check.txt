@@ -1,1 +1,1 @@
-This site's ERA5 world average minus the series published by Copernicus, 18311 overlapping days (1974-01-01 to 2024-02-18): mean -0.0001 degC, standard deviation 0.0002 degC, largest difference 0.0079 degC.
+This site's ERA5 world average minus the series published by Copernicus, 21964 overlapping days (1964-01-01 to 2024-02-18): mean -0.0001 degC, standard deviation 0.0002 degC, largest difference 0.0079 degC.
