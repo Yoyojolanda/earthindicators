@@ -38,9 +38,14 @@
  <div class="seg" id="zh">Region: <button class="nb" type="button" data-h="1">Antarctic</button><button class="nb" type="button" data-h="0">Arctic</button></div>
  <div class="seg" id="zb">Baseline: <button class="nb" type="button" data-b="1981">1981–2010</button><button class="nb" type="button" data-b="1991">1991–2020</button></div>
  <div class="wrap"><canvas id="c5"></canvas></div></div>
+<div class="box hide" id="vbox"><h2 id="t6"></h2>
+ <div class="seg" id="vh">Region: <button class="nb" type="button" data-p="north">Arctic</button><button class="nb" type="button" data-p="south">Antarctic</button></div>
+ <div class="wrap"><canvas id="c6"></canvas></div>
+ <p class="sub" id="vnote"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Further reading: <a href="https://zacklabe.com/" target="_blank" rel="noopener">Zack Labe's climate graphics</a>, with detailed, regularly updated figures on Arctic sea ice (extent, thickness and volume), Arctic temperatures and more.</p>
 <p class="sub">Extent = total area where sea-ice concentration is at least 15%. Each value is a 5-day trailing mean of daily extent; the newest days are near-real-time and may be revised. Reference period 1981–2010, as used by NSIDC. Data: Sea Ice Index, Version 4 (NSIDC / NOAA), <a href="https://nsidc.org/data/g02135/versions/4" target="_blank" rel="noopener">nsidc.org/data/g02135</a>.</p>
+<p class="sub">Volume = thickness × ice concentration × area, summed over the polar ocean. Model: Mercator Ocean's GLORYS12 global ocean reanalysis (monthly, 1993 to about two months ago), which combines an ocean and sea-ice model with observations, much as ERA5 does for the atmosphere. Satellite: ice thickness from ESA's CryoSat-2 radar altimeter merged with SMOS (thin ice), sampled weekly. Radar cannot see through summer melt ponds, so the satellite record covers only the cold season (Arctic October–April, Antarctic roughly April–October). The shaded band adds up the uncertainty of every grid cell, a cautious upper bound. Antarctic thickness is harder to measure: heavy snow pushes the ice down and floods it. Data: Copernicus Marine Service, <a href="https://data.marine.copernicus.eu/" target="_blank" rel="noopener">data.marine.copernicus.eu</a>.</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -134,8 +139,57 @@ function run(nt,st){
  charts.splice(0).forEach(c=>c.destroy());
  env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR=R;zchart();
  $('exp').disabled=false}
-['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
-$('exp').onclick=()=>{if(charts.length<5)return;siteExport([1,2,3,4,5].map(k=>[charts[k-1],'t'+k,0]),expName)};
+// ---- sea-ice volume: model (GLORYS12 reanalysis, monthly) and satellite (CryoSat-2 + SMOS, weekly, cold season)
+let VD=null,vp='north',vc=null;
+const csvRows=t=>{const [h,...r]=t.trim().split(/\r?\n/),k=h.split(',');return r.map(l=>{const v=l.split(',');return Object.fromEntries(k.map((x,i)=>[x,v[i]]))})};
+const decY=s=>{const y=+s.slice(0,4),t=Date.parse(s+'T00:00Z');return y+(t-Date.UTC(y,0,1))/(Date.UTC(y+1,0,1)-Date.UTC(y,0,1))};
+const mName=m=>['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];
+function vchart(){
+ if(!VD)return;
+ document.querySelectorAll('#vh .nb').forEach(b=>b.classList.toggle('on',b.dataset.p===vp));
+ const name=vp=='north'?'Arctic':'Antarctic',c=COL[vp=='north'?'n':'s'];
+ const G=VD.g.filter(r=>r.pole==vp).map(r=>({d:r.date,y:+r.date.slice(0,4),m:+r.date.slice(5,7),v:+r.volume}));
+ const model=G.map(r=>({x:r.y+(r.m-.5)/12,y:r.v}));
+ // satellite: weekly points; break the line and band across the summer gap
+ const pts=[],lo=[],hi=[];let prev=null;
+ VD.s.filter(r=>r.pole==vp&&r.volume!=='').forEach(r=>{const x=decY(r.date),v=+r.volume,u=+r.volume_unc;
+  if(prev!=null&&x-prev>20/365)[pts,lo,hi].forEach(a=>a.push({x:(x+prev)/2,y:null}));
+  pts.push({x,y:v,d:r.date});lo.push({x,y:Math.max(0,v-u)});hi.push({x,y:v+u});prev=x});
+ const last=G[G.length-1],y0=G[0].y;
+ $('t6').textContent=`${name} sea-ice volume, ${y0}–${last.y}: model and satellite`;
+ const bandLbl='Satellite uncertainty (cautious upper bound)';
+ if(vc)vc.destroy();
+ vc=new Chart($('c6'),{type:'line',data:{datasets:[
+   {label:bandLbl,data:hi,borderWidth:0,pointRadius:0,backgroundColor:c+'33',fill:'+1'},
+   {label:'lo',data:lo,borderWidth:0,pointRadius:0},
+   {label:'Satellite: CryoSat-2 + SMOS (weekly, cold season)',data:pts,borderColor:c,backgroundColor:c,borderWidth:1.2,pointRadius:1.5},
+   {label:'Model: GLORYS12 reanalysis (monthly)',data:model,borderColor:THEME.clim,borderWidth:1.3,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>i.text!=='lo'}},tooltip:{filter:i=>i.dataset.label!=='lo'&&i.dataset.label!==bandLbl,callbacks:{
+    title:t=>{const r=t[0].raw;if(r.d)return r.d;const x=t[0].parsed.x,y=Math.floor(x);return mName(Math.min(12,Math.floor((x-y)*12)+1))+' '+y},
+    label:k=>k.dataset.label.split(':')[0]+': '+k.parsed.y.toFixed(1)+' thousand km³'}}},
+   scales:{x:{type:'linear',min:y0,max:last.y+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},
+    y:{min:0,title:{display:true,text:'Thousand km³'},grid:{color:THEME.grid}}}}});
+ // sentences: latest model month vs 1993-2020, yearly-average change, satellite vs model
+ const same=G.filter(r=>r.m==last.m&&r.y>=1993&&r.y<=2020).map(r=>r.v),avg=same.reduce((a,b)=>a+b,0)/same.length;
+ const first=G.find(r=>r.m==last.m);
+ const yr={};G.forEach(r=>(yr[r.y]=yr[r.y]||[]).push(r.v));
+ const full=Object.keys(yr).map(Number).filter(y=>yr[y].length==12),ym=y=>yr[y].reduce((a,b)=>a+b,0)/12;
+ const m5=ys=>ys.reduce((a,y)=>a+ym(y),0)/ys.length,A=full.slice(0,5),B=full.slice(-5);
+ const pc=(a,b)=>Math.round(100*(b-a)/a),ch=pc(m5(A),m5(B));
+ const mv={};G.forEach(r=>mv[r.d.slice(0,7)]=r.v);
+ const rat=pts.filter(p=>p.y!=null&&mv[p.d.slice(0,7)]).map(p=>p.y/mv[p.d.slice(0,7)]).sort((a,b)=>a-b);
+ const med=rat.length?rat[Math.floor(rat.length/2)]:null;
+ const s1=`In ${mName(last.m)} ${last.y} the model puts ${name} sea-ice volume at ${last.v.toFixed(1)} thousand km³, ${Math.abs(pc(avg,last.v))}% ${last.v<avg?'below':'above'} the 1993–2020 average for ${mName(last.m)} (${avg.toFixed(1)}) and ${Math.abs(pc(first.v,last.v))}% ${last.v<first.v?'below':'above'} ${mName(last.m)} ${first.y}.`;
+ const s2=` Averaged over the year, volume went from ${m5(A).toFixed(1)} thousand km³ (${A[0]}–${A[A.length-1]}) to ${m5(B).toFixed(1)} (${B[0]}–${B[B.length-1]}), ${ch<0?'a drop of '+(-ch):'an increase of '+ch}%.`;
+ const s3=med==null?'':` Where both exist, the satellite value is typically ${Math.round(100*med)}% of the model value${Math.abs(med-1)<=.1?': close agreement for two independent methods.':vp=='south'?'; the gap likely reflects how hard Antarctic thickness is to measure.':'.'}`;
+ $('vnote').textContent=s1+s2+s3;
+ $('vbox').classList.remove('hide')}
+document.querySelectorAll('#vh .nb').forEach(b=>b.onclick=()=>{vp=b.dataset.p;vchart()});
+Promise.all(['glorys','cs2smos'].map(k=>fetch(`data/seaice_volume_${k}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
+ .then(([g,s])=>{VD={g:csvRows(g),s:csvRows(s)};vchart()}).catch(e=>console.error('volume data',e));
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>[...charts,vc].forEach(c=>c&&c.resize())));
+$('exp').onclick=()=>{if(charts.length<5)return;siteExport([...[1,2,3,4,5].map(k=>[charts[k-1],'t'+k,0]),...(vc?[[vc,'t6',0]]:[])],expName)};
 Promise.all(['N','S'].map(h=>fetch(`data/${h}_seaice_extent_daily_v4.0.csv`).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([n,s])=>run(n,s))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the sea ice data. Please try again later.'});
 </script></main></body></html>
