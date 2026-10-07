@@ -30,9 +30,14 @@ jobs:
             name=${pair%%:*}; short="${pair##*:}_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4"
             url=$(curl -fsSL --retry 3 "https://cmr.earthdata.nasa.gov/search/granules.json?short_name=$short&sort_key=-start_date&page_size=20" | python3 -c "
           import json, sys
-          links = [l['href'] for e in json.load(sys.stdin)['feed']['entry'] for l in e.get('links', [])
-                   if 'podaac-ops-cumulus-protected' in l.get('href', '') and l['href'].endswith('.txt')]
-          print(sorted(links)[-1] if links else '')") || true
+          # the catalogue lists each file twice: as an https address and as an s3:// address (for use inside
+          # Amazon's cloud only); curl needs the https one, so turn any s3 address into its https form
+          pre = 's3://podaac-ops-cumulus-protected/'
+          links = {l['href'].replace(pre, 'https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/')
+                   for e in json.load(sys.stdin)['feed']['entry'] for l in e.get('links', [])
+                   if 'podaac-ops-cumulus-protected' in l.get('href', '') and l['href'].endswith('.txt')}
+          # newest = the file whose name has the latest end date (e.g. ..._200204_202607.txt)
+          print(max(links, key=lambda u: u.rsplit('/', 1)[-1]) if links else '')") || true
             [ -n "$url" ] || { echo "::warning::no file found in the catalogue for $short"; continue; }
             echo "$name: $url"
             f="data/grace_${name}.txt"
