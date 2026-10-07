@@ -11,7 +11,7 @@ What this script does:
 2. Downloads it with the same CDS key as the ERA5 workflows (~/.cdsapirc, written by the workflow).
 3. Prints the file layout (variables, dimensions, units), so the log shows exactly what came in.
 4. Adds up the total mass change of all grid cells for each year -> data/glaciers_global.csv
-   (year, mass change in Gt, uncertainty in Gt). Uncertainty: the cells' random uncertainties combined as the
+   (year, hydrological year, mass change in Gt, uncertainty in Gt). Uncertainty: the cells' random uncertainties combined as the
    square root of the sum of squares, as random errors add up.
 """
 import csv, glob, json, os, sys, tempfile, urllib.request, zipfile
@@ -54,6 +54,7 @@ def choose(inputs):
 
 
 def open_all(path):
+    """Returns (file name, dataset) pairs."""
     import xarray as xr
     print(f"  downloaded {os.path.getsize(path):,} bytes; zip: {zipfile.is_zipfile(path)}", flush=True)
     files = [path]
@@ -71,7 +72,7 @@ def open_all(path):
                        if os.path.isfile(f) and not zipfile.is_zipfile(f)
                        and f.lower().rsplit(".", 1)[-1] in ("nc", "nc4", "netcdf", "cdf", "h5"))
     print(f"  {len(files)} data file(s): {[os.path.basename(f) for f in files[:5]]}{' ...' if len(files) > 5 else ''}", flush=True)
-    return [xr.open_dataset(f) for f in files]
+    return [(os.path.basename(f), xr.open_dataset(f)) for f in files]
 
 
 def describe(ds):
@@ -82,10 +83,12 @@ def describe(ds):
 
 
 def pick(ds, want_unc):
-    """The 'total' mass change variable (or its uncertainty), not the 'specific' (per square metre) one."""
+    """The total mass change in gigatonnes (or its uncertainty), not the specific one (metres of water per area).
+    In the files: glacier_mass_change_gt and uncertainty_gt, both with units 'gt'."""
     for v in ds.data_vars:
         txt = (v + " " + str(ds[v].attrs.get("long_name", ""))).lower()
-        if "total" in txt and ("uncertainty" in txt or "error" in txt or "_unc" in txt) == want_unc:
+        is_gt = str(ds[v].attrs.get("units", "")).lower().replace(" ", "") in ("gt", "gigatonnes") or v.lower().endswith("_gt")
+        if is_gt and ("uncertainty" in txt or "error" in txt) == want_unc:
             return v
     return None
 
@@ -115,31 +118,38 @@ def main():
     client = Client(url=cfg["url"], key=cfg["key"], progress=False)
     path = os.path.join(tempfile.mkdtemp(), "glaciers")
     client.retrieve(DATASET, req, path)
-    rows = {}
-    for ds in open_all(path):
-        describe(ds)
+    import re
+    rows, shown = {}, False
+    for fname, ds in open_all(path):
+        if not shown:
+            describe(ds); shown = True                 # every file has the same layout: show the first one
         tv, uv = pick(ds, False), pick(ds, True)
         if tv is None:
-            raise SystemExit("no 'total' mass change variable found; see the variables listed above")
+            raise SystemExit("no mass change variable in gigatonnes found; see the variables listed above")
         k = to_gt(ds[tv])
         tdim = next((d for d in ds[tv].dims if d not in ("lat", "lon", "latitude", "longitude")), None)
         space = [d for d in ds[tv].dims if d != tdim]
         tot = (ds[tv].sum(space, skipna=True) * k)
         unc = (np.sqrt((ds[uv] ** 2).sum(space, skipna=True)) * to_gt(ds[uv])) if uv else None
-        times = ds[tdim].values if tdim else [ds.attrs.get("year")]
-        for i, t in enumerate(times):
-            y = int(str(t)[:4])
-            rows[y] = (float(tot.values[i] if tdim else tot.values),
-                       float(unc.values[i] if tdim else unc.values) if unc is not None else None)
+        # one file per hydrological year, e.g. ...-2022-23.nc4 = October 2022 to September 2023 (north);
+        # labelled by the year it ends in (2023), as WGMS does when it calls 2023 the record year
+        m = re.search(r"(\d{4})-(\d{2})\.", fname)
+        if not m:
+            raise SystemExit(f"no hydrological year in file name {fname}")
+        y = int(m.group(1)) + 1
+        rows[y] = (f"{m.group(1)}-{m.group(2)}", float(tot.values.sum()), float(unc.values.sum()) if unc is not None else None)
+        ds.close()
     if len(rows) < 30:
         raise SystemExit(f"only {len(rows)} years found; not saving")
     with open(OUT + ".tmp", "w", newline="") as fh:
-        w = csv.writer(fh, lineterminator="\n"); w.writerow(["year", "mass_change_gt", "uncertainty_gt"])
+        w = csv.writer(fh, lineterminator="\n"); w.writerow(["year", "hydrological_year", "mass_change_gt", "uncertainty_gt"])
         for y in sorted(rows):
-            m, u = rows[y]; w.writerow([y, f"{m:.1f}", "" if u is None else f"{u:.1f}"])
+            h, m, u = rows[y]; w.writerow([y, h, f"{m:.1f}", "" if u is None else f"{u:.1f}"])
     os.replace(OUT + ".tmp", OUT)
     open(SRC, "w").write(version + "\n")
-    print(f"saved {len(rows)} years ({min(rows)}-{max(rows)}); last: {max(rows)} {rows[max(rows)][0]:.0f} Gt", flush=True)
+    big = min(rows, key=lambda y: rows[y][1])
+    print(f"saved {len(rows)} years ({rows[min(rows)][0]} to {rows[max(rows)][0]}); latest {rows[max(rows)][1]:.0f} Gt; "
+          f"largest loss {rows[big][0]}: {rows[big][1]:.0f} Gt", flush=True)
 
 
 if __name__ == "__main__":
