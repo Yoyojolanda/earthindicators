@@ -29,7 +29,8 @@ data reach, where they came from and the date new data last arrived (a change in
   trees Global Forest Watch / University of Maryland (Hansen et al.) annual tree cover loss by dominant driver, world,
         hectares at 30% canopy cover, from 2001; released once a year (spring). Taken from Our World in Data's copy,
         because GFW's own API needs a key and its download links change with each release.
-        -> data/tree_cover_loss_world.csv  year, then one column per driver (hectares)
+        -> data/tree_cover_loss_world.csv  year, total, wildfire (hectares; OWID publishes the total and the wildfire
+           part as separate charts)
 """
 import csv, hashlib, io, json, os, sys, tempfile, urllib.request
 from datetime import date, datetime, timedelta
@@ -42,6 +43,7 @@ BLOSSOM_URL = "https://raw.githubusercontent.com/GMU-CherryBlossomCompetition/pe
 FAO_URLS = ["https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip",
             "https://fenixservices.fao.org/faostat/static/bulkdownloads/Production_Crops_Livestock_E_All_Data_(Normalized).zip"]
 TREES_URL = "https://ourworldindata.org/grapher/tree-cover-loss.csv?v=1&csvType=full&useColumnShortNames=false"
+FIRE_URL = "https://ourworldindata.org/grapher/tree-cover-loss-from-wildfires.csv?v=1&csvType=full&useColumnShortNames=false"
 RLI_URL = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=ER_RSK_LST&areaCode=1&pageSize=1000"
 
 
@@ -247,21 +249,29 @@ def crops():
     return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": used}
 
 
-def trees():
-    rd = csv.DictReader(io.StringIO(get(TREES_URL).decode("utf-8-sig")))
-    cols = [c for c in rd.fieldnames if c not in ("Entity", "Code", "Year")]
-    print(f"  trees: columns {rd.fieldnames}", flush=True)
-    rows = []
+def owid_world(url, tag):
+    """{year: value} for the World row of a one-indicator Our World in Data chart."""
+    rd = csv.DictReader(io.StringIO(get(url).decode("utf-8-sig")))
+    cols = [c for c in rd.fieldnames if c not in ("Entity", "Code", "Year", "World region according to OWID")]
+    print(f"  trees: {tag} columns {rd.fieldnames}", flush=True)
+    out = {}
     for r in rd:
-        if r.get("Entity") != "World":
-            continue
-        rows.append([int(r["Year"])] + [f"{float(r[c]):.0f}" if r.get(c) not in (None, "") else "" for c in cols])
-    rows.sort()
-    tot = lambda r: sum(float(v) for v in r[1:] if v)
-    if len(rows) < 20 or not (5e6 < tot(rows[-1]) < 1e8):
-        raise RuntimeError(f"incomplete or implausible: {len(rows)} years, last total {tot(rows[-1]) if rows else None}")
-    print(f"  trees: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}; last total {tot(rows[-1])/1e6:.1f} million ha", flush=True)
-    write_csv("data/tree_cover_loss_world.csv", ["year", *cols], rows)
+        if r.get("Entity") == "World" and r.get(cols[0]) not in (None, ""):
+            out[int(r["Year"])] = float(r[cols[0]])
+    return out
+
+
+def trees():
+    tot = owid_world(TREES_URL, "total")
+    try:
+        fire = owid_world(FIRE_URL, "wildfire")
+    except Exception as e:
+        print(f"  trees: wildfire part not available ({e})", flush=True); fire = {}
+    rows = [[y, f"{tot[y]:.0f}", f"{fire[y]:.0f}" if y in fire else ""] for y in sorted(tot)]
+    if len(rows) < 20 or not (5e6 < tot[max(tot)] < 1e8):
+        raise RuntimeError(f"incomplete or implausible: {len(rows)} years")
+    print(f"  trees: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}; last {rows[-1]} ha", flush=True)
+    write_csv("data/tree_cover_loss_world.csv", ["year", "total", "wildfire"], rows)
     return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": "Global Forest Watch, via Our World in Data"}
 
 

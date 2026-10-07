@@ -193,7 +193,7 @@ const LOAD={
  ph:()=>get('hot_surface_ph.csv').then(t=>{const D=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[1]!=='').map(p=>{const [y,m]=p[0].split('-').map(Number);return{x:y+(m-.5)/12,y:+p[1],d:p[0]}});
   const b=slope(D),L=D[D.length-1],dpH=b*(L.x-D[0].x),dt=`${ML[+L.d.slice(5,7)-1]} ${L.d.slice(0,4)}`;
   return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt}}),
- trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:p.slice(1).reduce((a,x)=>a+(+x||0),0)/1e6}));
+ trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:(+p[1]||0)/1e6}));
   const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y}}),
  blossom:()=>get('kyoto_cherry_blossom.csv').then(t=>{const B=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],d:p[1],n:+p[2]}));
   const L=B[B.length-1],o=mean(B.filter(r=>r.y<1850).map(r=>r.n)),n10=mean(B.slice(-10).map(r=>r.n)),e=Math.round(o-n10);
