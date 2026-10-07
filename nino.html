@@ -30,9 +30,9 @@
 <p id="err"></p>
 <div id="out" class="hide">
 <div class="cards" id="cards"></div>
-<div class="box"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
-<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
-<div class="box" id="b3"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
+<div class="box" data-nav="Compared with normal"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box" data-nav="Latest day, every year"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box" id="b3" data-nav="Actual temperature"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Anomaly = daily SST minus the 1991–2020 daily mean. Recent values are preliminary and may be revised by NOAA. Not the relative index NOAA uses to classify El Niño strength. Data: NOAA OISST v2.1, provided by the NOAA PSL, Boulder, Colorado, USA, from their website at <a href="https://psl.noaa.gov" target="_blank" rel="noopener">psl.noaa.gov</a>.</p>
 </div>
@@ -65,8 +65,8 @@ function run(raw){
  const rank=at.filter(v=>v>now).length+1;
  const f=x=>(x>=0?'+':'')+x.toFixed(2);
  document.getElementById('cards').innerHTML=[[f(now)+' °C',cur+' anomaly, '+fmtDate(last)],[f(rec)+' °C','Prior record for this date ('+recY+')'],[f(now-rec)+' °C','Margin over that record'],[z.toFixed(1)+' σ','Above 1982–'+(cur-1)+' mean for this date'],[streak+' days','Consecutive days above record']].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
- document.getElementById('t1').textContent=`Niño 3.4 anomaly: ${cur} vs every year since 1982`;
- document.getElementById('t3').textContent=`Niño 3.4 sea-surface temperature (°C): ${cur} vs every year since 1982`;
+ document.getElementById('t1').textContent=`Niño 3.4: each day of ${cur} compared with the same day in every year since 1982 (°C above or below the 1991–2020 average)`;
+ document.getElementById('t3').textContent=`Niño 3.4: each day of ${cur} in actual sea-surface temperature (°C), compared with every year since 1982`;
  document.getElementById('t2').textContent=`${fmtDate(last)} anomaly, every year`;
  const items=[
   `As of ${fmtDate(last)}, the ${cur} temperature anomaly is ${f(now)} °C. The previous record for this date was ${f(rec)} °C (${recY}); ${now>rec?cur+' is above it by '+(now-rec).toFixed(2)+' °C':cur+' ranks #'+rank+' of '+(at.length+1)+' years'}.`,
