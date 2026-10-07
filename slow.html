@@ -33,7 +33,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="cards" id="fossil-cards"></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
 <ul id="fossil-read"></ul>
-<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of tonnes of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, <a href="https://doi.org/10.5281/zenodo.831454" target="_blank" rel="noopener">doi:10.5281/zenodo.831454</a> (newest version).</p>
+<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of tonnes of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, published on <a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a> and Zenodo (the version used is named in the line above the chart).</p>
 </section>
 
 <section id="ph-s" class="hide">
@@ -79,7 +79,7 @@ function fossil(t,S){
  const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1000,c:+p[2]/1000,o:+p[3]/1000,g:+p[4]/1000,m:+p[5]/1000,f:((+p[6]||0)+(+p[7]||0))/1000}));if(Y.length<200)throw 0;
  const L=Y[Y.length-1],P=Y[Y.length-2],y90=Y.find(r=>r.y===1990),cum=Y.reduce((s,r)=>s+r.t,0),Z=Y.filter(r=>r.y>=1850);
  const peak=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),r10=(Math.pow(L.t/Y.find(r=>r.y===L.y-10).t,1/10)-1)*100;
- $('fossil-st').innerHTML=`<b>Data through ${L.y}.</b> The Global Carbon Project publishes once a year, in October or November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
+ $('fossil-st').innerHTML=`<b>Data through ${L.y}</b> (version ${S.version||'?'}, <a href="${S.source}" target="_blank" rel="noopener">dataset</a>). The Global Carbon Project publishes once a year, in October or November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
  cards('fossil-cards',[[L.t.toFixed(1)+' Gt',`CO₂ from fossil fuels and cement in ${L.y} (billion tonnes)`],[pc((L.t-P.t)/P.t*100),`change from ${P.y}`],
   [pc((L.t-y90.t)/y90.t*100),`change since 1990`],[Math.round(cum).toLocaleString('en-US')+' Gt',`emitted in total since ${Y[0].y}`]]);
  $('t3').textContent=`Fossil CO₂ emissions by source, 1850–${L.y} (billion tonnes of CO₂ a year)`;

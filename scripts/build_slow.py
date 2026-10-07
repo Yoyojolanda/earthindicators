@@ -21,11 +21,11 @@ data reach, where they came from and the date new data last arrived (a change in
         -> data/hot_surface_ph.csv  date, ph_calc, ph_meas (calculated from DIC and alkalinity; measured directly)
 """
 import csv, hashlib, io, json, os, sys, tempfile, urllib.request
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 STATUS = "data/slow_status.json"
 AMOC_URL = "https://rapid.ac.uk/sites/default/files/rapid_data/moc_transports.nc"
-FOSSIL_CONCEPT = "831454"                    # Zenodo concept record: always resolves to the newest version
+FOSSIL_RECORD = "17417124"   # one known version (2025v15); its "concept" id leads to the newest version
 HOT_URL = "https://hahana.soest.hawaii.edu/hot/hotco2/HOT_surface_CO2.txt"
 RLI_URL = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=ER_RSK_LST&areaCode=1&pageSize=1000"
 
@@ -93,13 +93,21 @@ def rli():
 
 
 def fossil():
-    rec = json.loads(get(f"https://zenodo.org/api/records/{FOSSIL_CONCEPT}/versions/latest"))
+    known = json.loads(get(f"https://zenodo.org/api/records/{FOSSIL_RECORD}"))
+    concept = known.get("conceptrecid") or known.get("parent", {}).get("id")
+    try:
+        rec = json.loads(get(f"https://zenodo.org/api/records/{concept}/versions/latest"))
+    except Exception as e:
+        print(f"  fossil: newest version not found ({e}); using {FOSSIL_RECORD}", flush=True); rec = known
+    title = rec.get("metadata", {}).get("title", "")
+    if "fossil" not in title.lower():
+        raise RuntimeError(f"newest version is not the fossil CO2 dataset: {title!r}")
     files = rec.get("files") or []
     if isinstance(files, dict):
         files = list((files.get("entries") or {}).values())
     keys = [f.get("key") or f.get("filename") for f in files]
-    key = next((k for k in keys if k and k.endswith("MtCO2_flat.csv")), None)
-    print(f"  fossil: Zenodo record {rec.get('id')}, version {rec.get('metadata', {}).get('version')}; files {keys}", flush=True)
+    key = next((k for k in keys if k and "mtco2" in k.lower() and "flat" in k.lower() and k.lower().endswith(".csv")), None)
+    print(f"  fossil: Zenodo record {rec.get('id')} (concept {concept}), {title!r}, version {rec.get('metadata', {}).get('version')}; files {keys}", flush=True)
     if not key:
         raise RuntimeError("no *_MtCO2_flat.csv in the newest version")
     raw = get(f"https://zenodo.org/records/{rec['id']}/files/{key}?download=1", 300).decode("utf-8-sig")
@@ -116,7 +124,7 @@ def fossil():
     print(f"  fossil: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}, latest {rows[-1][1]} Mt CO2", flush=True)
     write_csv("data/fossil_co2_global.csv", ["year", "total", "coal", "oil", "gas", "cement", "flaring", "other"], rows)
     return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "version": str(rec.get("metadata", {}).get("version")),
-            "source": f"https://doi.org/10.5281/zenodo.{rec['id']}"}
+            "source": f"https://doi.org/10.5281/zenodo.{rec['id']}", "file": key}
 
 
 def ph():
@@ -136,18 +144,27 @@ def ph():
         except ValueError:
             return ""
         return f"{v:.4f}" if v is not None and 7.6 < v < 8.4 else ""
+    ki = find("days")
+    def when(p):
+        d = p[di]
+        for fmt in ("%m/%d/%y", "%m/%d/%Y", "%Y-%m-%d", "%d-%b-%Y", "%m%d%y"):
+            try:
+                return datetime.strptime(d.zfill(6) if fmt == "%m%d%y" else d, fmt).date().isoformat()
+            except ValueError:
+                continue
+        try:                                   # "days": days since 1 October 1988, the start of HOT
+            return (date(1988, 10, 1) + timedelta(days=float(p[ki]))).isoformat() if ki is not None else None
+        except (ValueError, IndexError):
+            return None
+    data = [l for l in lines[hi + 1:] if l.strip()]
+    print(f"  ph: first data lines {data[:3]}", flush=True)
     rows = []
-    for l in lines[hi + 1:]:
+    for l in data:
         p = [x.strip() for x in l.split("\t")]
         if len(p) <= max(di, ci):
             continue
-        d = p[di]
-        for fmt in ("%m/%d/%y", "%m/%d/%Y", "%Y-%m-%d", "%d-%b-%Y"):
-            try:
-                d = datetime.strptime(d, fmt).date().isoformat(); break
-            except ValueError:
-                continue
-        else:
+        d = when(p)
+        if not d or not "1988" <= d[:4] <= str(date.today().year):
             continue
         c, m = val(p, ci), val(p, mi)
         if c or m:
