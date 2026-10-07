@@ -266,7 +266,7 @@
   // ---- section menu on wide screens: the page's sections down the empty right-hand side, as a timeline whose dot
   //      turns red for the section being read. Built from the page itself, so new sections appear in it by themselves;
   //      rebuilt when page scripts show sections or fill in chart titles after their data has loaded.
-  if (nav && !['index.html', 'claims.html'].includes(page)) {
+  if (nav && page !== 'claims.html') {                      // the overview gets one too: its five groups
     const side = document.createElement('nav');
     side.className = 'secnav'; side.setAttribute('aria-label', 'Sections on this page');
     document.body.appendChild(side);
