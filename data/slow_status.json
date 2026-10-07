@@ -1,0 +1,19 @@
+{
+ "amoc": {
+  "first": "2004-04",
+  "new_data": "2026-10-07",
+  "source": "https://rapid.ac.uk/sites/default/files/rapid_data/moc_transports.nc",
+  "through": "2024-03",
+  "version": {
+   "Creation_date": "22-Jan-2026",
+   "Title": "RAPID MOC timeseries",
+   "version": "v2024.1a"
+  }
+ },
+ "rli": {
+  "first": "1993",
+  "new_data": "2026-10-07",
+  "source": "UN SDG database, series ER_RSK_LST (indicator 15.5.1)",
+  "through": "2025"
+ }
+}
