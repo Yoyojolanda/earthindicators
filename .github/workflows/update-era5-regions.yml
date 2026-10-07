@@ -2,8 +2,8 @@ name: Update regional air temperature data (ERA5)
 
 on:
   schedule:
-    - cron: "15 * * * *"   # 4x a day while the history is being filled in (concurrency below keeps runs from overlapping);
-                                   # once it reaches 1940, once a day ("15 3 * * *") is enough
+    - cron: "15 3 * * *"   # once a day: only new days are fetched here; the history back to 1940 came from
+                           # ARCO-ERA5 (backfill-era5-arco.yml)
   workflow_dispatch:           # lets you run it manually from the Actions tab
 
 permissions:
