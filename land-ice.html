@@ -34,7 +34,7 @@
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">The GRACE (2002–2017) and GRACE Follow-On (since 2018) satellites measure tiny changes in Earth's gravity; less ice means slightly less pull. The values are mass changes in gigatonnes (1 Gt = 1 billion tonnes, about 1 km³ of water), shown here relative to the first 12 months of the record. Between the two missions there is a gap of about a year (mid-2017 to mid-2018). Sea-level equivalent: 362 Gt of ice spread over the world's oceans raises sea level by about 1 mm. Yearly change = the average of one year minus the average of the year before, for years with at least ten months of data. Mountain glaciers are not included yet. Data: NASA JPL GRACE/GRACE-FO mascon time series, release 06.3 version 04: Greenland (<a href="https://doi.org/10.5067/TEMSC-GT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-GT634</a>) and Antarctica (<a href="https://doi.org/10.5067/TEMSC-AT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-AT634</a>).</p>
+<p class="sub">The GRACE (2002–2017) and GRACE Follow-On (since 2018) satellites measure tiny changes in Earth's gravity; less ice means slightly less pull. The values are mass changes in gigatonnes (1 Gt = 1 billion tonnes, about 1 km³ of water), shown here relative to the first 12 months of the record. Between the two missions there is a gap of about a year (mid-2017 to mid-2018). Sea-level equivalent: 362 Gt of ice spread over the world's oceans raises sea level by about 1 mm. Gaps: the original GRACE satellites lost battery capacity from 2011, so they were switched off for a month or two every few months to save power; the mission ended in 2017 and its successor, GRACE-FO, started delivering data in mid-2018, with a few more months missing in its first months. Lines are broken across gaps of more than about three months. Yearly change = the average of one year minus the average of the year before; for this, gaps of up to three months are filled by straight-line interpolation, and only years with at least ten months count. Mountain glaciers are not included yet. Data: NASA JPL GRACE/GRACE-FO mascon time series, release 06.3 version 04: Greenland (<a href="https://doi.org/10.5067/TEMSC-GT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-GT634</a>) and Antarctica (<a href="https://doi.org/10.5067/TEMSC-AT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-AT634</a>).</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -48,7 +48,12 @@ function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options
 // JPL file: header lines (HDR ...), then rows: decimal year, mass anomaly (Gt), 1-sigma uncertainty (Gt)
 const parse=t=>{const R=t.split(/\r?\n/).map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&p[0]>2000&&p[0]<2200&&isFinite(p[1]));
  const z=mean(R.slice(0,12).map(p=>p[1]));return R.map(p=>({x:p[0],y:p[1]-z,u:p[2]}))};
-function yearly(S){const by={};S.forEach(p=>(by[Math.floor(p.x)]=by[Math.floor(p.x)]||[]).push(p.y));
+// yearly averages: put the values on a monthly grid and fill short gaps (up to 3 months, from the satellites'
+// battery-saving pauses) by straight-line interpolation, so those years still count; the long 2017-18 gap is not filled
+function yearly(S){const mi=x=>Math.floor(x)*12+Math.min(11,Math.floor((x-Math.floor(x))*12)),V={};S.forEach(p=>V[mi(p.x)]=p.y);
+ const K=Object.keys(V).map(Number).sort((a,b)=>a-b);
+ for(let k=1;k<K.length;k++){const a=K[k-1],b=K[k];if(b-a>1&&b-a<=4)for(let i=a+1;i<b;i++)V[i]=V[a]+(V[b]-V[a])*(i-a)/(b-a)}
+ const by={};Object.keys(V).map(Number).forEach(i=>(by[Math.floor(i/12)]=by[Math.floor(i/12)]||[]).push(V[i]));
  const Y={};Object.keys(by).forEach(y=>{if(by[y].length>=10)Y[y]=mean(by[y])});
  return Object.keys(Y).map(Number).filter(y=>Y[y-1]!=null).map(y=>({y,d:Y[y]-Y[y-1]}))}
 function run(gT,aT){
@@ -72,7 +77,7 @@ function run(gT,aT){
   `Since 2002–03 Greenland has lost about ${fmt(-gL.y)} gigatonnes of ice and Antarctica about ${fmt(-aL.y)} (to ${lab(gL.x)}). On average that is ${fmt(-gr)} Gt a year for Greenland and ${fmt(-ar)} Gt a year for Antarctica; over the last 10 years, ${fmt(-g10)} and ${fmt(-a10)}.`,
   `Together the two ice sheets have added about ${(-tL.y/GT_MM).toFixed(1)} mm to global sea level since 2002–03, roughly ${(-tr/GT_MM).toFixed(1)} mm a year. Mountain glaciers and the expansion of warming seawater add more; see the sea level page for the total.`,
   `A gigatonne is a billion tonnes: about a cubic kilometre of water. Greenland's yearly loss would cover a country the size of the Netherlands (about 41,500 km²) in roughly ${(-gr/41.5).toFixed(0)} metres of water.`,
-  worst?`Melt varies a lot from year to year with summer weather. Greenland's biggest loss in this record (yearly averages) was in ${worst.y}: ${fmt(-worst.d)} Gt.`:'',
+  worst?`Melt varies a lot from year to year with summer weather. The largest drop in Greenland's yearly average in this record was from ${worst.y-1} to ${worst.y}: ${fmt(-worst.d)} Gt. Changes into and out of 2017–2019 cannot be calculated because of the gap between the two missions.`:'',
   `Ice sheets react slowly but keep going: once warmed, they can lose mass for centuries, and the sea-level rise they cause is effectively permanent on human timescales.`
  ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
  expName=`land-ice-${lab(Math.max(gL.x,aL.x)).replace(' ','-')}.jpg`;
