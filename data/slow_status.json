@@ -10,6 +10,20 @@
    "version": "v2024.1a"
   }
  },
+ "fossil": {
+  "file": "GCB2025v15_MtCO2_flat.csv",
+  "first": "1750",
+  "new_data": "2026-10-07",
+  "source": "https://doi.org/10.5281/zenodo.17417124",
+  "through": "2024",
+  "version": "2025v15"
+ },
+ "ph": {
+  "first": "1988-10",
+  "new_data": "2026-10-07",
+  "source": "https://hahana.soest.hawaii.edu/hot/hotco2/HOT_surface_CO2.txt",
+  "through": "2024-12"
+ },
  "rli": {
   "first": "1993",
   "new_data": "2026-10-07",
