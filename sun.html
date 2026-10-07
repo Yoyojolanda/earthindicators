@@ -74,7 +74,7 @@ function run(mT,sT,eT){
  ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
  $('t1').textContent=`Sunspot number, ${M[0].y}–${cy}: monthly and 13-month smoothed`;
  $('t2').textContent=`The Sun and global temperature, ${y0}–${Yl}: yearly averages`;
- $('t3').textContent=`${cur.n?'Cycle '+cur.n:'The current cycle'} compared with the previous five, months since each cycle's minimum`;
+ $('t3').textContent=`${cur.n?'Cycle '+cur.n:'The current cycle'} compared with the previous five cycles, each starting at its minimum`;
  const big=Math.max(...cyc.filter(c=>c.done).slice(-3).map(c=>c.peak.v));
  $('read').innerHTML=[
   `In ${lab(L)} the monthly sunspot number was ${L.v.toFixed(0)}${L.prov?' (provisional)':''}. ${cur.n?'Solar cycle '+cur.n:'The current cycle'} began at the minimum of ${lab(cur.start)}; ${peakDone?`its smoothed maximum was ${peakNow.v.toFixed(0)} in ${lab(peakNow)}`:`its highest smoothed value so far is ${peakNow.v.toFixed(0)} (${lab(peakNow)})`}, compared with ${prev.peak.v.toFixed(0)} for ${prev.n?'cycle '+prev.n:'the previous cycle'} (${lab(prev.peak)}).`,
