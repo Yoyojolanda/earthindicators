@@ -10,6 +10,18 @@
    "version": "v2024.1a"
   }
  },
+ "blossom": {
+  "first": "812",
+  "new_data": "2026-10-07",
+  "source": "https://raw.githubusercontent.com/GMU-CherryBlossomCompetition/peak-bloom-prediction/main/data/kyoto.csv",
+  "through": "2026"
+ },
+ "crops": {
+  "first": "1961",
+  "new_data": "2026-10-07",
+  "source": "https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip",
+  "through": "2024"
+ },
  "fossil": {
   "file": "GCB2025v15_MtCO2_flat.csv",
   "first": "1750",
@@ -29,5 +41,11 @@
   "new_data": "2026-10-07",
   "source": "UN SDG database, series ER_RSK_LST (indicator 15.5.1)",
   "through": "2025"
+ },
+ "trees": {
+  "first": "2001",
+  "new_data": "2026-10-07",
+  "source": "Global Forest Watch, via Our World in Data",
+  "through": "2024"
  }
 }
