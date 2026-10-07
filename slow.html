@@ -11,9 +11,9 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Earth Indicators">
 <meta property="og:title" content="Slow signals: indicators measured once a year or less often">
-<meta property="og:description" content="The Atlantic overturning circulation (AMOC) and the Red List Index of extinction risk: important, but only measured every year or two.">
+<meta property="og:description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation (AMOC) and the Red List Index of extinction risk: important, but only measured every year or two.">
 <meta property="og:url" content="https://earthindicators.org/slow.html">
-<meta name="description" content="The Atlantic overturning circulation (AMOC) and the Red List Index of extinction risk: important, but only measured every year or two.">
+<meta name="description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation (AMOC) and the Red List Index of extinction risk: important, but only measured every year or two.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="site.css">
 <style>
@@ -24,8 +24,26 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 </style></head><body><main>
 <h1>Slow signals</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
-<p class="sub">Some of the most important changes can only be measured slowly: instruments on the sea floor are read out when a ship recovers them, and species are reassessed one group at a time. The indicators on this page are updated once a year or less often, so their latest value is often a year or two old. That is how these measurements work, not a sign that the page has stopped updating. Each section says how far the data reach, how often new data are published, and when new data last arrived here. The sources are checked every week.</p>
+<p class="sub">Some of the most important changes can only be measured slowly: emissions are added up from national energy statistics, seawater is sampled from research ships, instruments on the sea floor are read out when a ship recovers them, and species are reassessed one group at a time. The indicators on this page are updated once a year or less often, so their latest value is often a year or two old. That is how these measurements work, not a sign that the page has stopped updating. Each section says how far the data reach, how often new data are published, and when new data last arrived here. The sources are checked every week.</p>
 <p id="err"></p>
+
+<section id="fossil-s" class="hide">
+<h2 class="sec">Fossil CO₂ emissions</h2>
+<p class="st" id="fossil-st"></p>
+<div class="cards" id="fossil-cards"></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
+<ul id="fossil-read"></ul>
+<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of tonnes of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, <a href="https://doi.org/10.5281/zenodo.831454" target="_blank" rel="noopener">doi:10.5281/zenodo.831454</a> (newest version).</p>
+</section>
+
+<section id="ph-s" class="hide">
+<h2 class="sec">Ocean acidification</h2>
+<p class="st" id="ph-st"></p>
+<div class="cards" id="ph-cards"></div>
+<div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<ul id="ph-read"></ul>
+<p class="sub">The ocean takes up about a quarter of the CO₂ we emit. Dissolved CO₂ forms carbonic acid, so seawater slowly becomes less alkaline: its pH falls. Seawater is still alkaline (above pH 7); "acidification" describes the direction of change. pH is a logarithmic scale, so a small step is a big change: a drop of 0.1 means about 26% more hydrogen ions, the particles that make water acidic. Shown: surface water (0–30 m) at Station ALOHA, 100 km north of Oʻahu, sampled by research ship about once a month since 1988. Dots: pH calculated from the measured carbon and alkalinity of each sample (the full record); measured directly where available. Line: the straight-line trend. Data: Hawaii Ocean Time-series, University of Hawaiʻi (Dore et al. 2009, updated), <a href="https://hahana.soest.hawaii.edu/hot/" target="_blank" rel="noopener">hahana.soest.hawaii.edu/hot</a>.</p>
+</section>
 
 <section id="amoc-s" class="hide">
 <h2 class="sec">Atlantic overturning circulation (AMOC)</h2>
@@ -47,13 +65,59 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 
 <script>
 const $=id=>document.getElementById(id);
-const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[];
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[],C={};
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,mlab=m=>ML[+m.slice(5,7)-1]+' '+m.slice(0,4);
 const day=d=>{const [y,m,dd]=d.split('-');return (+dd)+' '+ML[m-1]+' '+y};
 const cards=(id,c)=>$(id).innerHTML=c.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
 const csv=t=>t.trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
 const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
-let done=0;const ready=()=>{if(++done==2)$('exp').disabled=false};
+const ready=(k,ch)=>{C[k]=ch;charts.push(ch);$('exp').disabled=false};
+const slope=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+const pc=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1)+'%';
+
+function fossil(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1000,c:+p[2]/1000,o:+p[3]/1000,g:+p[4]/1000,m:+p[5]/1000,f:((+p[6]||0)+(+p[7]||0))/1000}));if(Y.length<200)throw 0;
+ const L=Y[Y.length-1],P=Y[Y.length-2],y90=Y.find(r=>r.y===1990),cum=Y.reduce((s,r)=>s+r.t,0),Z=Y.filter(r=>r.y>=1850);
+ const peak=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),r10=(Math.pow(L.t/Y.find(r=>r.y===L.y-10).t,1/10)-1)*100;
+ $('fossil-st').innerHTML=`<b>Data through ${L.y}.</b> The Global Carbon Project publishes once a year, in October or November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
+ cards('fossil-cards',[[L.t.toFixed(1)+' Gt',`CO₂ from fossil fuels and cement in ${L.y} (billion tonnes)`],[pc((L.t-P.t)/P.t*100),`change from ${P.y}`],
+  [pc((L.t-y90.t)/y90.t*100),`change since 1990`],[Math.round(cum).toLocaleString('en-US')+' Gt',`emitted in total since ${Y[0].y}`]]);
+ $('t3').textContent=`Fossil CO₂ emissions by source, 1850–${L.y} (billion tonnes of CO₂ a year)`;
+ $('fossil-read').innerHTML=[
+  `In ${L.y} the world emitted ${L.t.toFixed(1)} billion tonnes of CO₂ from fossil fuels and cement, ${L.t>=P.t?'more than':'less than'} in ${P.y}${peak===L?', a new record':`; the record is ${peak.t.toFixed(1)} billion tonnes in ${peak.y}`}. Over the last ten years emissions ${r10>=0?'grew':'fell'} by about ${Math.abs(r10).toFixed(1)}% a year on average: ${r10>=1?'still rising':r10>=0?'growing slowly, but not yet falling':'falling'}.`,
+  `About half of each year's emissions stays in the air; the rest is taken up by the ocean and by plants on land. CO₂ in the air keeps rising as long as emissions continue, and global warming stops only when net CO₂ emissions reach zero.`,
+  (()=>{const F=[['coal',L.c],['oil',L.o],['gas',L.g]].sort((a,b)=>b[1]-a[1]),q=v=>(v/L.t*100).toFixed(0)+'%';return `By source in ${L.y}: ${F[0][0]} ${q(F[0][1])}, ${F[1][0]} ${q(F[1][1])}, ${F[2][0]} ${q(F[2][1])}; cement, flaring and other sources make up the rest.`})()
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('fossil-s').classList.remove('hide');
+ const ds=[['Coal','c','#55524c'],['Oil','o','#9a7650'],['Gas','g','#4f81b0'],['Cement','m','#b9ad9c'],['Flaring and other','f','#d0a43a']].map(([l,k,c])=>({label:l,data:Z.map(r=>r[k]),backgroundColor:c,borderWidth:0}));
+ ready('f',new Chart($('c3'),{type:'bar',data:{labels:Z.map(r=>String(r.y)),datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' Gt',footer:t=>'Total: '+Z[t[0].dataIndex].t.toFixed(1)+' Gt'}}},
+   scales:{x:{stacked:true,ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Billion tonnes CO₂'},grid:{color:THEME.grid}}}}}))}
+
+function ph(t,S){
+ const D=csv(t).map(p=>{const [y,m,d]=p[0].split('-').map(Number);return{d:p[0],x:y+(m-1+(d-.5)/31)/12,c:p[1]===''?null:+p[1],m:p[2]===''?null:+p[2]}});if(D.length<200)throw 0;
+ const Pc=D.filter(r=>r.c!=null).map(r=>({x:r.x,y:r.c})),Pm=D.filter(r=>r.m!=null).map(r=>({x:r.x,y:r.m})),b=slope(Pc),my=mean(Pc.map(p=>p.y)),mx=mean(Pc.map(p=>p.x));
+ const fit=x=>my+b*(x-mx),x0=Pc[0].x,x1=Pc[Pc.length-1].x,dpH=fit(x1)-fit(x0),hplus=(Math.pow(10,-dpH)-1)*100;
+ const L=D[D.length-1],lab=d=>ML[+d.slice(5,7)-1]+' '+d.slice(0,4),last12=mean(Pc.filter(p=>p.x>x1-1).map(p=>p.y));
+ $('ph-st').innerHTML=`<b>Data through ${lab(L.d)}.</b> A research ship samples Station ALOHA about once a month; the processed results are published in batches, usually a year or more later. New data last arrived here on ${day(S.new_data)}.`;
+ cards('ph-cards',[[last12.toFixed(3),`average surface pH, 12 months to ${lab(L.d)}`],[((b<0?'−':'+')+Math.abs(b*10).toFixed(3)),`trend per decade (pH units)`],
+  ['+'+hplus.toFixed(0)+'%',`more hydrogen ions (acidity) than in ${Math.floor(x0)}, from the trend`]]);
+ $('t4').textContent=`Surface seawater pH at Station ALOHA, Hawaiʻi, ${Math.floor(x0)}–${L.d.slice(0,4)}`;
+ $('ph-read').innerHTML=[
+  `Surface pH at Station ALOHA has fallen by about ${Math.abs(dpH).toFixed(3)} since ${Math.floor(x0)} (${((b<0?'−':'+')+Math.abs(b*10).toFixed(3))} per decade). Because pH is a logarithmic scale, that means about ${hplus.toFixed(0)}% more hydrogen ions: the water is that much more acidic.`,
+  `The decline follows the rising CO₂ in the air, measured at Mauna Loa in the same island chain (see the <a href="co2.html">CO₂ page</a>): the ocean takes up CO₂ from the air, and the more there is in the air, the more dissolves.`,
+  `More acidic water makes it harder for corals, shellfish, sea snails and some plankton to build their shells and skeletons from calcium carbonate, which affects the food webs and fisheries that depend on them.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('ph-s').classList.remove('hide');
+ ready('p',new Chart($('c4'),{type:'scatter',data:{datasets:[
+   {label:'Calculated from carbon and alkalinity',data:Pc,backgroundColor:'#4f81b0',borderColor:'#4f81b0',pointRadius:2},
+   {label:'Measured directly',data:Pm,backgroundColor:'#d06a4e',borderColor:'#d06a4e',pointRadius:2},
+   {type:'line',label:'Trend',data:[{x:x0,y:fit(x0)},{x:x1,y:fit(x1)}],borderColor:THEME.clim,backgroundColor:THEME.clim,borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,
+   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(3)}}},
+   scales:{x:{type:'linear',min:Math.floor(x0),max:Math.ceil(x1),ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'pH (total scale)'},grid:{color:THEME.grid}}}}}))}
+
 
 function amoc(t,S){
  const M=csv(t).map(p=>({m:p[0],x:+p[0].slice(0,4)+(+p[0].slice(5,7)-.5)/12,v:+p[1]}));if(M.length<200)throw 0;
@@ -70,13 +134,12 @@ function amoc(t,S){
   `Climate models project that the AMOC will weaken during this century as the North Atlantic warms and receives more fresh water from melting ice and rainfall. Whether and when it could pass a tipping point and collapse is an open question in research; that is why these continuous measurements matter.`
  ].map(x=>`<li>${x}</li>`).join('');
  $('amoc-s').classList.remove('hide');
- charts.push(new Chart($('c1'),{data:{datasets:[
+ ready('a',new Chart($('c1'),{data:{datasets:[
    {type:'line',label:'12-month average',data:R,borderColor:THEME.clim,borderWidth:2,pointRadius:0,order:1},
    {type:'line',label:'Monthly',data:M.map(r=>({x:r.x,y:r.v})),borderColor:'#7fa6c9',backgroundColor:'#7fa6c9',borderWidth:1,pointRadius:0,order:2}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' Sv'}}},
-   scales:{x:{type:'linear',min:2004,max:Math.ceil(L.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Sverdrup (million m³/s)'},grid:{color:THEME.grid}}}}}));
- ready()}
+   scales:{x:{type:'linear',min:2004,max:Math.ceil(L.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Sverdrup (million m³/s)'},grid:{color:THEME.grid}}}}}))}
 
 function rli(t,S){
  const Y=csv(t).map(p=>({y:+p[0],v:+p[1],lo:p[2]===''?null:+p[2],hi:p[3]===''?null:+p[3]}));if(Y.length<20)throw 0;
@@ -90,18 +153,19 @@ function rli(t,S){
  ].map(x=>`<li>${x}</li>`).join('');
  $('rli-s').classList.remove('hide');
  const band=Y.every(r=>r.lo!=null&&r.hi!=null);
- charts.push(new Chart($('c2'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:[
+ ready('r',new Chart($('c2'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:[
    ...(band?[{label:'Upper bound',data:Y.map(r=>r.hi),borderWidth:0,pointRadius:0,fill:false},
              {label:'Lower bound',data:Y.map(r=>r.lo),borderWidth:0,pointRadius:0,fill:'-1',backgroundColor:'rgba(208,106,78,.18)'}]:[]),
    {label:'Red List Index',data:Y.map(r=>r.v),borderColor:'#d06a4e',backgroundColor:'#d06a4e',borderWidth:2,pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
    plugins:{legend:{labels:{filter:i=>!/bound/.test(i.text)}},tooltip:{filter:i=>!/bound/.test(i.dataset.label),callbacks:{label:c=>'Red List Index: '+c.parsed.y.toFixed(3)+(band?` (range ${Y[c.dataIndex].lo.toFixed(3)}–${Y[c.dataIndex].hi.toFixed(3)})`:'')}}},
-   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{grid:{color:THEME.grid}}}}}));
- ready()}
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{grid:{color:THEME.grid}}}}}))}
 
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
-$('exp').onclick=()=>{if(charts.length<2)return;siteExport([[charts[0],'t1',0],[charts[1],'t2',0]],'slow-signals.jpg')};
+$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
 get('slow_status.json').then(JSON.parse).then(S=>Promise.allSettled([
+  get('fossil_co2_global.csv').then(t=>fossil(t,S.fossil)),
+  get('hot_surface_ph.csv').then(t=>ph(t,S.ph)),
   get('amoc_rapid_monthly.csv').then(t=>amoc(t,S.amoc)),
   get('redlist_index_world.csv').then(t=>rli(t,S.rli))]))
  .then(r=>{if(r&&r.some(x=>x.status==='rejected')){r.forEach(x=>x.reason&&console.error(x.reason));$('err').textContent='Some of the data could not be loaded. Please try again later.'}})
