@@ -240,3 +240,23 @@ html[data-theme="dark"] body::before{opacity:.42;filter:saturate(.7) brightness(
 .how p{margin:0 0 6px;max-width:48rem;line-height:1.5}
 .how .links{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0}
 @media print{.how{display:none}}
+
+/* section menu: down the empty right-hand side on wide screens (site.js builds it from the page's sections).
+   A vertical line with a dot per section; the dot of the section being read turns red. Hidden where there is no room. */
+.secnav{display:none}
+@media (min-width:1380px){
+ .secnav{display:block;position:fixed;top:150px;left:calc(50% + 528px);width:min(200px,calc(50vw - 548px));
+  max-height:calc(100vh - 240px);overflow-y:auto;z-index:40;font-size:13px;line-height:1.35}
+ .secnav ol{list-style:none;margin:0;padding:0;position:relative}
+ .secnav ol::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--edge);border-radius:1px}
+ .secnav li{margin:0}
+ .secnav a{display:flex;gap:10px;align-items:flex-start;padding:5px 0;color:var(--mut2);text-decoration:none}
+ .secnav a span{flex:none;width:10px;height:10px;margin-top:3px;border-radius:50%;border:2px solid var(--edge2);background:var(--bg);position:relative;transition:background .2s,border-color .2s}
+ .secnav a:hover{color:var(--fg)}
+ .secnav a:hover span{border-color:var(--acc)}
+ .secnav a.on{color:var(--fg);font-weight:600}
+ .secnav a.on span{background:var(--acc);border-color:var(--acc)}
+}
+@media print{.secnav{display:none!important}}
+/* jumping to a section leaves room for the slim header that slides in at the top */
+main section,main .box,main h2,.inshort,.how{scroll-margin-top:72px}

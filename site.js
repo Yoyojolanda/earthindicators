@@ -262,6 +262,67 @@
   }, true);
   top.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // ---- section menu on wide screens: the page's sections down the empty right-hand side, as a timeline whose dot
+  //      turns red for the section being read. Built from the page itself, so new sections appear in it by themselves;
+  //      rebuilt when page scripts show sections or fill in chart titles after their data has loaded.
+  if (nav && !['index.html', 'claims.html'].includes(page)) {
+    const side = document.createElement('nav');
+    side.className = 'secnav'; side.setAttribute('aria-label', 'Sections on this page');
+    document.body.appendChild(side);
+    const main = document.querySelector('main');
+    const shown = el => el && el.offsetParent !== null && el.getClientRects().length > 0;
+    // short label: up to the first colon; if still long, up to the first comma; then cut at a word
+    const short = t => {
+      t = t.replace(/\s+/g, ' ').trim();
+      if (t.indexOf(':') > 0) t = t.slice(0, t.indexOf(':'));
+      if (t.length > 34 && t.indexOf(',') > 0) t = t.slice(0, t.indexOf(','));
+      if (t.length > 40) t = t.slice(0, 38).replace(/\s+\S*$/, '') + '…';
+      return t;
+    };
+    let items = [];
+    const build = () => {
+      const found = [], seen = new Set();
+      const add = (target, label, full) => {
+        if (!target || seen.has(target) || !label || !shown(target)) return;
+        seen.add(target); found.push({ target, label, full: full || label });
+      };
+      add(document.querySelector('.inshort'), 'In short');
+      const sec = [...main.querySelectorAll('h2.sec')];
+      if (sec.length) sec.forEach(h => add(h.closest('section') || h, short(h.textContent), h.textContent));   // pages grouped in sections
+      else main.querySelectorAll('h2').forEach(h => {                                                         // otherwise every chart and heading
+        if (h.closest('.inshort, .how, .site-head, .foot-nav, .secnav')) return;
+        const box = h.closest('.box') || h;                         // data-nav="…" on a box sets its menu label by hand
+        add(box, box.dataset.nav || short(h.textContent), h.textContent.trim());
+      });
+      add(document.querySelector('.how'), 'Data and method');
+      found.sort((a, b) => a.target.compareDocumentPosition(b.target) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+      const key = found.map(f => f.label).join('|');
+      if (key === side.dataset.key) return;
+      side.dataset.key = key; items = found;
+      side.innerHTML = '<ol>' + found.map((f, i) => '<li><a href="#" data-i="' + i + '" title="' + f.full.replace(/"/g, '&quot;') + '"><span></span>' + f.label + '</a></li>').join('') + '</ol>';
+      mark();
+    };
+    // the section being read: the last one whose top has passed 35% of the window height (the first at the top)
+    const mark = () => {
+      if (!items.length) return;
+      let cur = 0;
+      items.forEach((f, i) => { if (f.target.getBoundingClientRect().top < window.innerHeight * 0.35) cur = i; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) cur = items.length - 1;   // at the very bottom
+      side.querySelectorAll('a').forEach((a, i) => a.classList.toggle('on', i === cur));
+    };
+    side.addEventListener('click', e => {
+      const a = e.target.closest('a'); if (!a) return;
+      e.preventDefault();
+      const f = items[+a.dataset.i]; if (f) f.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    let tick = false, wait;
+    window.addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(() => { tick = false; mark(); }); } }, { passive: true });
+    window.addEventListener('resize', mark);
+    new MutationObserver(recs => { if (recs.every(r => side.contains(r.target))) return; clearTimeout(wait); wait = setTimeout(build, 250); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+    build();
+  }
+
   if (!window.Chart) return;
 
   // ---- small screens: diagonal x-axis labels so they never overlap
