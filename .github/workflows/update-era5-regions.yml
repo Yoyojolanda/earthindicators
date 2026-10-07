@@ -38,11 +38,26 @@ jobs:
           python -u scripts/build_era5_regions.py
           rm -f ~/.cdsapirc
 
+      # Two runs can overlap (e.g. a manual run next to a scheduled one). A plain "pull --rebase" then hits a
+      # conflict on the data files and this run's work - and its list of open Copernicus requests - is lost,
+      # so the next run sends those requests again. Instead: keep this run's copies aside, take the latest
+      # version from GitHub, and merge both (scripts/merge_era5_regions.py). Retries if someone pushed meanwhile.
       - name: Commit changes
         if: always()
         run: |
-          rm -f ~/.cdsapirc
+          rm -f ~/.cdsapirc data/*.tmp
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
-          git add data
-          git diff --cached --quiet || (git commit -m "Update regional air temperature data" && git pull --rebase && git push)
+          mkdir -p /tmp/ours
+          cp data/era5_t2_regions_daily.csv data/era5_open_requests.json /tmp/ours/ 2>/dev/null || true
+          for i in 1 2 3; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            python scripts/merge_era5_regions.py /tmp/ours
+            git add data
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Update regional air temperature data"
+            git push -q && exit 0
+            sleep 20
+          done
+          exit 1
