@@ -244,8 +244,19 @@
   top.type = 'button'; top.id = 'totop'; top.textContent = '↑';
   top.title = 'Back to top'; top.setAttribute('aria-label', 'Back to top');
   document.body.appendChild(top);
-  const toggle = () => top.classList.toggle('show', window.scrollY > 400);
-  window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  // its outline fills up (clockwise) with how far down the page the reader is
+  const toggle = () => {
+    top.classList.toggle('show', window.scrollY > 400);
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    top.style.setProperty('--p', h > 0 ? Math.min(1, window.scrollY / h).toFixed(3) : 0);
+  };
+  window.addEventListener('scroll', toggle, { passive: true }); window.addEventListener('resize', toggle); toggle();
+
+  // ---- links to other websites open in a new tab (also links added later by page scripts)
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href]');
+    if (a && a.hostname && a.hostname !== location.hostname && !a.target) { a.target = '_blank'; a.rel = 'noopener'; }
+  }, true);
   top.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (!window.Chart) return;
@@ -265,10 +276,15 @@
   const LG = new WeakMap();
   function items(ch) {
     const st = LG.get(ch);
-    return ch.data.datasets.map((ds, i) => ({ text: ds.label, datasetIndex: i, hidden: !ch.isDatasetVisible(i),
-      color: typeof ds.borderColor === 'string' ? ds.borderColor : '#888',
-      fill: typeof ds.backgroundColor === 'string' ? ds.backgroundColor : null,
-      line: ds.borderWidth === undefined || ds.borderWidth > 0, dash: !!(ds.borderDash && ds.borderDash.length) }))
+    // bars get a filled box in their own colour; bars coloured per value (e.g. positive/negative) get a box split
+    // in two showing both colours; lines get a line sample
+    return ch.data.datasets.map((ds, i) => {
+      const bar = (ds.type || ch.config.type) === 'bar', bg = ds.backgroundColor;
+      const cols = Array.isArray(bg) ? [...new Set(bg)] : null;
+      const fill = typeof bg === 'string' ? bg : cols && cols.length > 1 ? `linear-gradient(90deg,${cols[0]} 50%,${cols[1]} 50%)` : cols ? cols[0] : null;
+      return { text: ds.label, datasetIndex: i, hidden: !ch.isDatasetVisible(i),
+        color: typeof ds.borderColor === 'string' ? ds.borderColor : '#888', fill,
+        line: !bar && (ds.borderWidth === undefined || ds.borderWidth > 0), dash: !!(ds.borderDash && ds.borderDash.length) }; })
       .filter(it => it.text && (!st.filter || st.filter(it, ch.data)));
   }
   function renderLegend(ch) {

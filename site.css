@@ -1,3 +1,5 @@
+/* keep room for the scrollbar from the start, so pages don't shift sideways when it appears */
+html{scrollbar-gutter:stable}
 /* Shared styles for every tracker page. Page-specific sizes are set per page with CSS variables:
    --h / --hs     chart heights on screen (normal / short charts)
    --ph / --phs   chart heights when printing
@@ -95,6 +97,9 @@ a{color:var(--link)}
  font:600 20px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:50;
  opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,transform .2s,visibility .2s}
 #totop.show{opacity:1;visibility:visible;transform:none}
+/* progress ring: the border is a conic gradient filled to --p (0 to 1, set by site.js while scrolling) */
+#totop{border:3px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,
+ conic-gradient(var(--acc) calc(var(--p,0)*1turn),var(--line) 0) border-box}
 #totop:hover{border-color:var(--acc);color:var(--acc)}
 
 /* small screens */
