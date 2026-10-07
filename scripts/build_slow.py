@@ -19,6 +19,17 @@ data reach, where they came from and the date new data last arrived (a change in
   ph    Hawaii Ocean Time-series (HOT), Station ALOHA (22.75N, 158W): surface (0-30 m) seawater pH, total scale,
         at in situ temperature, about monthly since 1988 (HOT_surface_CO2.txt, Dore et al. 2009, updated).
         -> data/hot_surface_ph.csv  date, ph_calc, ph_meas (calculated from DIC and alkalinity; measured directly)
+  blossom  Kyoto cherry blossom: peak bloom date of the mountain cherry (Prunus jamasakura) at Arashiyama, from 812.
+        Compiled by Yasuyuki Aono (Aono and Kazui 2008; Aono and Saito 2010; recent years from a local newspaper),
+        as kept up to date by the George Mason University cherry blossom prediction competition on GitHub.
+        -> data/kyoto_cherry_blossom.csv  year, date, doy (day of the year)
+  crops FAOSTAT crops and livestock products (QCL), world yields of maize, wheat, rice and soybeans, tonnes per
+        hectare, from 1961; released once a year (around December, for the year before last).
+        -> data/fao_crop_yields_world.csv  year, maize, wheat, rice, soybeans
+  trees Global Forest Watch / University of Maryland (Hansen et al.) annual tree cover loss by dominant driver, world,
+        hectares at 30% canopy cover, from 2001; released once a year (spring). Taken from Our World in Data's copy,
+        because GFW's own API needs a key and its download links change with each release.
+        -> data/tree_cover_loss_world.csv  year, then one column per driver (hectares)
 """
 import csv, hashlib, io, json, os, sys, tempfile, urllib.request
 from datetime import date, datetime, timedelta
@@ -27,6 +38,10 @@ STATUS = "data/slow_status.json"
 AMOC_URL = "https://rapid.ac.uk/sites/default/files/rapid_data/moc_transports.nc"
 FOSSIL_RECORD = "17417124"   # one known version (2025v15); its "concept" id leads to the newest version
 HOT_URL = "https://hahana.soest.hawaii.edu/hot/hotco2/HOT_surface_CO2.txt"
+BLOSSOM_URL = "https://raw.githubusercontent.com/GMU-CherryBlossomCompetition/peak-bloom-prediction/main/data/kyoto.csv"
+FAO_URLS = ["https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip",
+            "https://fenixservices.fao.org/faostat/static/bulkdownloads/Production_Crops_Livestock_E_All_Data_(Normalized).zip"]
+TREES_URL = "https://ourworldindata.org/grapher/tree-cover-loss.csv?v=1&csvType=full&useColumnShortNames=false"
 RLI_URL = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=ER_RSK_LST&areaCode=1&pageSize=1000"
 
 
@@ -177,13 +192,88 @@ def ph():
     return {"through": rows[-1][0][:7], "first": rows[0][0][:7], "source": HOT_URL}
 
 
+def blossom():
+    rows = []
+    for r in csv.DictReader(io.StringIO(get(BLOSSOM_URL).decode("utf-8-sig"))):
+        try:
+            y, d, n = int(r["year"]), r["bloom_date"].strip(), int(float(r["bloom_doy"]))
+        except (KeyError, ValueError):
+            continue
+        if 60 <= n <= 140:
+            rows.append([y, d, n])
+    rows.sort()
+    if len(rows) < 700 or rows[0][0] > 900:
+        raise RuntimeError(f"incomplete: {len(rows)} years")
+    print(f"  blossom: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}; last {rows[-1]}", flush=True)
+    write_csv("data/kyoto_cherry_blossom.csv", ["year", "date", "doy"], rows)
+    return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": BLOSSOM_URL}
+
+
+def crops():
+    import zipfile
+    raw, used = None, None
+    for u in FAO_URLS:
+        try:
+            raw, used = get(u, 600), u; break
+        except Exception as e:
+            print(f"  crops: {u} failed ({e})", flush=True)
+    if raw is None:
+        raise RuntimeError("no FAOSTAT download worked")
+    z = zipfile.ZipFile(io.BytesIO(raw))
+    name = next(n for n in z.namelist() if n.lower().endswith(".csv") and "all_data" in n.lower())
+    print(f"  crops: {len(raw):,} bytes from {used}; reading {name}", flush=True)
+    want = {"maize": ("maize (corn)", "maize"), "wheat": ("wheat",), "rice": ("rice", "rice, paddy"), "soybeans": ("soya beans", "soybeans")}
+    vals, units = {}, set()
+    with z.open(name) as fh:
+        rd = csv.DictReader(io.TextIOWrapper(fh, encoding="latin-1"))
+        for r in rd:
+            if r.get("Area") != "World" or r.get("Element") != "Yield":
+                continue
+            item = r.get("Item", "").lower()
+            crop = next((k for k, keys in want.items() if item in keys), None)     # exact names: not "Maize, green"
+            if not crop:
+                continue
+            u = r.get("Unit", "").lower(); units.add(u)
+            f = {"kg/ha": 1e-3, "hg/ha": 1e-4, "t/ha": 1.0, "100 g/ha": 1e-4}.get(u)
+            if f is None or not r.get("Value"):
+                continue
+            vals.setdefault(int(r["Year"]), {})[crop] = float(r["Value"]) * f
+    print(f"  crops: units {units}", flush=True)
+    rows = [[y] + [f"{vals[y][c]:.3f}" if c in vals[y] else "" for c in want] for y in sorted(vals)]
+    if len(rows) < 55 or not all(rows[-1][1:]) or not (3 < float(rows[-1][1]) < 10):
+        raise RuntimeError(f"incomplete or implausible: {len(rows)} years, last {rows[-1] if rows else None}")
+    print(f"  crops: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}; last {rows[-1]} t/ha", flush=True)
+    write_csv("data/fao_crop_yields_world.csv", ["year", *want], rows)
+    return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": used}
+
+
+def trees():
+    rd = csv.DictReader(io.StringIO(get(TREES_URL).decode("utf-8-sig")))
+    cols = [c for c in rd.fieldnames if c not in ("Entity", "Code", "Year")]
+    print(f"  trees: columns {rd.fieldnames}", flush=True)
+    rows = []
+    for r in rd:
+        if r.get("Entity") != "World":
+            continue
+        rows.append([int(r["Year"])] + [f"{float(r[c]):.0f}" if r.get(c) not in (None, "") else "" for c in cols])
+    rows.sort()
+    tot = lambda r: sum(float(v) for v in r[1:] if v)
+    if len(rows) < 20 or not (5e6 < tot(rows[-1]) < 1e8):
+        raise RuntimeError(f"incomplete or implausible: {len(rows)} years, last total {tot(rows[-1]) if rows else None}")
+    print(f"  trees: {len(rows)} years, {rows[0][0]} to {rows[-1][0]}; last total {tot(rows[-1])/1e6:.1f} million ha", flush=True)
+    write_csv("data/tree_cover_loss_world.csv", ["year", *cols], rows)
+    return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": "Global Forest Watch, via Our World in Data"}
+
+
 def main():
     os.makedirs("data", exist_ok=True)
     status = json.load(open(STATUS)) if os.path.exists(STATUS) else {}
     files = {"amoc": "data/amoc_rapid_monthly.csv", "rli": "data/redlist_index_world.csv",
-             "fossil": "data/fossil_co2_global.csv", "ph": "data/hot_surface_ph.csv"}
+             "fossil": "data/fossil_co2_global.csv", "ph": "data/hot_surface_ph.csv",
+             "blossom": "data/kyoto_cherry_blossom.csv", "crops": "data/fao_crop_yields_world.csv", "trees": "data/tree_cover_loss_world.csv"}
     failed = []
-    for key, fn in (("amoc", amoc), ("rli", rli), ("fossil", fossil), ("ph", ph)):
+    for key, fn in (("amoc", amoc), ("rli", rli), ("fossil", fossil), ("ph", ph),
+                    ("blossom", blossom), ("crops", crops), ("trees", trees)):
         before = hashlib.sha1(open(files[key], "rb").read()).hexdigest() if os.path.exists(files[key]) else None
         try:
             info = fn()

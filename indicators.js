@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii)
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -193,6 +193,11 @@ const LOAD={
  ph:()=>get('hot_surface_ph.csv').then(t=>{const D=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[1]!=='').map(p=>{const [y,m]=p[0].split('-').map(Number);return{x:y+(m-.5)/12,y:+p[1],d:p[0]}});
   const b=slope(D),L=D[D.length-1],dpH=b*(L.x-D[0].x),dt=`${ML[+L.d.slice(5,7)-1]} ${L.d.slice(0,4)}`;
   return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt}}),
+ trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:p.slice(1).reduce((a,x)=>a+(+x||0),0)/1e6}));
+  const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y}}),
+ blossom:()=>get('kyoto_cherry_blossom.csv').then(t=>{const B=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],d:p[1],n:+p[2]}));
+  const L=B[B.length-1],o=mean(B.filter(r=>r.y<1850).map(r=>r.n)),n10=mean(B.slice(-10).map(r=>r.n)),e=Math.round(o-n10);
+  return{src:'Aono / GMU cherry blossom data',vd:`Kyoto's cherry trees now bloom about ${e} days earlier than before 1850`,earlier:e+' days',date:L.y,through:String(L.y)}}),
  rli:()=>get('redlist_index_world.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],v:+p[1]}));
   const F=Y[0],L=Y[Y.length-1],pct=(L.v-F.v)/F.v*100;
   return{src:'IUCN and BirdLife (UN SDG database)',vd:pct<0?'Species are, on balance, moving closer to extinction':'No overall increase in extinction risk',now:L.v.toFixed(3),first:F.v.toFixed(3),y0:F.y,pct:(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',date:L.y,through:L.y}}),
@@ -205,7 +210,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

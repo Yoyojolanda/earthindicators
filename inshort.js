@@ -55,7 +55,7 @@ window.IN_SHORT = {
     text: [
       'In {fossil.through} the world emitted {fossil.now} of CO₂ from fossil fuels and cement ({fossil.ch} on the year before). About a quarter of it ends up in the ocean, which is slowly becoming more acidic: near Hawaiʻi, surface water has {ph.hplus} more acidity than in {ph.since}.',
       'The Atlantic overturning circulation, which carries warmth north towards Europe, averaged {amoc.a12} over the 12 months to {amoc.through}. It varies a lot, and two decades of direct measurements are not yet enough to confirm a long-term weakening, though climate models expect one.',
-      'The Red List Index of extinction risk fell from {rli.first} in {rli.y0} to {rli.now} in {rli.through} ({rli.pct}): on balance, species are moving closer to extinction.',
+      'The Red List Index of extinction risk fell from {rli.first} in {rli.y0} to {rli.now} in {rli.through} ({rli.pct}): on balance, species are moving closer to extinction. On land, {trees.now} of tree cover was lost in {trees.through}, and the cherry trees of Kyoto, recorded since the year 812, now bloom about {blossom.earlier} earlier than before 1850.',
     ],
     claims: ['adapt'],
   },

@@ -1,4 +1,4 @@
-name: Update slow signals (emissions, ocean pH, AMOC, Red List Index)
+name: Update slow signals (emissions, ocean pH, AMOC, Red List Index, trees, crops, cherry blossom)
 
 # These sources publish once a year or less often, so a weekly check is plenty. Each source is handled on its own
 # by scripts/build_slow.py; a failed download keeps the previous data. data/slow_status.json records how far each
