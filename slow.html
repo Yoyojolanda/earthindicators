@@ -67,7 +67,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 const $=id=>document.getElementById(id);
 const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[],C={};
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,mlab=m=>ML[+m.slice(5,7)-1]+' '+m.slice(0,4);
-const day=d=>{const [y,m,dd]=d.split('-');return (+dd)+' '+ML[m-1]+' '+y};
+const day=d=>{if(!d)return 'an unknown date';const [y,m,dd]=d.split('-');return (+dd)+' '+ML[m-1]+' '+y};
 const cards=(id,c)=>$(id).innerHTML=c.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
 const csv=t=>t.trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
 const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
@@ -163,11 +163,10 @@ function rli(t,S){
 
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
 $('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
-get('slow_status.json').then(JSON.parse).then(S=>Promise.allSettled([
-  get('fossil_co2_global.csv').then(t=>fossil(t,S.fossil)),
-  get('hot_surface_ph.csv').then(t=>ph(t,S.ph)),
-  get('amoc_rapid_monthly.csv').then(t=>amoc(t,S.amoc)),
-  get('redlist_index_world.csv').then(t=>rli(t,S.rli))]))
- .then(r=>{if(r&&r.some(x=>x.status==='rejected')){r.forEach(x=>x.reason&&console.error(x.reason));$('err').textContent='Some of the data could not be loaded. Please try again later.'}})
+const PARTS=[['fossil emissions','fossil_co2_global.csv',fossil,'fossil'],['ocean pH','hot_surface_ph.csv',ph,'ph'],
+ ['Atlantic overturning','amoc_rapid_monthly.csv',amoc,'amoc'],['Red List Index','redlist_index_world.csv',rli,'rli']];
+get('slow_status.json').then(JSON.parse).catch(()=>({})).then(S=>Promise.allSettled(PARTS.map(([n,f,fn,k])=>get(f).then(t=>fn(t,S[k]||{})))))
+ .then(r=>{const bad=PARTS.filter((p,i)=>r[i].status==='rejected');r.forEach((x,i)=>x.status==='rejected'&&console.error(PARTS[i][0],x.reason));
+  if(bad.length)$('err').textContent='Could not load: '+bad.map(p=>p[0]).join(', ')+'. Please try again later.'})
  .catch(e=>{console.error(e);$('err').textContent='Could not load the data. Please try again later.'});
 </script></main></body></html>
