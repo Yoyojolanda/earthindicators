@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Sea-ice volume for the Arctic and Antarctic from Copernicus Marine.
 
---source glorys   Monthly volume from Mercator's GLORYS12 reanalysis (1993 to ~3 months ago),
-                  extended to the latest month with Mercator's real-time analysis ("anfc").
-                  Each month records which of the two it came from (src = my / anfc); an anfc month
-                  is replaced by the reanalysis value once that becomes available.
+--source glorys   Monthly volume from Mercator's GLORYS12 reanalysis (1993 to ~2-3 months ago).
+                  Their real-time system is not used: it runs clearly lower than the reanalysis.
 --source cs2smos   Weekly volume (every Monday) from the CryoSat-2 + SMOS satellite thickness product.
+                  Only the cold season has data (Arctic Oct-Apr, Antarctic roughly Apr-Oct); empty days
+                  are stored with a blank volume and coverage 0 so they are not fetched again.
                   Copernicus only keeps a rolling window of this near-real-time data online, so the
                   cache file IS the history: rows are never deleted.
 
@@ -105,9 +105,8 @@ def glorys_month(sub, area):
             "area": f"{float((c * area).sum()) / 1e6:.3f}"}
 
 
-def run_glorys(path, check_path):
+def run_glorys(path):
     rows = load_cache(path)
-    checks = []
     for pole in POLES:
         print(f"== GLORYS {pole}", flush=True)
         my = open_ds(GLORYS_MY, ["sithick", "siconc"], pole)
@@ -125,31 +124,18 @@ def run_glorys(path, check_path):
             save_cache(path, rows, G_FIELDS)
             print(f"  {year}: {len(need)} months", flush=True)
 
-        # Real-time analysis: newer months, plus the last 12 overlapping months to check for a jump
-        an = open_ds(GLORYS_ANFC, ["sithick", "siconc"], pole)
-        an_area = cell_area(an["latitude"].values, an["longitude"].values)
-        an_months = [iso(t)[:7] + "-01" for t in an["time"].values]
-        overlap = [m for m in an_months if m <= my_end][-12:]
-        newer = [m for m in an_months if m > my_end]
-        for m in overlap + newer:
-            sub = retry(f"load anfc {m}", lambda: an.sel(time=m).load())
-            val = glorys_month(sub, an_area)
-            if m > my_end:
-                rows[(m, pole)] = {"date": m, "pole": pole, "src": "anfc", **val}
-            else:
-                ref = float(rows[(m, pole)]["volume"])
-                checks.append(f"{pole} {m}  reanalysis {ref:7.3f}  real-time {float(val['volume']):7.3f}"
-                              f"  diff {float(val['volume']) - ref:+.3f} thousand km3")
-        save_cache(path, rows, G_FIELDS)
-        print(f"  real-time months added: {len(newer)}", flush=True)
+        print(f"  reanalysis up to {my_end}", flush=True)
 
-    with open(check_path, "w") as fh:
-        fh.write(f"GLORYS seam check, {date.today()}: same months from both systems\n" + "\n".join(checks) + "\n")
-    print("\n".join(checks))
+    # The real-time system ("anfc") turned out to run 1-4 thousand km3 lower than the reanalysis in
+    # the same months (seam check, Oct 2026), so it is not used: remove rows an earlier version added.
+    for k in [k for k, r in rows.items() if r.get("src") == "anfc"]:
+        del rows[k]
+    save_cache(path, rows, G_FIELDS)
 
 
 # ---------- CryoSat-2 + SMOS (satellite) ----------
-C_FIELDS = ["date", "pole", "volume", "volume_unc", "area"]
+C_FIELDS = ["date", "pole", "volume", "volume_unc", "area", "coverage"]
+ARCTIC_SEASON = {10, 11, 12, 1, 2, 3, 4}            # summer melt ponds blind the radar (May-September)
 
 
 def run_cs2smos(path, max_days):
@@ -160,7 +146,13 @@ def run_cs2smos(path, max_days):
         ds = open_ds(CS2SMOS[pole], CS_VARS, pole)
         area = cell_area(ds["latitude"].values, ds["longitude"].values)
         days = sorted({iso(t) for t in ds["time"].values})
-        mondays = [d for d in days if date.fromisoformat(d).weekday() == 0 and (d, pole) not in rows]
+        if pole == "north":                         # drop summer rows a previous version stored
+            for k in [k for k in rows if k[1] == "north" and int(k[0][5:7]) not in ARCTIC_SEASON]:
+                del rows[k]
+        # new Mondays, plus rows from the previous version that have no coverage value yet
+        mondays = [d for d in days if date.fromisoformat(d).weekday() == 0
+                   and not rows.get((d, pole), {}).get("coverage")
+                   and (pole == "south" or int(d[5:7]) in ARCTIC_SEASON)]
         print(f"  online {days[0] if days else '-'} to {days[-1] if days else '-'}; new Mondays: {len(mondays)}", flush=True)
         for n, d in enumerate(mondays, 1):
             if done >= max_days:
@@ -171,14 +163,26 @@ def run_cs2smos(path, max_days):
             if "time" in sub.dims:
                 sub = sub.isel(time=0)
             c = frac(sub["sea_ice_concentration"].values)
-            rows[(d, pole)] = {"date": d, "pole": pole,
+            h = np.asarray(sub["sea_ice_thickness"].values, dtype="float64")
+            # coverage: share of the ice-covered area (concentration >= 15%) that has a thickness value.
+            # Cells without one count as zero in the volume, so low coverage means too low a volume.
+            ice = c >= 0.15
+            ice_area = float((area * ice).sum())
+            cov = float((area * (ice & np.isfinite(h))).sum()) / ice_area if ice_area else 0.0
+            if cov == 0.0:                          # no data that day: keep a row so it isn't retried
+                rows[(d, pole)] = {"date": d, "pole": pole, "volume": "", "volume_unc": "", "area": "",
+                                   "coverage": "0.000"}
+                print(f"  {d}: no thickness data", flush=True)
+                done += 1
+                continue
+            rows[(d, pole)] = {"date": d, "pole": pole, "coverage": f"{cov:.3f}",
                                "volume": f"{vol(sub['sea_ice_thickness'].values, c, area):.3f}",
                                # errors partly share causes (snow on the ice), so add them up in full:
                                # a cautious, upper-bound uncertainty band
                                "volume_unc": f"{vol(sub['sea_ice_thickness_uncertainty'].values, c, area):.3f}",
                                "area": f"{float((c * area).sum()) / 1e6:.3f}"}
             done += 1
-            print(f"  {d}: {rows[(d, pole)]['volume']} thousand km3 ({time.time() - t0:.0f} s)", flush=True)
+            print(f"  {d}: {rows[(d, pole)]['volume']} thousand km3, coverage {cov:.0%} ({time.time() - t0:.0f} s)", flush=True)
             if n % 5 == 0:
                 save_cache(path, rows, C_FIELDS)
         save_cache(path, rows, C_FIELDS)
@@ -191,7 +195,7 @@ def main():
     a = ap.parse_args()
     os.makedirs("data", exist_ok=True)
     if a.source == "glorys":
-        run_glorys("data/seaice_volume_glorys.csv", "data/seaice_volume_seam_check.txt")
+        run_glorys("data/seaice_volume_glorys.csv")
     else:
         run_cs2smos("data/seaice_volume_cs2smos.csv", a.max_days)
 

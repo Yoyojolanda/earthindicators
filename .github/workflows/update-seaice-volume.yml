@@ -27,15 +27,14 @@ jobs:
           python-version: "3.12"
       - run: pip install copernicusmarine numpy xarray
 
-      # Model: Mercator GLORYS12 reanalysis 1993 to ~3 months ago, plus their real-time analysis
-      # for the newest months. The first run backfills; each year is saved as soon as it is done.
+      # Model: Mercator GLORYS12 reanalysis, 1993 to ~2-3 months ago. Each year is saved as soon as it is done.
       - name: Model volume, GLORYS (monthly, both poles)
         continue-on-error: true
         timeout-minutes: 240
         run: python -u scripts/build_seaice_volume.py --source glorys
 
-      # Satellite: CryoSat-2 + SMOS thickness, sampled every Monday. Arctic October-April only
-      # (summer melt ponds blind the radar); Antarctic year-round.
+      # Satellite: CryoSat-2 + SMOS thickness, sampled every Monday. Cold season only:
+      # Arctic October-April, Antarctic roughly April-October.
       - name: Satellite volume, CryoSat-2 + SMOS (weekly, both poles)
         continue-on-error: true
         timeout-minutes: 80
