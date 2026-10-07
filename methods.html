@@ -99,6 +99,13 @@
 <dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-sun-pdo.yml">update-sun-pdo.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/sun.html">sun.html</a>.</dd>
 <dt>Data as used</dt><dd><a href="data/SN_m_tot_V2.0.csv">SN_m_tot_V2.0.csv</a>, <a href="data/SN_ms_tot_V2.0.csv">SN_ms_tot_V2.0.csv</a>, unchanged.</dd>
 </dl></section>
+<section class="m" id="slow"><h2>Slow signals</h2><p class="pg">Used on: <a href="slow.html">Slow signals</a>.</p><dl>
+<dt>Atlantic overturning (AMOC)</dt><dd>RAPID-MOCHA-WBTS monitoring array at 26.5°N (National Oceanography Centre, University of Miami, NOAA): the file moc_transports.nc from <a href="https://rapid.ac.uk/">rapid.ac.uk</a>, with the overturning strength (moc_mar_hc10) and its parts (Florida Current, Ekman transport, upper mid-ocean transport) twice a day, in sverdrups. This site averages them to days, then to calendar months; months with fewer than 20 days of data are left out. The 12-month averages and the four-year comparisons are calculated by the page. New releases come every one to two years, after the moorings are recovered; earlier values can change slightly with each release, and the whole series is replaced each time.</dd>
+<dt>Red List Index</dt><dd>IUCN and BirdLife International, world series from the UN Sustainable Development Goals database (series ER_RSK_LST, indicator 15.5.1), with its lower and upper bounds. Shown unchanged; the changes over time are calculated by the page. Updated once a year after the Red List reassessments.</dd>
+<dt>Updates</dt><dd>Weekly check of both sources. A download only replaces the saved data when it is complete and plausible; <a href="data/slow_status.json">slow_status.json</a> records how far each series reaches and the date its content last changed, which the page shows as "new data last arrived".</dd>
+<dt>Code</dt><dd><a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_slow.py">build_slow.py</a>, run by <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-slow.yml">update-slow.yml</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/amoc_rapid_monthly.csv">amoc_rapid_monthly.csv</a>, <a href="data/redlist_index_world.csv">redlist_index_world.csv</a>.</dd>
+</dl></section>
 
 <section class="m" id="sst"><h2>Sea surface temperature</h2><p class="pg">Used on: <a href="sst.html">Sea surface temperature</a>, the overview and the claims page.</p><dl>
 <dt>Dataset</dt><dd>NOAA OISST v2.1, as for El Niño above.</dd>

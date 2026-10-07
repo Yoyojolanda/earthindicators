@@ -41,6 +41,7 @@
     ['co2.html',       'CO₂'],
     ['ch4.html',       'Methane'],
     ['eei.html',       'Energy imbalance'],
+    ['slow.html',      'Slow signals'],
   ];
 
   // ---- site header: logo, name and tagline, with the menu next to it (a hamburger menu on narrow screens).
@@ -204,6 +205,8 @@
       'SILSO\'s monthly and 13-month smoothed values are shown unchanged; cycle minima and maxima and the yearly averages are calculated by this page.', ['sun.html'], ['data/SN_m_tot_V2.0.csv', 'data/SN_ms_tot_V2.0.csv']],
     'eei.html': ['NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://doi.org/10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1">doi:10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1</a>).',
       'NASA\'s own global monthly means; the imbalance is absorbed solar minus outgoing longwave radiation. Running means are calculated by this page.', ['scripts/build_ceres.py'], 'data/ceres_ebaf_global.csv'],
+    'slow.html': ['AMOC: RAPID-MOCHA-WBTS array at 26.5°N (<a href="https://rapid.ac.uk/">rapid.ac.uk</a>). Red List Index: IUCN and BirdLife International, via the UN SDG database (indicator 15.5.1).',
+      'RAPID\'s twice-daily transports are averaged here to months; the Red List Index is shown unchanged. 12-month averages and changes are calculated by this page.', ['scripts/build_slow.py'], ['data/amoc_rapid_monthly.csv', 'data/redlist_index_world.csv']],
   };
   const how = HOW[here];
   if (how && nav) {
