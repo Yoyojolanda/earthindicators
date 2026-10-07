@@ -186,8 +186,9 @@
       'NOAA\'s values are shown unchanged; trends and heating rates are calculated by this page.', ['ohc.html'], 'data/h22-w0-2000m.dat'],
     'sea-level.html': ['NASA-SSH Global Mean Sea Level, version 1 (<a href="https://doi.org/10.5067/NSIND-GMSV1">doi:10.5067/NSIND-GMSV1</a>).',
       'NASA\'s values are shown with the average seasonal cycle removed; trends are calculated by this page.', ['sea-level.html'], 'data/NASA_SSH_GMSL_INDICATOR.txt'],
-    'sea-ice.html': ['NSIDC Sea Ice Index, version 4 (<a href="https://doi.org/10.7265/a98x-0f50">doi:10.7265/a98x-0f50</a>).',
-      'NSIDC\'s daily extent, shown as a 5-day mean; anomalies and standard deviations are calculated by this page.', ['sea-ice.html'], 'data/N_seaice_extent_daily_v4.0.csv'],
+    'sea-ice.html': ['Extent: NSIDC Sea Ice Index, version 4 (<a href="https://doi.org/10.7265/a98x-0f50">doi:10.7265/a98x-0f50</a>). Volume: Copernicus Marine, Mercator GLORYS12 ocean reanalysis and CryoSat-2 + SMOS satellite thickness.',
+      'NSIDC\'s daily extent, shown as a 5-day mean; anomalies and standard deviations are calculated by this page. Volume (thickness × concentration × area) is calculated here from the Copernicus grids.',
+      ['sea-ice.html', 'scripts/build_seaice_volume.py'], ['data/N_seaice_extent_daily_v4.0.csv', 'data/seaice_volume_glorys.csv', 'data/seaice_volume_cs2smos.csv']],
     'co2.html': ['NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂.',
       'NOAA\'s daily values are shown unchanged; monthly means, trend and growth are calculated by this page.', ['co2.html'], 'data/co2_daily_mlo.txt'],
     'ch4.html': ['NOAA Global Monitoring Laboratory, globally averaged marine surface methane.',
@@ -202,7 +203,7 @@
     box.innerHTML = '<h2>Data and method</h2><p><b>Source:</b> ' + src + ' ' + what + '</p><p class="links">' +
       '<a href="methods.html#' + here.replace('.html', '') + '">Full method and checks</a>' +
       code.map(c => '<a href="' + GH + '/blob/main/' + c + '">Code: ' + name(c) + '</a>').join('') +
-      '<a href="' + file + '">Data: ' + name(file) + '</a></p>';
+      [].concat(file).map(f => '<a href="' + f + '">Data: ' + name(f) + '</a>').join('') + '</p>';   // one data file or several
     (document.querySelector('.tools') || nav).after(box);
   }
 

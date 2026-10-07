@@ -35,8 +35,13 @@ jobs:
         run: |
           printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
           chmod 600 ~/.cdsapirc
-          python -u scripts/build_era5_regions.py
+          # every 30 minutes, save progress and the open-request list to GitHub (scripts/checkpoint_era5_regions.sh)
+          ( while sleep 1800; do bash scripts/checkpoint_era5_regions.sh; done ) &
+          CK=$!
+          python -u scripts/build_era5_regions.py || rc=$?
+          pkill -P $CK 2>/dev/null; kill $CK 2>/dev/null || true
           rm -f ~/.cdsapirc
+          exit ${rc:-0}
 
       # Two runs can overlap (e.g. a manual run next to a scheduled one). A plain "pull --rebase" then hits a
       # conflict on the data files and this run's work - and its list of open Copernicus requests - is lost,
