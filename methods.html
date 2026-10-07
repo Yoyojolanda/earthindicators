@@ -121,12 +121,20 @@
 <dt>Data as used</dt><dd><a href="data/NASA_SSH_GMSL_INDICATOR.txt">NASA_SSH_GMSL_INDICATOR.txt</a>, <a href="data/slr_sla_gbl_free_all_66.csv">slr_sla_gbl_free_all_66.csv</a>, unchanged.</dd>
 </dl></section>
 
-<section class="m" id="sea-ice"><h2>Sea ice extent</h2><p class="pg">Used on: <a href="sea-ice.html">Sea ice extent</a>.</p><dl>
+<section class="m" id="sea-ice"><h2>Sea ice extent</h2><p class="pg">Used on: <a href="sea-ice.html">Sea ice</a>.</p><dl>
 <dt>Dataset</dt><dd>NSIDC / NOAA Sea Ice Index, version 4 (G02135), daily extent for the Arctic and Antarctic. Fetterer, F., K. Knowles, W. Meier et al., DOI <a href="https://doi.org/10.7265/a98x-0f50">10.7265/a98x-0f50</a>.</dd>
 <dt>What this site does</dt><dd>Extent is NSIDC's: the area where ice concentration is at least 15%. Each value shown is a 5-day trailing mean, which also fills the every-other-day gaps of the 1978–1987 record. Reference period 1981–2010, as used by NSIDC. The standard-deviation chart compares each day with the mean and spread of the same day over a 30-year reference period (1981–2010 or 1991–2020, selectable).</dd>
 <dt>Updates</dt><dd>Daily; the newest days may still be revised by NSIDC.</dd>
 <dt>Code</dt><dd>Download: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-seaice.yml">update-seaice.yml</a>. Calculations: the script inside <a href="https://github.com/yoyojolanda/earthindicators/blob/main/sea-ice.html">sea-ice.html</a>.</dd>
 <dt>Data as used</dt><dd><a href="data/N_seaice_extent_daily_v4.0.csv">N_seaice_extent_daily_v4.0.csv</a>, <a href="data/S_seaice_extent_daily_v4.0.csv">S_seaice_extent_daily_v4.0.csv</a>, unchanged.</dd>
+</dl></section>
+<section class="m" id="sea-ice-volume"><h2>Sea ice volume</h2><p class="pg">Used on: <a href="sea-ice.html">Sea ice</a>.</p><dl>
+<dt>Datasets</dt><dd>Model: Mercator Ocean GLORYS12 global ocean physics reanalysis, monthly means (Copernicus Marine product GLOBAL_MULTIYEAR_PHY_001_030, dataset cmems_mod_glo_phy_my_0.083deg_P1M-m), variables sea-ice thickness and concentration, 1993 onwards. Satellite: sea-ice thickness from ESA CryoSat-2 merged with SMOS (product SEAICE_GLO_PHY_L4_NRT_011_014), daily, Arctic and Antarctic.</dd>
+<dt>What this site does</dt><dd>Volume = thickness × concentration × cell area, summed over the polar ocean (Arctic 40–90°N, Antarctic 50–80°S). In both products thickness is the thickness of the ice where there is ice, so multiplying by concentration gives the amount of ice per grid cell. The satellite series is sampled every Monday; days without satellite data (the melt season: Arctic May–September, Antarctic roughly November–March) are stored as "no data", not zero. The uncertainty band adds up the uncertainty of every grid cell, a cautious upper bound. Mercator's real-time analysis is not used to extend the model line: it ran 1–4 thousand km³ lower than the reanalysis in the same months, which would show as a false drop.</dd>
+<dt>Checks</dt><dd>Coverage: the share of the ice-covered area that has a satellite thickness value is stored for every day (typically 98–99%; the rest is the hole around the North Pole). Model and satellite are independent; where both exist, the page shows how close they are.</dd>
+<dt>Updates</dt><dd>Daily check; the model adds a month when Mercator publishes one (about two months' delay), the satellite a week during the cold season. Copernicus keeps only the last year or two of satellite data online, so this site's file is the longer record.</dd>
+<dt>Code</dt><dd>Download and calculation: <a href="https://github.com/yoyojolanda/earthindicators/blob/main/.github/workflows/update-seaice-volume.yml">update-seaice-volume.yml</a>, <a href="https://github.com/yoyojolanda/earthindicators/blob/main/scripts/build_seaice_volume.py">build_seaice_volume.py</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/seaice_volume_glorys.csv">seaice_volume_glorys.csv</a>, <a href="data/seaice_volume_cs2smos.csv">seaice_volume_cs2smos.csv</a> (thousand km³; ice area in million km²).</dd>
 </dl></section>
 
 <section class="m" id="co2"><h2>CO₂</h2><p class="pg">Used on: <a href="co2.html">CO₂</a>.</p><dl>

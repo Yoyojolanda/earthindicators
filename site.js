@@ -34,7 +34,7 @@
     ['sst.html',       'Sea surface temp'],
     ['ohc.html',       'Ocean heat'],
     ['sea-level.html', 'Sea level'],
-    ['sea-ice.html',   'Sea ice extent'],
+    ['sea-ice.html',   'Sea ice'],
     ['co2.html',       'CO₂'],
     ['ch4.html',       'Methane'],
     ['eei.html',       'Energy imbalance'],

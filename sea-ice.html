@@ -5,12 +5,12 @@
 <script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
-<title>Sea ice extent tracker</title>
+<title>Sea ice tracker</title>
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Earth Indicators">
-<meta property="og:title" content="Sea ice extent, Arctic and Antarctic">
+<meta property="og:title" content="Sea ice extent and volume, Arctic and Antarctic">
 <meta property="og:description" content="Arctic and Antarctic sea ice compared with every year since 1978. NSIDC Sea Ice Index data.">
 <meta property="og:url" content="https://earthindicators.org/sea-ice.html">
 <meta property="og:image" content="https://earthindicators.org/og/sea-ice.png">
@@ -24,7 +24,7 @@
 <style>
 :root{--h:380px;--hs:320px;--ph:230px;--phs:200px;--cardw:230px;--pcols:3}
 @media print{h2:has(+ #read){break-before:page;break-after:avoid}}</style></head><body><main>
-<h1>Sea ice extent tracker</h1>
+<h1>Sea ice tracker</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
 <p id="err"></p>
 <div id="out" class="hide">
@@ -147,43 +147,49 @@ const mName=m=>['January','February','March','April','May','June','July','August
 function vchart(){
  if(!VD)return;
  document.querySelectorAll('#vh .nb').forEach(b=>b.classList.toggle('on',b.dataset.p===vp));
- const name=vp=='north'?'Arctic':'Antarctic',c=COL[vp=='north'?'n':'s'];
+ const name=vp=='north'?'Arctic':'Antarctic',WC='#1f6fb5',SC='#e08a00',SAT='#0b2f55';
  const G=VD.g.filter(r=>r.pole==vp).map(r=>({d:r.date,y:+r.date.slice(0,4),m:+r.date.slice(5,7),v:+r.volume}));
- const model=G.map(r=>({x:r.y+(r.m-.5)/12,y:r.v}));
- // satellite: weekly points; break the line and band across the summer gap
- const pts=[],lo=[],hi=[];let prev=null;
- VD.s.filter(r=>r.pole==vp&&r.volume!=='').forEach(r=>{const x=decY(r.date),v=+r.volume,u=+r.volume_unc;
-  if(prev!=null&&x-prev>20/365)[pts,lo,hi].forEach(a=>a.push({x:(x+prev)/2,y:null}));
-  pts.push({x,y:v,d:r.date});lo.push({x,y:Math.max(0,v-u)});hi.push({x,y:v+u});prev=x});
- const last=G[G.length-1],y0=G[0].y;
- $('t6').textContent=`${name} sea-ice volume, ${y0}–${last.y}: model and satellite`;
- const bandLbl='Satellite uncertainty (cautious upper bound)';
+ const X=(y,m)=>y+(m-.5)/12;
+ // the month of the yearly maximum and minimum, from the 1993-2020 average seasonal cycle
+ const cl=Array(13).fill(0),cn=Array(13).fill(0);G.forEach(r=>{if(r.y<=2020){cl[r.m]+=r.v;cn[r.m]++}});
+ const mm=[...Array(12).keys()].map(i=>cl[i+1]/cn[i+1]),maxM=mm.indexOf(Math.max(...mm))+1,minM=mm.indexOf(Math.min(...mm))+1;
+ // per year: highest and lowest month, only once that year's usual peak (or low) month is in the data
+ const yr={};G.forEach(r=>(yr[r.y]=yr[r.y]||{})[r.m]=r.v);
+ const ext=(m,f)=>Object.keys(yr).map(Number).filter(y=>yr[y][m]!=null).map(y=>{const o=yr[y],k=Object.keys(o).map(Number).reduce((a,b)=>f(o[a],o[b])?a:b);return{x:X(y,k),y:o[k],yr:y,m:k}});
+ const W=ext(maxM,(a,b)=>a>=b),S=ext(minM,(a,b)=>a<=b);
+ const av=a=>{const v=a.filter(p=>p.yr<=2020).map(p=>p.y);return v.reduce((s,x)=>s+x,0)/v.length},aW=av(W),aS=av(S);
+ const y0=G[0].y,last=G[G.length-1],x1=last.y+1;
+ // satellite: the highest weekly value of each finished cold season (Arctic Oct-Apr, Antarctic Apr-Oct)
+ const today=new Date().toISOString().slice(0,10),seas={};
+ VD.s.filter(r=>r.pole==vp&&r.volume!=='').forEach(r=>{const y=+r.date.slice(0,4),m=+r.date.slice(5,7),k=vp=='north'&&m>=10?y+1:y;
+  if((vp=='north'?`${k}-04-30`:`${k}-10-31`)>=today)return;
+  if(!seas[k]||+r.volume>seas[k].y)seas[k]={x:decY(r.date),y:+r.volume,u:+r.volume_unc,d:r.date}});
+ const sat=Object.values(seas);
+ const flat=v=>[{x:y0,y:v},{x:x1,y:v}];
+ $('t6').textContent=`${name} sea-ice volume: winter maximum and summer minimum, ${y0}–${last.y}`;
  if(vc)vc.destroy();
  vc=new Chart($('c6'),{type:'line',data:{datasets:[
-   {label:bandLbl,data:hi,borderWidth:0,pointRadius:0,backgroundColor:c+'33',fill:'+1'},
-   {label:'lo',data:lo,borderWidth:0,pointRadius:0},
-   {label:'Satellite: CryoSat-2 + SMOS (weekly, cold season)',data:pts,borderColor:c,backgroundColor:c,borderWidth:1.2,pointRadius:1.5},
-   {label:'Model: GLORYS12 reanalysis (monthly)',data:model,borderColor:THEME.clim,borderWidth:1.3,pointRadius:0}]},
-  options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{legend:{labels:{filter:i=>i.text!=='lo'}},tooltip:{filter:i=>i.dataset.label!=='lo'&&i.dataset.label!==bandLbl,callbacks:{
-    title:t=>{const r=t[0].raw;if(r.d)return r.d;const x=t[0].parsed.x,y=Math.floor(x);return mName(Math.min(12,Math.floor((x-y)*12)+1))+' '+y},
-    label:k=>k.dataset.label.split(':')[0]+': '+k.parsed.y.toFixed(1)+' thousand km³'}}},
-   scales:{x:{type:'linear',min:y0,max:last.y+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},
+   {label:'Monthly values (model)',data:G.map(r=>({x:X(r.y,r.m),y:r.v})),borderColor:'rgba(128,128,128,.35)',borderWidth:1,pointRadius:0,order:9},
+   {label:`Winter maximum (model, usually ${mName(maxM)})`,data:W,borderColor:WC,backgroundColor:WC,borderWidth:2.2,pointRadius:2.5,order:2},
+   {label:`Summer minimum (model, usually ${mName(minM)})`,data:S,borderColor:SC,backgroundColor:SC,borderWidth:2.2,pointRadius:2.5,order:2},
+   {label:'Winter maximum, 1993–2020 average',data:flat(aW),borderColor:WC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
+   {label:'Summer minimum, 1993–2020 average',data:flat(aS),borderColor:SC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
+   {label:'Winter maximum (satellite, CryoSat-2 + SMOS)',data:sat,showLine:false,borderColor:SAT,backgroundColor:SAT,pointStyle:'rectRot',pointRadius:6,order:1}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',intersect:true},
+   plugins:{tooltip:{callbacks:{
+    title:t=>{const r=t[0].raw;if(r.d)return r.d;if(r.yr)return mName(r.m)+' '+r.yr;const x=t[0].parsed.x,y=Math.floor(x);return mName(Math.min(12,Math.floor((x-y)*12)+1))+' '+y},
+    label:k=>k.dataset.label.split(' (')[0]+': '+k.parsed.y.toFixed(1)+(k.raw.u?' ± '+k.raw.u.toFixed(1):'')+' thousand km³'}}},
+   scales:{x:{type:'linear',min:y0,max:x1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},
     y:{min:0,title:{display:true,text:'Thousand km³'},grid:{color:THEME.grid}}}}});
- // sentences: latest model month vs 1993-2020, yearly-average change, satellite vs model
- const same=G.filter(r=>r.m==last.m&&r.y>=1993&&r.y<=2020).map(r=>r.v),avg=same.reduce((a,b)=>a+b,0)/same.length;
- const first=G.find(r=>r.m==last.m);
- const yr={};G.forEach(r=>(yr[r.y]=yr[r.y]||[]).push(r.v));
- const full=Object.keys(yr).map(Number).filter(y=>yr[y].length==12),ym=y=>yr[y].reduce((a,b)=>a+b,0)/12;
- const m5=ys=>ys.reduce((a,y)=>a+ym(y),0)/ys.length,A=full.slice(0,5),B=full.slice(-5);
- const pc=(a,b)=>Math.round(100*(b-a)/a),ch=pc(m5(A),m5(B));
+ // sentences: latest winter maximum and summer minimum vs 1993-2020; satellite vs model
+ const pc=(a,b)=>Math.round(100*(b-a)/a),lw=W[W.length-1],ls=S[S.length-1];
+ const cmp=(p,a)=>`${p.y.toFixed(1)} thousand km³, ${Math.abs(pc(a,p.y))}% ${p.y<a?'below':'above'} the 1993–2020 average of ${a.toFixed(1)}`;
  const mv={};G.forEach(r=>mv[r.d.slice(0,7)]=r.v);
- const rat=pts.filter(p=>p.y!=null&&mv[p.d.slice(0,7)]).map(p=>p.y/mv[p.d.slice(0,7)]).sort((a,b)=>a-b);
+ const rat=VD.s.filter(r=>r.pole==vp&&r.volume!==''&&mv[r.date.slice(0,7)]).map(r=>+r.volume/mv[r.date.slice(0,7)]).sort((a,b)=>a-b);
  const med=rat.length?rat[Math.floor(rat.length/2)]:null;
- const s1=`In ${mName(last.m)} ${last.y} the model puts ${name} sea-ice volume at ${last.v.toFixed(1)} thousand km³, ${Math.abs(pc(avg,last.v))}% ${last.v<avg?'below':'above'} the 1993–2020 average for ${mName(last.m)} (${avg.toFixed(1)}) and ${Math.abs(pc(first.v,last.v))}% ${last.v<first.v?'below':'above'} ${mName(last.m)} ${first.y}.`;
- const s2=` Averaged over the year, volume went from ${m5(A).toFixed(1)} thousand km³ (${A[0]}–${A[A.length-1]}) to ${m5(B).toFixed(1)} (${B[0]}–${B[B.length-1]}), ${ch<0?'a drop of '+(-ch):'an increase of '+ch}%.`;
- const s3=med==null?'':` Where both exist, the satellite value is typically ${Math.round(100*med)}% of the model value${Math.abs(med-1)<=.1?': close agreement for two independent methods.':vp=='south'?'; the gap likely reflects how hard Antarctic thickness is to measure.':'.'}`;
- $('vnote').textContent=s1+s2+s3;
+ $('vnote').textContent=`The ${name} winter maximum of ${lw.yr} (${mName(lw.m)}) was ${cmp(lw,aW)}. The latest summer minimum (${mName(ls.m)} ${ls.yr}) was ${cmp(ls,aS)}.`+
+  (med==null?'':` Where model and satellite overlap, the satellite value is typically ${Math.round(100*med)}% of the model value${Math.abs(med-1)<=.1?': close agreement for two independent methods.':vp=='south'?'; the gap likely reflects how hard Antarctic thickness is to measure.':'.'}`)+
+  ' The faint grey line shows every month, so the seasonal cycle stays visible behind the yearly extremes.';
  $('vbox').classList.remove('hide')}
 document.querySelectorAll('#vh .nb').forEach(b=>b.onclick=()=>{vp=b.dataset.p;vchart()});
 Promise.all(['glorys','cs2smos'].map(k=>fetch(`data/seaice_volume_${k}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
