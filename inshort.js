@@ -51,6 +51,13 @@ window.IN_SHORT = {
     ],
     claims: ['sea-level', 'antarctic-ice'],
   },
+  'slow.html': {
+    text: [
+      'The Atlantic overturning circulation, which carries warmth north towards Europe, averaged {amoc.a12} over the 12 months to {amoc.through}. It varies a lot, and two decades of direct measurements are not yet enough to confirm a long-term weakening, though climate models expect one.',
+      'The Red List Index of extinction risk fell from {rli.first} in {rli.y0} to {rli.now} in {rli.through} ({rli.pct}): on balance, species are moving closer to extinction.',
+    ],
+    claims: ['adapt'],
+  },
   'pdo.html': {
     text: [
       'The Pacific Decadal Oscillation (PDO) is a slow, El Niño-like swing in the North Pacific. In its warm (positive) phase the water along North America runs warm; in its cool (negative) phase the reverse. Phases last years to decades and nudge global temperatures and weather around the Pacific.',
