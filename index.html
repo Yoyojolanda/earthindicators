@@ -42,9 +42,15 @@
 .tile .why{font-size:13px;line-height:1.45;margin:8px 0 6px;padding-top:8px;border-top:1px solid var(--line)}
 .tile .go{font-size:13px;font-weight:600;color:var(--link);margin-top:auto}
 .tile:hover .go{text-decoration:underline}
+.tile.wide{grid-column:1/-1}
+.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 18px;margin:8px 0 2px}
+.mini div{display:flex;flex-direction:column;gap:1px}
+.mini b{font-size:20px;line-height:1.2}
+.mini span{font-size:13px;line-height:1.35}
+.mini small{font-size:11px;color:var(--mut)}
 .foot{margin-top:28px}
 @media (max-width:600px){.lead h1{font-size:26px}.lead p{font-size:15px}}
-@media print{.tiles{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
+@media print{.tiles{grid-template-columns:repeat(3,1fr)}.mini{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
 </style></head><body><main>
 <nav class="nav" id="nav"></nav><script src="site.js"></script>
 <header class="lead">
@@ -92,4 +98,18 @@ function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').t
 
 // numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes
 ['air','sst','ohc','co2','ch4','eei','sl','ice','land','nino','pdo','sun'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
+
+// ---- slow signals: one wide tile with six headline numbers, each with its own date, since they lag months to years
+const SLOW=[
+ ['fossil',r=>[r.now,`fossil CO₂ emitted (${r.ch} on the year before)`]],
+ ['ph',r=>[r.hplus,`more acidity in sea water near Hawaiʻi than in ${r.since}`]],
+ ['amoc',r=>[r.a12,`Atlantic overturning, 12-month average (long-term ${r.mean})`]],
+ ['rli',r=>[r.pct,`Red List Index since ${r.y0}: ${r.vd.toLowerCase()}`]],
+ ['trees',r=>[r.now,'of tree cover lost in a year']],
+ ['blossom',r=>[r.earlier,'earlier cherry blossom in Kyoto than before 1850']]];
+$('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Slow signals</h2><p>Some important measurements come only once a year or less often, months to years after the fact. Each number below says how recent it is.</p><div class="tiles"><a class="tile wide" href="slow.html"><h3>Emissions, ocean acidity, Atlantic currents, species, forests and blossom</h3><div class="mini">`
+ +SLOW.map(([id])=>`<div id="m-${id}"><b>…</b><span>${EI.NAMES[id]}</span><small></small></div>`).join('')
+ +`</div><p class="why">These change slowly and are counted carefully, so they arrive late. Together they show the causes and the slower, longer-lasting effects: what we emit, what the ocean absorbs, and what happens to living things.</p><span class="go">See the slow signals →</span></a></div></section>`);
+SLOW.forEach(([id,f])=>EI.get(id).then(r=>{const [v,l]=f(r),m=$('m-'+id);m.querySelector('b').textContent=v;m.querySelector('span').textContent=l;m.querySelector('small').textContent=`${r.src}, data for ${r.through}`})
+ .catch(e=>{console.error(e);$('m-'+id).querySelector('b').textContent='–'}));
 </script></main></body></html>

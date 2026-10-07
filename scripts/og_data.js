@@ -38,6 +38,22 @@ const PAGES = {
       };
     } catch (e) { console.error(page, 'failed:', e); }
   }
+  // slow signals card: six short numbers, each with its own date (build_og.py draws it separately)
+  const SLOW = [
+    ['fossil',  r => [r.now.replace(' billion tonnes', ''), `billion tonnes of fossil CO₂ emitted in ${r.through}`]],
+    ['ph',      r => [r.hplus, `more acidity in sea water near Hawaiʻi, ${r.since}–${r.through.slice(-4)}`]],
+    ['amoc',    r => [r.a12, `Atlantic overturning (sverdrups), 12 months to ${r.through}`]],
+    ['rli',     r => [r.pct, `Red List Index ${r.y0}–${r.through}: ${r.pct.startsWith('−') ? 'species closer to extinction' : 'no rise in extinction risk'}`]],
+    ['trees',   r => [r.now.replace(' million hectares', ''), `million hectares of tree cover lost in ${r.through}`]],
+    ['blossom', r => [r.earlier, `earlier cherry blossom in Kyoto than before 1850`]],
+  ];
+  const items = [];
+  for (const [id, f] of SLOW) {
+    try { const [big, label] = f(await window.EI.get(id)); items.push({ big, label }); }
+    catch (e) { console.error(id, 'failed:', e); }
+  }
+  if (items.length) out.slow = { title: 'Slow signals', items };
+
   fs.writeFileSync('og/og.json', JSON.stringify(out, null, 1));
   console.log('wrote og/og.json for', Object.keys(out).join(', '));
 })();

@@ -1,7 +1,7 @@
 """Draws the 1200x630 link-preview images (og/*.png) shown when a page is shared on X, Bluesky, etc.
 Live pages use the numbers in og/og.json (made by scripts/og_data.js); the home and claims pages get a fixed card.
 Run from the repo root: python scripts/build_og.py"""
-import json, matplotlib
+import json, textwrap, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
@@ -44,10 +44,27 @@ def fixed(page, title, lines):
     fig.savefig(f"og/{page}.png", dpi=DPI, facecolor="white")
     plt.close(fig)
 
+def slow(d):
+    """Slow signals: a 3 x 2 grid of yearly numbers instead of one number and a sparkline."""
+    fig = frame()
+    fig.text(0.05, 0.725, d["title"], fontsize=40, weight="bold", color=INK)
+    fig.text(0.05, 0.655, "Measured once a year or less often; each figure gives its year", fontsize=19, color=MUTED)
+    for i, it in enumerate(d["items"][:6]):
+        x, y = 0.05 + (i % 3) * 0.31, 0.51 - (i // 3) * 0.225
+        fig.text(x, y, it["big"], fontsize=38, weight="bold", color=ACC if i == 0 else INK)
+        fig.text(x, y - 0.025, "\n".join(textwrap.wrap(it["label"], 30)), fontsize=15, color=MUTED, va="top", linespacing=1.3)
+    fig.text(0.05, 0.08, "Data: Global Carbon Project, Hawaii Ocean Time-series, RAPID, IUCN, Global Forest Watch, Aono", fontsize=15, color=MUTED)
+    fig.text(0.05, 0.035, METHOD, fontsize=13, color=MUTED)
+    fig.savefig("og/slow.png", dpi=DPI, facecolor="white")
+    return fig
+
 if __name__ == "__main__":
     data = json.load(open("og/og.json"))
+    has_slow = "slow" in data
+    if has_slow:
+        plt.close(slow(data.pop("slow")))
     for page, d in data.items():
         live(page, d)
     fixed("index", "Is the climate changing?", "Every major indicator, updated automatically,\nin plain words.")
     fixed("claims", "Common climate claims,\nanswered with the latest data", "From \u201cit's cooling\u201d to \u201cit's too late\u201d:\nshort answers, live numbers, one link per answer.")
-    print("drew", len(data) + 2, "images")
+    print("drew the images:", ", ".join(list(data) + ["index", "claims"] + (["slow"] if has_slow else [])))
