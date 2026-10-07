@@ -230,6 +230,7 @@
         const box = document.createElement('section'); box.className = 'inshort';
         const live = t => t.replace(/\{(\w+\.\w+)\}/g, '<span class="live" data-k="$1">…</span>');
         box.innerHTML = '<h2>In short</h2>' + it.text.map(t => '<p>' + live(t) + '</p>').join('') +
+          (it.units ? '<p class="units"><b>In everyday terms:</b> ' + live(it.units) + '</p>' : '') +
           (it.claims && it.claims.length ? '<div class="rel"><span>Related claims, answered:</span><ul>' + it.claims.map(c => '<li><a href="claims.html#' + c + '">' + (window.CLAIMS[c] || c) + '</a></li>').join('') + '</ul></div>' : '') +
           '<p class="stamp"></p>';
         (document.querySelector('.tools') || nav).after(box);

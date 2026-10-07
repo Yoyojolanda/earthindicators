@@ -260,3 +260,6 @@ html[data-theme="dark"] body::before{opacity:.42;filter:saturate(.7) brightness(
 @media print{.secnav{display:none!important}}
 /* jumping to a section leaves room for the slim header that slides in at the top */
 main section,main .box,main h2,.inshort,.how{scroll-margin-top:72px}
+
+/* "In everyday terms" line in the In short box: what the page's units mean (text in inshort.js) */
+.inshort .units{font-size:13px;color:var(--mut2);border-top:1px solid var(--blueedge);padding-top:8px}
