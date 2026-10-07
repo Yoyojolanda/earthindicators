@@ -175,12 +175,13 @@ const LOAD={
    tile:{v:sg(L.v),l:`PDO index, ${dt}`,s:`12-month average ${sg(a12)}. Beyond ±1 counts as strong.`,spark:run,sparkLabel:`12-month average, ${Math.floor(run[0].x)}–${L.y}`}}}),
 
  // land ice: NASA JPL GRACE/GRACE-FO mass of Greenland and Antarctica (Gt), relative to the first 12 months; 362 Gt = 1 mm of sea level
- land:()=>Promise.all([get('grace_greenland.txt'),get('grace_antarctica.txt')]).then(([g,a])=>{
+ land:()=>Promise.all([get('grace_greenland.txt'),get('grace_antarctica.txt'),get('glaciers_global.csv')]).then(([g,a,w])=>{
   const P=t=>{const R=t.split(/\r?\n/).map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&p[0]>2000&&p[0]<2200&&isFinite(p[1]));const z=mean(R.slice(0,12).map(p=>p[1]));return R.map(p=>({x:p[0],y:p[1]-z}))};
   const G=P(g),A=P(a),T=G.map(p=>{const q=A.find(r=>Math.abs(r.x-p.x)<.02);return q?{x:p.x,y:p.y+q.y}:null}).filter(Boolean);
   const L=T[T.length-1],y=Math.floor(L.x),dt=`${ML[Math.min(11,Math.floor((L.x-y)*12))]} ${y}`,rate=-slope(T),mm=-L.y/362,fmt=n=>Math.round(n).toLocaleString('en-US');
-  return{src:'NASA GRACE',vd:`Losing about ${fmt(rate)} billion tonnes of ice a year`,rate:fmt(rate)+' Gt',mm:mm.toFixed(1)+' mm',gl:fmt(-G[G.length-1].y)+' Gt',an:fmt(-A[A.length-1].y)+' Gt',date:dt,through:dt,
-   tile:{v:'+'+mm.toFixed(1)+' mm',l:`sea-level rise from Greenland and Antarctica since 2002–03, to ${dt}`,s:`Together about ${fmt(rate)} Gt of ice a year. 362 Gt raises the sea by 1 mm.`,spark:T.filter((p,i)=>i%2==0),sparkLabel:`ice mass, ${Math.floor(T[0].x)}–${y}`}}}),
+  const WL=w.trim().split(/\r?\n/).pop().split(','),glac=`${fmt(-+WL[2])} Gt`,gh=WL[1].replace('-','–');
+  return{src:'NASA GRACE, WGMS',glac,gh,vd:`Greenland and Antarctica losing about ${fmt(rate)} billion tonnes of ice a year`,rate:fmt(rate)+' Gt',mm:mm.toFixed(1)+' mm',gl:fmt(-G[G.length-1].y)+' Gt',an:fmt(-A[A.length-1].y)+' Gt',date:dt,through:dt,
+   tile:{v:'+'+mm.toFixed(1)+' mm',l:`sea-level rise from Greenland and Antarctica since 2002–03, to ${dt}`,s:`The two ice sheets: about ${fmt(rate)} Gt a year (362 Gt raises the sea by 1 mm). World glaciers lost ${fmt(-+WL[2])} Gt in ${WL[1].replace('-','–')}.`,spark:T.filter((p,i)=>i%2==0),sparkLabel:`ice mass, ${Math.floor(T[0].x)}–${y}`}}}),
 
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);

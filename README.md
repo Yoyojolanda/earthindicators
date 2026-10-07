@@ -15,6 +15,7 @@ Each page shows one of Earth's vital signs, updated automatically from the agenc
 | Sea level | NASA |
 | Sea ice extent | NSIDC Sea Ice Index |
 | Land ice (Greenland, Antarctica) | NASA JPL GRACE/GRACE-FO |
+| Glaciers | WGMS via Copernicus Climate Data Store |
 | Sea ice volume | Copernicus Marine (Mercator GLORYS12; CryoSat-2 + SMOS) |
 | CO₂ (Mauna Loa) | NOAA Global Monitoring Laboratory |
 | Methane | NOAA Global Monitoring Laboratory |
@@ -38,6 +39,7 @@ The files in `data/` are of two kinds:
 - **Series calculated here** from gridded agency data:
   - `scripts/build_nino34.py`: El Niño and sea surface temperature, area-weighted averages of NOAA OISST v2.1 (`*_daily_sst.csv`, `oisst2.1_*_sst_day.json`).
   - `scripts/build_era5.py` and `build_era5_regions.py`: air temperature from Copernicus ERA5 (`era5_*`). In `era5_t2_global_daily.csv` the `source` column marks each day as Copernicus's published value (`c3s`) or calculated here (`cds`).
+  - `scripts/build_glaciers.py`: world glacier mass change per year (`glaciers_global.csv`), added up from the WGMS/Copernicus grid.
   - `scripts/build_seaice_volume.py`: sea ice volume for both poles from Copernicus Marine thickness and concentration grids, model (`seaice_volume_glorys.csv`) and satellite (`seaice_volume_cs2smos.csv`).
   - `scripts/build_ceres.py`: NASA CERES EBAF-TOA Ed4.2.1 global monthly means (`ceres_ebaf_global.csv`), taken from the file's own global-mean variables.
 

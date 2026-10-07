@@ -46,8 +46,8 @@ window.IN_SHORT = {
   },
   'land-ice.html': {
     text: [
-      'Greenland and Antarctica hold most of the world\'s fresh water as ice. Since 2002 the GRACE satellites have weighed them every month by measuring their pull on gravity. Unlike sea ice, ice that melts or slides off land adds water to the ocean and raises sea level.',
-      'Latest ({land.date}): {land.vd}. Since 2002–03 Greenland has lost about {land.gl} and Antarctica about {land.an}, together adding {land.mm} to global sea level.',
+      'Greenland and Antarctica hold most of the world\'s fresh water as ice; mountain glaciers hold far less, but react quickly to warming. Since 2002 the GRACE satellites have weighed the two ice sheets every month; glaciers are measured on the ground and from space once a year. Unlike sea ice, ice that melts or slides off land adds water to the ocean and raises sea level.',
+      'Latest ({land.date}): {land.vd}. Since 2002–03 Greenland has lost about {land.gl} and Antarctica about {land.an}, together adding {land.mm} to global sea level. The world\'s glaciers lost {land.glac} in the hydrological year {land.gh}.',
     ],
     claims: ['sea-level', 'antarctic-ice'],
   },
