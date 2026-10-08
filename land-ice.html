@@ -182,7 +182,11 @@ function ice(kT,aT,eT){
  ].map(x=>`<li>${x}</li>`).join('');
  $('gl').classList.remove('hide');
  iceCharts.splice(0).forEach(c=>c.destroy());
- const xs={type:'linear',min:-2000,max:Math.ceil((EL.x+5)/10)*10,ticks:{autoSkip:true,maxRotation:0,callback:v=>v===0?'0':yr(v)},afterBuildTicks:ax=>{ax.ticks=[-2000,-1500,-1000,-500,0,500,1000,1500,2000].map(value=>({value}))},grid:{display:false}};
+ // each chart gets its own x axis settings (zooming changes them), with round-year ticks that follow the zoom
+ const XMAX=Math.ceil((EL.x+5)/10)*10,STEPS=[1,2,5,10,20,25,50,100,200,250,500,1000];
+ const xs=()=>({type:'linear',min:-2000,max:XMAX,ticks:{autoSkip:false,maxRotation:0,callback:v=>v===0?'0':yr(v)},
+  afterBuildTicks:ax=>{const st=STEPS.find(s=>(ax.max-ax.min)/s<=(innerWidth<600?5:9))||1000,t=[];for(let v=Math.ceil(ax.min/st)*st;v<=ax.max;v+=st)t.push({value:v});ax.ticks=t},
+  grid:{display:false}});
  const tipT={title:t=>yr(Math.round(t[0].parsed.x))};
  iceCharts.push(new Chart($('c5'),{type:'line',data:{datasets:[
    {label:'Uncertainty (1σ)',data:K.map(p=>({x:p.x,y:p.y+p.s})),borderWidth:0,pointRadius:0,backgroundColor:THEME.band1,fill:'+1',order:9},
@@ -190,17 +194,17 @@ function ice(kT,aT,eT){
    {label:'Ice core (Kobashi et al. 2011)',data:K,borderColor:THEME.deep2,borderWidth:1.2,pointRadius:0},
    {label:'Measured, single years (ERA5)',data:E,showLine:false,pointRadius:2,pointBackgroundColor:'rgba(208,0,0,.45)',borderColor:'rgba(208,0,0,.45)'},
    {label:'Measured, 10-year average',data:E10,borderColor:COL.t,borderWidth:3,pointRadius:0},
-   {label:`Level of the last 10 years (${c1(cur)} °C)`,data:[{x:-2000,y:cur},{x:xs.max,y:cur}],borderColor:COL.t,borderWidth:1,borderDash:[5,4],pointRadius:0}]},
+   {label:`Level of the last 10 years (${c1(cur)} °C)`,data:[{x:-2000,y:cur},{x:XMAX,y:cur}],borderColor:COL.t,borderWidth:1,borderDash:[5,4],pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{legend:{labels:{filter:i=>!i.text.startsWith('_')}},tooltip:{filter:c=>c.datasetIndex>=2&&c.datasetIndex<=4,callbacks:{...tipT,label:c=>c.dataset.label+': '+c1(c.parsed.y)+' °C'}}},
-   scales:{x:xs,y:{title:{display:true,text:'°C (snow temperature at the drill site)'}}}}}));
- const gap={id:'gap',beforeDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,x0=x.getPixelForValue(A[A.length-1].x);ctx.save();
+   scales:{x:xs(),y:{title:{display:true,text:'°C (snow temperature at the drill site)'}}}}}));
+ const gap={id:'gap',beforeDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,x0=Math.max(a.left,x.getPixelForValue(A[A.length-1].x));if(x0>=a.right)return;ctx.save();   // kept inside the plot when zoomed
   ctx.fillStyle=THEME.dark?'rgba(255,90,80,.16)':'rgba(208,0,0,.09)';ctx.fillRect(x0,a.top,a.right-x0,a.bottom-a.top);
-  ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';ctx.textAlign='right';ctx.fillText('not in this',a.right-4,a.top+14);ctx.fillText('record',a.right-4,a.top+29);ctx.restore()}};
+  if(a.right-x0>60){ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';ctx.textAlign='right';ctx.fillText('not in this',a.right-4,a.top+14);ctx.fillText('record',a.right-4,a.top+29)}ctx.restore()}};
  iceCharts.push(new Chart($('c6'),{type:'line',data:{datasets:[{label:'Alley (2000), oxygen isotopes',data:A,borderColor:THEME.ink,borderWidth:1.5,pointRadius:0}]},plugins:[gap],
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{legend:{display:false},tooltip:{callbacks:{...tipT,label:c=>c1(c.parsed.y)+' °C'}}},
-   scales:{x:xs,y:{title:{display:true,text:'°C (as published)'}}}}}));
+   scales:{x:xs(),y:{title:{display:true,text:'°C (as published)'}}}}}));
  $('exp').disabled=false}
 Promise.all(['gisp2_kobashi2011.csv','gisp2_alley2000.csv','greenland_summit_era5.csv'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([k,a,e])=>ice(k,a,e))
  .catch(e=>{console.error(e);$('gl-err').textContent='Could not load the ice-core data. Please try again later.'});

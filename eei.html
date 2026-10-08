@@ -66,7 +66,7 @@ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
 
 function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
 const grid={color:THEME.grid};
-const xYears=labels=>({ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>{const[y,m]=labels[i].split('-');return m=='01'&&+y%2==0?y:''}},grid:{display:false}});
+const xYears=labels=>({ticks:{maxRotation:0,autoSkip:false,callback:v=>{const[y,m]=labels[v].split('-');return m=='01'&&+y%2==0?y:''}},grid:{display:false}});
 
 // left-to-right gradient, soft white -> red
 function gradFill(c){const{ctx,chartArea:a}=c.chart;if(!a)return'rgba(208,0,0,.25)';

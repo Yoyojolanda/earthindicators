@@ -117,7 +117,7 @@ function run(t){
  charts.push(freeze(new Chart($('c2'),{type:'line',data:{labels:[...Array(NN).keys()],datasets:ds2},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
    plugins:{tooltip:{callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' ppm')}}},
-   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
+   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
  // 3. annual growth
  const ys=Object.keys(R.growth).map(Number);
  charts.push(new Chart($('c3'),{type:'bar',data:{labels:ys.map(String),datasets:[{label:'Annual growth',data:ys.map(y=>R.growth[y].g),

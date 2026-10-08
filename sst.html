@@ -117,7 +117,7 @@ function run(raw){
  if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
  c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>/^\d{4}$/.test(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min','90th percentile','10th percentile',String(cur),...Object.keys(HI)].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
-  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
+  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  const bc=prior.map(y=>HI[y]||'#8fa9c4');
  c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:[...prior,cur],datasets:[{data:[...at,now],backgroundColor:[...bc,'#d00000']}]},options:{animation:false,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C'}}},scales:{x:{ticks:{color:tc,maxRotation:90,autoSkip:true},grid:{display:false}},y:{ticks:{color:tc},grid:{color:THEME.grid}}}}});
@@ -136,7 +136,7 @@ function run(raw){
  const shown=['1991–2020 mean',String(cur),...Object.keys(HI)];
  c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min',...shown].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
-  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:(v,i)=>MS.includes(i)?ML[MS.indexOf(i)]:''},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
+  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  freeze(c1);freeze(c3);
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize()}));

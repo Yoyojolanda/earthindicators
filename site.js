@@ -403,10 +403,31 @@
         b = document.createElement('button'); b.type = 'button'; b.className = 'nb zreset'; b.textContent = 'Reset zoom';
         b.onclick = () => ch.resetZoom(); wrap.appendChild(b);
       }
-      b.hidden = !ch.isZoomedOrPanned();
+      const zoomed = ch.isZoomedOrPanned();
+      b.hidden = !zoomed;
+      // a fixed tick step (every 5 years, say) leaves a zoomed-in axis with one tick or none, and Chart.js would label the
+      // zoomed edges with long decimals. While zoomed, ticks are put at round values inside the visible range (whole
+      // numbers only if the page's step was whole); after a reset the page's own step is used again.
+      const sx = ch.options.scales && ch.options.scales.x;
+      if (sx && sx.ticks && (sx.ticks.stepSize != null || STEP.has(ch))) {
+        if (!STEP.has(ch)) STEP.set(ch, sx.ticks.stepSize);
+        const st = STEP.get(ch);
+        if (zoomed !== !!sx.afterBuildTicks) {
+          sx.ticks.stepSize = zoomed ? undefined : st;
+          sx.afterBuildTicks = zoomed ? ax => {
+            const raw = (ax.max - ax.min) / (innerWidth < 600 ? 5 : 9), p = Math.pow(10, Math.floor(Math.log10(raw)));
+            let step = [1, 2, 5, 10].map(m => m * p).find(v => v >= raw);
+            if (st >= 1) step = Math.max(1, Math.round(step));
+            const t = []; for (let v = Math.ceil(ax.min / step) * step; v <= ax.max + 1e-9; v += step) t.push({ value: +v.toFixed(6) });
+            ax.ticks = t;
+          } : undefined;
+          ch.update('none');
+        }
+      }
     };
+    const STEP = new WeakMap();
     Chart.helpers.merge(Chart.defaults.plugins.zoom, {
-      limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } },
+      limits: { x: { min: 'original', max: 'original', minRange: 2 }, y: { min: 'original', max: 'original' } },   // x: at least 2 units (years, months, days)
       zoom: { mode: touch ? 'x' : 'xy', wheel: { enabled: false }, pinch: { enabled: true },
         drag: { enabled: true, threshold: 8, backgroundColor: 'rgba(31,111,181,.12)', borderColor: 'rgba(31,111,181,.7)', borderWidth: 1 },
         onZoomComplete: zoomState },
