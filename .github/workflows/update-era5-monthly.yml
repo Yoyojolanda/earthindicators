@@ -34,6 +34,10 @@ jobs:
           python -u scripts/build_era5_monthly.py
           rm -f ~/.cdsapirc
 
+      - name: Greenland summit series for the ice-core chart (cut from the yearly maps above)
+        continue-on-error: true
+        run: python -u scripts/build_greenland_icecore.py
+
       - name: Commit changes
         if: always()
         run: |
