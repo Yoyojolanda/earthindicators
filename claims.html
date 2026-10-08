@@ -481,7 +481,7 @@
 <script>
 // ---- search: narrows the list to the answers that contain every word typed (claim, answer, evidence and the extra
 //      words in data-also, for words people use that the text doesn't). While searching, all groups show; clearing
-//      the box goes back to the tabs. claims.html?q=word opens the page already searched. Enter opens the first match.
+//      the box goes back to the tabs. Matching answers are shown collapsed. claims.html?q=word opens the page already searched. Enter opens the first match.
 (function(){
  const box=document.getElementById('q'),x=document.getElementById('qx'),st=document.getElementById('qst'),
   list=document.querySelector('.claims'),tabs=document.getElementById('tabs'),D=[...document.querySelectorAll('details.claim')];
@@ -491,6 +491,7 @@
   x.hidden=!box.value;list.classList.toggle('searching',!!words.length);tabs.classList.toggle('searching',!!words.length);
   if(push){const u=new URL(location.href);if(words.length)u.searchParams.set('q',box.value);else u.searchParams.delete('q');history.replaceState(null,'',u)}
   if(!words.length){st.textContent='';D.forEach(d=>d.classList.remove('miss'));document.querySelectorAll('.grp').forEach(g=>g.classList.remove('none'));return []}
+  D.forEach(d=>d.open=false);                       // results start collapsed: just the list of matching claims
   const hit=D.filter(d=>{const h=norm(d.textContent+' '+(d.dataset.also||''));const m=words.every(w=>h.includes(w));d.classList.toggle('miss',!m);return m});
   document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('none',!g.querySelector('details.claim:not(.miss)')));
   st.textContent=hit.length?(hit.length===1?'1 answer matches':hit.length+' answers match')+(hit.length<=3?'; press Enter to open the first':''):'No answer matches. Try fewer or other words.';
