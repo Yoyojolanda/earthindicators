@@ -30,6 +30,20 @@ window.CLAIMS = {
   'adapt':            '"Plants and animals will adapt"',
   'too-late':         '"It\'s too late, so nothing matters"',
   'weather-blame':    '"Every bit of weather gets blamed on climate change"',
+  'ice-age-1970s':     '"In the 1970s they predicted an ice age"',
+  'no-consensus':      '"There is no real consensus"',
+  'predictions-fail':  '"The experts\' predictions always fail"',
+  'how-much-human':    '"Scientists disagree on how much is human"',
+  'models-unreliable': '"Models can\'t tell what humans do"',
+  'little-ice-age':    '"It\'s just the recovery from the Little Ice Age"',
+  'co2-not-ours':      '"The CO₂ rise isn\'t from us" or "volcanoes emit more"',
+  'cows':              '"Now they blame cow farts"',
+  'medieval-warm':     '"The Medieval Warm Period was warmer"',
+  'solar-heat':        '"Solar farms cause the heat"',
+  'wildfires':         '"Wildfires are natural, or bad forest management"',
+  'emissions-falling': '"Emissions are already falling"',
+  'fewer-affected':    '"Fewer people are affected by extreme weather"',
+  'god-in-control':    '"God will take care of it"',
 };
 
 window.IN_SHORT = {
