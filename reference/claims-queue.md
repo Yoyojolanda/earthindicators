@@ -6,7 +6,14 @@ claim can't be answered without them. Covered claims get extra search words (dat
 
 ## To build
 
-(empty)
+| # | Claim (general form) | Heard as | Group |
+|---|---|---|---|
+| O | "Geothermal heat and undersea volcanoes are melting Antarctica, not global warming." | "Geothermal and underwater volcanic heat is melting Antarctic glaciers, not atmospheric global warming" | not us |
+| P | "The recent record heat came from the Hunga Tonga eruption's water vapour, not from us." | "Recent record-breaking global temperatures were caused by volcanic water vapor" | not us |
+
+Search words only (already answered): "a single eruption releases more CO₂ than all human activity / cars in history" -> co2-not-ours
+(single eruption, pinatubo, cars); "natural forces easily override human impacts; models can't handle natural variability" ->
+how-much-human, models-unreliable, natural-cycles (override, natural variability).
 
 ## Candidates (common claims we haven't been sent yet; move up to "To build" when chosen)
 
