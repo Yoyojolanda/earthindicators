@@ -48,6 +48,7 @@
 .slowgrid b{font-size:20px;line-height:1.2}
 .slowgrid span{font-size:13px;line-height:1.35}
 .slowgrid small{font-size:11px;color:var(--mut)}
+.slowgrid .mspark{position:relative;height:34px;margin:6px 0 0;margin-top:auto;padding-top:6px}   /* at the bottom of each cell, so a row's sparklines line up */
 .foot{margin-top:28px}
 @media (max-width:600px){.lead h1{font-size:26px}.lead p{font-size:15px}}
 @media print{.tiles{grid-template-columns:repeat(3,1fr)}.slowgrid{grid-template-columns:repeat(3,1fr)}.tile{break-inside:avoid}.grp{break-inside:avoid}}
@@ -94,6 +95,12 @@ function fill(id,{vd,v,l,s,through,spark,sparkLabel,bars}){
    :{datasets:[{data:P,borderColor:'#d00000',borderWidth:1.6,pointRadius:0,fill:true,backgroundColor:'rgba(208,0,0,.08)'}]},
   options:{animation:false,maintainAspectRatio:false,parsing:bars?true:false,events:[],plugins:{legend:{display:false},tooltip:{enabled:false}},
    scales:{x:bars?{display:false}:{type:'linear',display:false,min:P[0].x,max:P[P.length-1].x},y:{display:false}}}}))}
+// small sparkline in a slow-signals cell (same look as the tiles above, a bit lower)
+function spark(c,S,bars){const P=S.filter(p=>p.y!=null&&isFinite(p.y));chartReady.then(()=>new Chart(c,{type:bars?'bar':'line',
+ data:bars?{labels:P.map(p=>p.x),datasets:[{data:P.map(p=>p.y),backgroundColor:P.map((p,i)=>i==P.length-1?'#d00000':THEME.thin),barPercentage:1,categoryPercentage:.85}]}
+  :{datasets:[{data:P,borderColor:'#d00000',borderWidth:1.4,pointRadius:0,fill:true,backgroundColor:'rgba(208,0,0,.08)'}]},
+ options:{animation:false,maintainAspectRatio:false,parsing:bars?true:false,events:[],plugins:{legend:{display:false},tooltip:{enabled:false}},
+  scales:{x:bars?{display:false}:{type:'linear',display:false,min:P[0].x,max:P[P.length-1].x},y:{display:false}}}}))}
 function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').textContent='Data unavailable right now';t.querySelector('.num').textContent='The full page may still have the latest values.'}
 
 // numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes
@@ -108,8 +115,8 @@ const SLOW=[
  ['trees',r=>[r.now,'of tree cover lost in a year']],
  ['blossom',r=>[r.earlier,'earlier cherry blossom in Kyoto than before 1850']]];
 $('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Slow signals</h2><p>Some important measurements come only once a year or less often, months to years after the fact.<br>Each number below says how recent it is.</p><div class="tiles"><a class="tile wide" href="slow.html"><h3>Emissions, ocean acidity, Atlantic currents, species, forests and blossom</h3><div class="slowgrid">`
- +SLOW.map(([id])=>`<div id="m-${id}"><b>…</b><span>${EI.NAMES[id]}</span><small></small></div>`).join('')
+ +SLOW.map(([id])=>`<div id="m-${id}"><b>…</b><span>${EI.NAMES[id]}</span><small></small><div class="mspark"><canvas></canvas></div></div>`).join('')
  +`</div><p class="why">These change slowly and are counted carefully, so they arrive late. Together they show the causes and the slower, longer-lasting effects: what we emit, what the ocean absorbs, and what happens to living things.</p><span class="go">See the slow signals →</span></a></div></section>`);
-SLOW.forEach(([id,f])=>EI.get(id).then(r=>{const [v,l]=f(r),m=$('m-'+id);m.querySelector('b').textContent=v;m.querySelector('span').textContent=l;m.querySelector('small').textContent=`${r.src}, data for ${r.through}`})
+SLOW.forEach(([id,f])=>EI.get(id).then(r=>{const [v,l]=f(r),m=$('m-'+id);m.querySelector('b').textContent=v;m.querySelector('span').textContent=l;m.querySelector('small').textContent=`${r.src}, data for ${r.through}`;if(r.spark&&r.spark.length>2)spark(m.querySelector('canvas'),r.spark,r.bars)})
  .catch(e=>{console.error(e);$('m-'+id).querySelector('b').textContent='–'}));
 </script></main></body></html>

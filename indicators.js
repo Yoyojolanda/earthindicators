@@ -20,6 +20,7 @@ const rankTxt=(n,first,other)=>n==1?first+' on record':ord(n)+' '+other+' on rec
 // or a request that lands while GitHub Pages is publishing a new version, shouldn't leave a number missing
 const get=(f,n=0)=>fetch('data/'+f,n?{cache:'no-store'}:{}).then(r=>{if(!r.ok)throw new Error(f+' '+r.status);return r.text()})
  .catch(e=>{if(n>=2)throw e;return new Promise(ok=>setTimeout(ok,n?4000:1500)).then(()=>get(f,n+1))});
+const yearly=(R,n)=>{const g={};R.forEach(r=>(g[r.y]=g[r.y]||[]).push(r.v));return Object.keys(g).filter(y=>g[y].length>=n).map(y=>({x:+y,y:mean(g[y])}))};   // slow-signal sparklines
 const lines=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*(#|HDR)/.test(l));
 
 // daily JSON files: one array per year plus a "1991-2020" climatology
@@ -189,21 +190,23 @@ const LOAD={
  // slow signals: RAPID AMOC at 26.5N (monthly, released every 1-2 years) and the world Red List Index (yearly)
  amoc:()=>get('amoc_rapid_monthly.csv').then(t=>{const M=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({m:p[0],v:+p[1]}));
   const L=M[M.length-1],dt=`${ML[+L.m.slice(5,7)-1]} ${L.m.slice(0,4)}`,a12=mean(M.slice(-12).map(r=>r.v)),all=mean(M.map(r=>r.v));
-  return{src:'RAPID 26°N array',vd:`Atlantic overturning averaged ${a12.toFixed(1)} Sv over the 12 months to ${dt}`,a12:a12.toFixed(1)+' Sv',mean:all.toFixed(1)+' Sv',y0:M[0].m.slice(0,4),date:dt,through:dt}}),
+  return{src:'RAPID 26°N array',vd:`Atlantic overturning averaged ${a12.toFixed(1)} Sv over the 12 months to ${dt}`,a12:a12.toFixed(1)+' Sv',mean:all.toFixed(1)+' Sv',y0:M[0].m.slice(0,4),date:dt,through:dt,spark:yearly(M.map(r=>({y:+r.m.slice(0,4),v:r.v})),10)}}),
  fossil:()=>get('fossil_co2_global.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:+p[1]/1000}));
   const L=Y[Y.length-1],P=Y[Y.length-2],ch=(L.t-P.t)/P.t*100;
-  return{src:'Global Carbon Project',vd:`Fossil CO₂ emissions ${ch>=0?'rose':'fell'} ${Math.abs(ch).toFixed(1)}% in ${L.y}`,now:L.t.toFixed(1)+' billion tonnes',ch:(ch>=0?'+':'−')+Math.abs(ch).toFixed(1)+'%',date:L.y,through:L.y}}),
+  return{src:'Global Carbon Project',vd:`Fossil CO₂ emissions ${ch>=0?'rose':'fell'} ${Math.abs(ch).toFixed(1)}% in ${L.y}`,now:L.t.toFixed(1)+' billion tonnes',ch:(ch>=0?'+':'−')+Math.abs(ch).toFixed(1)+'%',date:L.y,through:L.y,
+   spark:Y.filter(r=>+r.y>=1950).map(r=>({x:+r.y,y:r.t}))}}),
  ph:()=>get('hot_surface_ph.csv').then(t=>{const D=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[1]!=='').map(p=>{const [y,m]=p[0].split('-').map(Number);return{x:y+(m-.5)/12,y:+p[1],d:p[0]}});
   const b=slope(D),L=D[D.length-1],dpH=b*(L.x-D[0].x),dt=`${ML[+L.d.slice(5,7)-1]} ${L.d.slice(0,4)}`;
-  return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt}}),
+  return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt,spark:yearly(D.map(p=>({y:Math.floor(p.x),v:p.y})),4)}}),
  trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:(+p[1]||0)/1e6}));
-  const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y}}),
+  const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y,spark:R.map(r=>({x:+r.y,y:r.t})),bars:true}}),
  blossom:()=>get('kyoto_cherry_blossom.csv').then(t=>{const B=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],d:p[1],n:+p[2]}));
   const L=B[B.length-1],o=mean(B.filter(r=>r.y<1850).map(r=>r.n)),n10=mean(B.slice(-10).map(r=>r.n)),e=Math.round(o-n10);
-  return{src:'Aono / GMU cherry blossom data',vd:`Kyoto's cherry trees now bloom about ${e} days earlier than before 1850`,earlier:e+' days',date:L.y,through:String(L.y)}}),
+  return{src:'Aono / GMU cherry blossom data',vd:`Kyoto's cherry trees now bloom about ${e} days earlier than before 1850`,earlier:e+' days',date:L.y,through:String(L.y),
+   spark:[...Array(Math.floor((L.y-1400)/10)+1).keys()].map(k=>{const c=1400+k*10,w=B.filter(r=>Math.abs(r.y-c)<=25);return w.length>=10?{x:c,y:mean(w.map(r=>r.n))}:null}).filter(Boolean)}}),
  rli:()=>get('redlist_index_world.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],v:+p[1]}));
   const F=Y[0],L=Y[Y.length-1],pct=(L.v-F.v)/F.v*100;
-  return{src:'IUCN and BirdLife (UN SDG database)',vd:pct<0?'Species are, on balance, moving closer to extinction':'No overall increase in extinction risk',now:L.v.toFixed(3),first:F.v.toFixed(3),y0:F.y,pct:(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',date:L.y,through:L.y}}),
+  return{src:'IUCN and BirdLife (UN SDG database)',vd:pct<0?'Species are, on balance, moving closer to extinction':'No overall increase in extinction risk',now:L.v.toFixed(3),first:F.v.toFixed(3),y0:F.y,pct:(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',date:L.y,through:L.y,spark:Y.map(r=>({x:+r.y,y:r.v}))}}),
 
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);
