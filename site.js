@@ -385,8 +385,50 @@
     },
     resize(ch, args) { rotate(ch, args.size.width); },
     afterUpdate: renderLegend,
+    afterInit(ch) { if (ch.resetZoom) ch.canvas.addEventListener('dblclick', () => ch.resetZoom()); },
     afterDestroy(ch) { const st = LG.get(ch); if (st) { st.box.remove(); LG.delete(ch); } }
   });
+
+  // ---- zoom: drag a rectangle with the mouse, or pinch with two fingers on a phone or tablet. Shift-drag (mouse) or a
+  //      sideways swipe (touch) moves a zoomed chart; double-click or the "Reset zoom" button shows the whole chart again.
+  //      Needs hammer.js and chartjs-plugin-zoom, loaded right after Chart.js (not on the overview, whose charts are static).
+  //      On touch screens the chart's vertical axis stays as it is, so a pinch only stretches time.
+  const touch = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  if (window.ChartZoom) {
+    if (window.Hammer) Hammer.defaults.touchAction = 'pan-y';      // an up-and-down swipe over a chart still scrolls the page
+    const zoomState = ({ chart: ch }) => {                         // show "Reset zoom" only while the chart is zoomed or moved
+      const wrap = ch.canvas.parentNode;
+      let b = wrap.querySelector(':scope > .zreset');
+      if (!b) {
+        b = document.createElement('button'); b.type = 'button'; b.className = 'nb zreset'; b.textContent = 'Reset zoom';
+        b.onclick = () => ch.resetZoom(); wrap.appendChild(b);
+      }
+      b.hidden = !ch.isZoomedOrPanned();
+    };
+    Chart.helpers.merge(Chart.defaults.plugins.zoom, {
+      limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } },
+      zoom: { mode: touch ? 'x' : 'xy', wheel: { enabled: false }, pinch: { enabled: true },
+        drag: { enabled: true, threshold: 8, backgroundColor: 'rgba(31,111,181,.12)', borderColor: 'rgba(31,111,181,.7)', borderWidth: 1 },
+        onZoomComplete: zoomState },
+      pan: { enabled: true, mode: touch ? 'x' : 'xy', modifierKey: 'shift', threshold: 10, onPanComplete: zoomState }
+    });
+    const addHint = () => document.querySelectorAll('.hint').forEach(h => h.insertAdjacentText('beforeend', touch
+      ? ' Tap a chart to see its values; pinch to zoom in.'
+      : ' Drag across a chart to zoom in, shift-drag to move it, double-click to zoom out.'));
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addHint); else addHint();
+  }
+
+  // ---- touch screens: values appear on a tap, not whenever a finger slides over a chart while scrolling,
+  //      and the tooltip goes away when the page scrolls or the reader taps somewhere else
+  if (touch && window.Chart) {
+    Chart.defaults.events = ['click'];
+    const clear = () => Object.values(Chart.instances).forEach(ch => {
+      if (!ch.tooltip || !ch.tooltip.getActiveElements().length) return;
+      ch.setActiveElements([]); ch.tooltip.setActiveElements([], { x: 0, y: 0 }); ch.update('none');
+    });
+    window.addEventListener('scroll', clear, { passive: true });
+    document.addEventListener('touchstart', e => { if (!(e.target instanceof HTMLCanvasElement)) clear(); }, { passive: true });
+  }
 
   // ---- JPG export of several charts with their titles and legends
   // sections: [[chart, titleElementId, showBandKey], ...]
