@@ -439,9 +439,10 @@ let wasOpen=[];
 window.addEventListener('beforeprint',()=>{const D=[...document.querySelectorAll('details.claim')];wasOpen=D.map(d=>d.open);D.forEach(d=>d.open=true)});
 window.addEventListener('afterprint',()=>document.querySelectorAll('details.claim').forEach((d,i)=>d.open=!!wasOpen[i]));
 
-// ---- copy-link buttons
+// ---- copy-link buttons: they copy c/<id>.html, a share link with this answer's own preview card
+//      (X and others ignore the #part of a link); it forwards readers to claims.html#<id>. Made by scripts/build_claim_cards.py
 document.querySelectorAll('.claim').forEach(s=>{const b=s.querySelector('.cp');b.onclick=()=>{
- const url=location.origin+location.pathname+'#'+s.id,done=()=>{b.textContent='Link copied';setTimeout(()=>b.textContent='Copy link to this answer',2000)};
+ const url=new URL('c/'+s.id+'.html',location.href).href,done=()=>{b.textContent='Link copied';setTimeout(()=>b.textContent='Copy link to this answer',2000)};
  if(navigator.clipboard)navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url));else prompt('Copy this link:',url)}});
 
 // ---- live numbers come from indicators.js (shared with the front page and the "In short" boxes)
