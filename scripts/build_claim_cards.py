@@ -31,7 +31,7 @@ def short_answer(ans):
 
 def claims():
     s = open("claims.html", encoding="utf-8").read()
-    pat = re.compile(r'<details class="claim" id="([^"]+)">\s*<summary><h3 class="ct">(.*?)</h3></summary>\s*'
+    pat = re.compile(r'<details class="claim" id="([^"]+)"[^>]*>\s*<summary><h3 class="ct">(.*?)</h3></summary>\s*'
                      r'<div class="body">\s*<p class="ans">(.*?)</p>', re.S)
     out = []
     for cid, head, ans in pat.findall(s):

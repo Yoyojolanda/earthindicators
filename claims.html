@@ -72,6 +72,16 @@
 @media (max-width:600px){.lead h1{font-size:24px}.claim summary{padding:12px 12px}.claim .body{padding:0 12px 14px}.claim h3.ct{font-size:17px}.claim .ans{font-size:16px}}
 @media (prefers-reduced-motion:reduce){.claim summary::after{transition:none}}
 @media print{.tabs{display:none}.claims{background:none;border:0;padding:0}.bar .nb{display:none}.claim{break-inside:avoid}.claim summary::after{display:none}}
+.find{max-width:50rem;margin:16px 0 0;position:relative}
+.find input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 38px 10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit}
+.find input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.find .x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;border-radius:6px}
+.find .x:hover{color:var(--acc)}
+.find .st{font-size:13px;color:var(--mut);margin:6px 2px 0;min-height:1.2em}
+@media screen{.claims.searching .grp{display:block}.claims.searching .grp>h2{display:block;font-size:15px;color:var(--mut);margin:14px 0 6px}
+ .claims.searching .grp>.gi,.claims.searching .grp.none,.claims.searching .claim.miss{display:none}}
+.tabs.searching button{opacity:.55}
+@media print{.find{display:none}}
 </style></head><body><main>
 <nav class="nav" id="nav"></nav><script src="site.js"></script>
 <header class="lead">
@@ -80,12 +90,17 @@
 <p>The arguments tend to come in a sequence: first that it isn't happening, then that it isn't us, then that it isn't bad, and finally that it's too late to bother. The answers are grouped the same way, one tab per step.</p>
 <p class="sub">Numbers on this page update automatically. Each one states how recent it is.</p>
 </header>
+<div class="find" role="search">
+<input type="search" id="q" placeholder="Search the answers, e.g. glacier, sun, 1998, scam" aria-label="Search the answers" autocomplete="off" spellcheck="false">
+<button type="button" class="x" id="qx" aria-label="Clear search" hidden>×</button>
+<p class="st" id="qst" aria-live="polite"></p>
+</div>
 <div class="tabs" role="tablist" aria-label="Groups of claims" id="tabs"></div>
 <div class="claims">
 <section class="grp" id="not-happening">
 <h2>“It's not happening”</h2>
 <p class="gi">The first line of argument: the warming isn't real, or the measurements can't be trusted.</p>
-<details class="claim" id="cooling">
+<details class="claim" id="cooling" data-also="cold snow winter freezing ice age record cold">
 <summary><h3 class="ct"><q>It's freezing here. So much for global warming.</q> Or: <q>It's cooling.</q></h3></summary>
 <div class="body">
 <p class="ans">A cold day, or even a cold winter, is weather in one place. The planet as a whole keeps warming, and cold snaps in one region often come with unusual warmth somewhere else.</p>
@@ -101,7 +116,7 @@
 </div>
 </details>
 
-<details class="claim" id="weather-blame">
+<details class="claim" id="weather-blame" data-also="rain storm hurricane flood extreme weather attribution">
 <summary><h3 class="ct"><q>It rained this weekend. Was that climate change too?</q> Or: <q>Every bit of weather gets blamed on climate change.</q></h3></summary>
 <div class="body">
 <p class="ans">A rainy weekend is weather. Climate change doesn't decide whether it rains; it changes the odds, and how hard it comes down. Scientists test extreme events one by one, and sometimes the answer is "no clear link".</p>
@@ -117,7 +132,7 @@
 </div>
 </details>
 
-<details class="claim" id="stopped-1998">
+<details class="claim" id="stopped-1998" data-also="pause hiatus no warming flat">
 <summary><h3 class="ct"><q>Warming stopped in 1998.</q></h3></summary>
 <div class="body">
 <p class="ans">1998 was a spike caused by a very strong El Niño. Starting a trend line at a spike makes the next few years look flat. They weren't flat for long: every year since <span class="live" data-k="air.since">…</span> has been warmer than 1998.</p>
@@ -132,7 +147,7 @@
 </div>
 </details>
 
-<details class="claim" id="records-short">
+<details class="claim" id="records-short" data-also="thermometers 1850 short record patchy">
 <summary><h3 class="ct"><q>The records are too short or too patchy to mean anything.</q></h3></summary>
 <div class="body">
 <p class="ans">Thermometer records go back to the 1850s, and records built by different teams, with different methods and instruments, show the same warming. The charts on this site start later only because they use the most complete modern data.</p>
@@ -150,7 +165,7 @@
 </div>
 </details>
 
-<details class="claim" id="urban-heat">
+<details class="claim" id="urban-heat" data-also="uhi city cities stations asphalt airports">
 <summary><h3 class="ct"><q>It's just cities. Thermometers got surrounded by asphalt.</q></h3></summary>
 <div class="body">
 <p class="ans">Cities are warmer than the countryside, but they are a tiny part of the planet. The warming shows up just as much where there are no cities at all: over the open ocean, at rural stations, and in the Arctic.</p>
@@ -167,7 +182,7 @@
 </div>
 </details>
 
-<details class="claim" id="data-manipulated">
+<details class="claim" id="data-manipulated" data-also="fraud adjusted adjustments homogenization tampering fake data noaa nasa">
 <summary><h3 class="ct"><q>The data is manipulated.</q></h3></summary>
 <div class="body">
 <p class="ans">The indicators on this site come from different agencies, in different countries, using different instruments. They all show the same thing.</p>
@@ -186,7 +201,7 @@
 </div>
 </details>
 
-<details class="claim" id="arctic-recovered">
+<details class="claim" id="arctic-recovered" data-also="arctic sea ice recovery polar bears">
 <summary><h3 class="ct"><q>Arctic sea ice has recovered. It hasn't gone down since 2012.</q></h3></summary>
 <div class="body">
 <p class="ans">2012 was an extreme low, so the years after it look flat by comparison. But every summer since 2007 has been lower than every summer before it, and the winter ice keeps setting records.</p>
@@ -202,7 +217,7 @@
 </div>
 </details>
 
-<details class="claim" id="antarctic-ice">
+<details class="claim" id="antarctic-ice" data-also="antarctica sea ice southern ocean">
 <summary><h3 class="ct"><q>Antarctic sea ice is growing.</q></h3></summary>
 <div class="body">
 <p class="ans">It grew slightly for decades, peaking in 2014. Since 2016 it has dropped sharply, with record lows in 2023.</p>
@@ -219,7 +234,7 @@
 </div>
 </details>
 
-<details class="claim" id="glacier-growing">
+<details class="claim" id="glacier-growing" data-also="glacier glaciers iceberg calving petermann jakobshavn greenland growing advancing">
 <summary><h3 class="ct"><q>That glacier is bigger now than it was ten years ago. The melting story is a scam.</q></h3></summary>
 <div class="body">
 <p class="ans">The front of one glacier moving forward or breaking off says little either way. What counts is how much ice the whole ice sheet holds, and Greenland loses ice every year.</p>
@@ -239,7 +254,7 @@
 <section class="grp" id="not-us">
 <h2>“It's not us”</h2>
 <p class="gi">Once the warming is accepted: it must be natural.</p>
-<details class="claim" id="hoax">
+<details class="claim" id="hoax" data-also="scam fraud lie lies fake conspiracy religion cult agenda nonsense bullshit">
 <summary><h3 class="ct"><q>Man-made climate change is a hoax. It's science fiction, not science.</q></h3></summary>
 <div class="body">
 <p class="ans">Science fiction doesn't make predictions that come true. The heat-trapping effect of CO₂ was measured in the 1850s, the warming was predicted decades ago, and it is happening as predicted.</p>
@@ -256,7 +271,7 @@
 </div>
 </details>
 
-<details class="claim" id="natural-cycles">
+<details class="claim" id="natural-cycles" data-also="sun solar sunspots orbit milankovitch el nino cycle cycles pdo amo">
 <summary><h3 class="ct"><q>It's just natural cycles.</q> Or: <q>It's the sun.</q></h3></summary>
 <div class="body">
 <p class="ans">Natural cycles move heat around the planet; they don't add heat to it. Satellites show Earth as a whole is gaining heat, and the sun's output has not gone up.</p>
@@ -272,7 +287,7 @@
 </div>
 </details>
 
-<details class="claim" id="always-changed">
+<details class="claim" id="always-changed" data-also="past climate ice ages medieval warm period vikings natural">
 <summary><h3 class="ct"><q>The climate has always changed.</q></h3></summary>
 <div class="body">
 <p class="ans">True, and studying those past changes is how we know this one is different: it is far faster, and its cause is us.</p>
@@ -289,7 +304,7 @@
 </div>
 </details>
 
-<details class="claim" id="trace-gas">
+<details class="claim" id="trace-gas" data-also="0.04% 400 ppm tiny amount">
 <summary><h3 class="ct"><q>CO₂ is a trace gas. It can't matter.</q></h3></summary>
 <div class="body">
 <p class="ans">Small amounts can have big effects. Nitrogen and oxygen, 99% of the air, let heat escape to space. CO₂ and the other greenhouse gases are the part that traps it.</p>
@@ -305,7 +320,7 @@
 </div>
 </details>
 
-<details class="claim" id="saturated">
+<details class="claim" id="saturated" data-also="saturation absorption bands logarithmic">
 <summary><h3 class="ct"><q>The CO₂ effect is saturated. Adding more does nothing.</q></h3></summary>
 <div class="body">
 <p class="ans">If it were saturated, satellites would see no change in the heat leaving Earth at the wavelengths CO₂ absorbs. They see less heat escaping there every decade, and Earth as a whole is gaining energy.</p>
@@ -320,7 +335,7 @@
 </div>
 </details>
 
-<details class="claim" id="volcano">
+<details class="claim" id="volcano" data-also="mauna loa hawaii volcanoes co2 measurement">
 <summary><h3 class="ct"><q>Mauna Loa is a volcano. Of course it measures CO₂.</q></h3></summary>
 <div class="body">
 <p class="ans">The station is built to measure clean air from far out over the Pacific, and readings touched by the volcano are flagged and left out. Stations all over the world, including the South Pole, show the same rise.</p>
@@ -341,7 +356,7 @@
 <section class="grp" id="not-bad">
 <h2>“It's not bad”</h2>
 <p class="gi">Once the cause is accepted: the effects will be harmless, or even good.</p>
-<details class="claim" id="plant-food">
+<details class="claim" id="plant-food" data-also="greening crops harvest agriculture fertilizer">
 <summary><h3 class="ct"><q>CO₂ is plant food. More is good.</q></h3></summary>
 <div class="body">
 <p class="ans">Partly true: more CO₂ helps many plants grow. But the same CO₂ brings heat and drought that cut harvests, and crops grown with more CO₂ are less nutritious. It is not a free gift.</p>
@@ -358,7 +373,7 @@
 </div>
 </details>
 
-<details class="claim" id="cold-deaths">
+<details class="claim" id="cold-deaths" data-also="deaths mortality heat waves heatwaves">
 <summary><h3 class="ct"><q>More people die of cold than of heat. A warmer world saves lives.</q></h3></summary>
 <div class="body">
 <p class="ans">It is true that more deaths are linked to cold than to heat today. But milder winters save fewer lives than hotter summers cost in most of the world, and heat deaths are badly undercounted.</p>
@@ -375,7 +390,7 @@
 </div>
 </details>
 
-<details class="claim" id="adapt">
+<details class="claim" id="adapt" data-also="species animals plants extinction evolution">
 <summary><h3 class="ct"><q>Plants and animals will adapt. They always have.</q></h3></summary>
 <div class="body">
 <p class="ans">Many are trying, mostly by moving. But this change is far faster than most past ones, and many species have nowhere to go: a mountaintop, an island or a coral reef can't move.</p>
@@ -392,7 +407,7 @@
 </div>
 </details>
 
-<details class="claim" id="sea-level">
+<details class="claim" id="sea-level" data-also="rising seas sea level ocean coast flooding millimetres">
 <summary><h3 class="ct"><q>Sea level rise is tiny.</q></h3></summary>
 <div class="body">
 <p class="ans">A few millimetres a year adds up, and the rate is increasing. What people notice is not the height itself but how often water now reaches places it used to reach only in storms.</p>
@@ -419,7 +434,7 @@
 <section class="grp" id="its-late">
 <h2>“It's too late to bother”</h2>
 <p class="gi">And finally: it is too late to bother.</p>
-<details class="claim" id="too-late">
+<details class="claim" id="too-late" data-also="doom doomer hopeless pointless give up">
 <summary><h3 class="ct"><q>It's too late, so nothing we do matters anymore.</q></h3></summary>
 <div class="body">
 <p class="ans">Some of it is too late, and no one can promise how this ends. But the physics is clear that what we do still sets how much worse it gets, and whatever warming we lock in lasts for thousands of years. That is a reason to keep going, not to stop.</p>
@@ -461,6 +476,30 @@
  function fromHash(){const el=document.getElementById(decodeURIComponent(location.hash.slice(1)));
   const g=el&&(el.classList.contains('grp')?el:el.closest('.grp'));show(g||G[0])}
  fromHash();window.addEventListener('hashchange',fromHash);
+})();
+</script>
+<script>
+// ---- search: narrows the list to the answers that contain every word typed (claim, answer, evidence and the extra
+//      words in data-also, for words people use that the text doesn't). While searching, all groups show; clearing
+//      the box goes back to the tabs. claims.html?q=word opens the page already searched. Enter opens the first match.
+(function(){
+ const box=document.getElementById('q'),x=document.getElementById('qx'),st=document.getElementById('qst'),
+  list=document.querySelector('.claims'),tabs=document.getElementById('tabs'),D=[...document.querySelectorAll('details.claim')];
+ const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/co₂/g,'co2');
+ function run(push){
+  const words=norm(box.value).split(/[\s,.;:!?"()]+/).filter(Boolean);
+  x.hidden=!box.value;list.classList.toggle('searching',!!words.length);tabs.classList.toggle('searching',!!words.length);
+  if(push){const u=new URL(location.href);if(words.length)u.searchParams.set('q',box.value);else u.searchParams.delete('q');history.replaceState(null,'',u)}
+  if(!words.length){st.textContent='';D.forEach(d=>d.classList.remove('miss'));document.querySelectorAll('.grp').forEach(g=>g.classList.remove('none'));return []}
+  const hit=D.filter(d=>{const h=norm(d.textContent+' '+(d.dataset.also||''));const m=words.every(w=>h.includes(w));d.classList.toggle('miss',!m);return m});
+  document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('none',!g.querySelector('details.claim:not(.miss)')));
+  st.textContent=hit.length?(hit.length===1?'1 answer matches':hit.length+' answers match')+(hit.length<=3?'; press Enter to open the first':''):'No answer matches. Try fewer or other words.';
+  return hit}
+ box.addEventListener('input',()=>run(true));
+ box.addEventListener('keydown',e=>{if(e.key==='Escape'){box.value='';run(true)}
+  if(e.key==='Enter'){e.preventDefault();const h=run(false);if(h.length){h[0].open=true;h[0].scrollIntoView({block:'start'});h[0].querySelector('summary').focus()}}});
+ x.onclick=()=>{box.value='';run(true);box.focus()};
+ const q=new URLSearchParams(location.search).get('q');if(q){box.value=q;run(false)}
 })();
 </script>
 <script>
