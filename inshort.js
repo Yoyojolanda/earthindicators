@@ -26,6 +26,7 @@ window.CLAIMS = {
   'records-short':    '"The records are too short or patchy"',
   'urban-heat':       '"It\'s just cities (urban heat islands)"',
   'cold-deaths':      '"More people die of cold than heat"',
+  'least-cost':       '"It\'s not big enough to justify more than least-cost measures"',
   'adapt':            '"Plants and animals will adapt"',
   'too-late':         '"It\'s too late, so nothing matters"',
   'weather-blame':    '"Every bit of weather gets blamed on climate change"',
