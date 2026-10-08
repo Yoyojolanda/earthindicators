@@ -19,7 +19,7 @@
 <meta property="og:image:alt" content="Earth Indicators: is the climate changing?: latest value and trend">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Earth is warming, and every major indicator shows it. Live data from NOAA, NASA, NSIDC and Copernicus, in plain words.">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="site.css">
 <style>
 .lead{margin:18px 0 6px}
@@ -90,10 +90,10 @@ function fill(id,{vd,v,l,s,through,spark,sparkLabel,bars}){
  t.querySelector('.num').innerHTML=`<b>${v}</b> ${l}`;t.querySelector('.s').textContent=s||'';
  t.querySelector('.dl').textContent=`${SRC[id]}, data through ${through}`;t.querySelector('.sl').textContent=sparkLabel||'';
  const P=spark.filter(p=>p.y!=null&&isFinite(p.y));
- new Chart(t.querySelector('canvas'),{type:bars?'bar':'line',data:bars?{labels:P.map(p=>p.x),datasets:[{data:P.map(p=>p.y),backgroundColor:P.map((p,i)=>i==P.length-1?'#d00000':THEME.thin),barPercentage:1,categoryPercentage:.9}]}
+ chartReady.then(()=>new Chart(t.querySelector('canvas'),{type:bars?'bar':'line',data:bars?{labels:P.map(p=>p.x),datasets:[{data:P.map(p=>p.y),backgroundColor:P.map((p,i)=>i==P.length-1?'#d00000':THEME.thin),barPercentage:1,categoryPercentage:.9}]}
    :{datasets:[{data:P,borderColor:'#d00000',borderWidth:1.6,pointRadius:0,fill:true,backgroundColor:'rgba(208,0,0,.08)'}]},
   options:{animation:false,maintainAspectRatio:false,parsing:bars?true:false,events:[],plugins:{legend:{display:false},tooltip:{enabled:false}},
-   scales:{x:bars?{display:false}:{type:'linear',display:false,min:P[0].x,max:P[P.length-1].x},y:{display:false}}}})}
+   scales:{x:bars?{display:false}:{type:'linear',display:false,min:P[0].x,max:P[P.length-1].x},y:{display:false}}}}))}
 function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').textContent='Data unavailable right now';t.querySelector('.num').textContent='The full page may still have the latest values.'}
 
 // numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes

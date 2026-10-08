@@ -13,11 +13,6 @@
         deep1: '#ff8a80', deep2: '#7fb3e8', bar: '#6f8fb3', trend: '#9cc2ec', card: '#1d1a15', zero: 'rgba(255,255,255,.55)', thin: '#4f6580' }
     : { dark, ink: '#1c1c1c', mut: '#555', grid: 'rgba(0,0,0,.18)', band1: '#dce6f0', band2: '#a9c0d8', clim: '#333', fill0: 'rgba(255,245,240,.6)',
         deep1: '#7a0000', deep2: '#0f3f6b', bar: '#8fa9c4', trend: '#1f3f66', card: '#fff', zero: 'rgba(0,0,0,.6)', thin: '#b8c7d9' };
-  if (window.Chart && dark) {            // light mode keeps Chart.js's own defaults
-    Chart.defaults.color = THEME.mut;
-    Chart.defaults.borderColor = THEME.grid;
-    document.documentElement.classList.add('charts-dark');   // printing flips these charts back to light (site.css)
-  }
   const themeLabel = { auto: 'Theme: automatic (follows your device)', light: 'Theme: light', dark: 'Theme: dark' };
   const themeIcon = t => t === 'light'
     ? '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
@@ -324,7 +319,16 @@
     build();
   }
 
+  // ---- everything below needs Chart.js. Pages may load it with "defer" (the overview does, so the page can be drawn
+  //      before the chart library arrives): then this part waits until the deferred scripts have run, and pages wait
+  //      for window.chartReady before drawing charts. With a normal script tag it all runs straight away, as before.
+  const chartSetup = () => {
   if (!window.Chart) return;
+  if (dark) {                            // light mode keeps Chart.js's own defaults
+    Chart.defaults.color = THEME.mut;
+    Chart.defaults.borderColor = THEME.grid;
+    document.documentElement.classList.add('charts-dark');   // printing flips these charts back to light (site.css)
+  }
 
   // ---- small screens: diagonal x-axis labels so they never overlap
   const NARROW = 640, fixedTicks = new WeakMap();
@@ -488,4 +492,9 @@
     const a = document.createElement('a'); a.download = filename; a.href = o.toDataURL('image/jpeg', .92);
     document.body.appendChild(a); a.click(); a.remove();
   };
+  };
+  window.chartReady = new Promise(done => {
+    const go = () => { chartSetup(); done(); };
+    if (window.Chart || document.readyState !== 'loading') go(); else document.addEventListener('DOMContentLoaded', go);
+  });
 })();
