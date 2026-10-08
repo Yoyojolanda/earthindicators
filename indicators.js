@@ -16,7 +16,10 @@ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
 const slope=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
 const ord=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
 const rankTxt=(n,first,other)=>n==1?first+' on record':ord(n)+' '+other+' on record';
-const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
+// a failed download is tried twice more (after 1.5 and 4 s, bypassing the browser cache): a moment of network trouble,
+// or a request that lands while GitHub Pages is publishing a new version, shouldn't leave a number missing
+const get=(f,n=0)=>fetch('data/'+f,n?{cache:'no-store'}:{}).then(r=>{if(!r.ok)throw new Error(f+' '+r.status);return r.text()})
+ .catch(e=>{if(n>=2)throw e;return new Promise(ok=>setTimeout(ok,n?4000:1500)).then(()=>get(f,n+1))});
 const lines=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*(#|HDR)/.test(l));
 
 // daily JSON files: one array per year plus a "1991-2020" climatology
@@ -219,7 +222,7 @@ function fill(root){
  const els=[...(root||document).querySelectorAll('[data-k]')],ids=[...new Set(els.map(e=>e.dataset.k.split('.')[0]))];
  return Promise.allSettled(ids.map(id=>{const mine=els.filter(e=>e.dataset.k.split('.')[0]==id);
   return getId(id).then(s=>mine.forEach(e=>{const v=s[e.dataset.k.slice(id.length+1)];e.textContent=v==null?'–':v}),
-   err=>{console.error(err);mine.forEach(e=>{e.textContent='(not available right now)';e.classList.add('na')});throw err})}))}
+   err=>{console.error(err);mine.forEach(e=>{e.textContent='(could not load; try reloading the page)';e.classList.add('na')});throw err})}))}
 
 window.EI={get:getId,fill,NAMES};
 })();
