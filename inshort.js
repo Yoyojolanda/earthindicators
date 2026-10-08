@@ -63,6 +63,7 @@ window.CLAIMS = {
   'tech-later':        '"Technology will fix it later"',
   'individual-pointless': '"Individual action is pointless"',
   'net-zero-bankrupt': '"Net zero will bankrupt us"',
+  'no-experiment':    '"Science is proven by experiment, not forecasts"',
 };
 
 window.IN_SHORT = {
