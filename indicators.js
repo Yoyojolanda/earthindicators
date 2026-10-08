@@ -222,7 +222,7 @@ function fill(root){
  const els=[...(root||document).querySelectorAll('[data-k]')],ids=[...new Set(els.map(e=>e.dataset.k.split('.')[0]))];
  return Promise.allSettled(ids.map(id=>{const mine=els.filter(e=>e.dataset.k.split('.')[0]==id);
   return getId(id).then(s=>mine.forEach(e=>{const v=s[e.dataset.k.slice(id.length+1)];e.textContent=v==null?'–':v}),
-   err=>{console.error(err);mine.forEach(e=>{e.textContent='(could not load; try reloading the page)';e.classList.add('na')});throw err})}))}
+   err=>{console.error(err);mine.forEach(e=>{e.textContent='(live data not loading; try refreshing the page)';e.classList.add('na')});throw err})}))}
 
 window.EI={get:getId,fill,NAMES};
 })();
