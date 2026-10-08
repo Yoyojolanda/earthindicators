@@ -740,6 +740,9 @@
  box.addEventListener('keydown',e=>{if(e.key==='Escape'){box.value='';run(true)}
   if(e.key==='Enter'){e.preventDefault();const h=run(false);if(h.length){h[0].open=true;h[0].scrollIntoView({block:'start'});h[0].querySelector('summary').focus()}}});
  x.onclick=()=>{box.value='';run(true);box.focus()};
+ // a link to an answer that the search is hiding ("See also …") ends the search, so the answer can open
+ window.addEventListener('hashchange',()=>{const el=document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if(el&&(el.classList.contains('miss')||el.classList.contains('none'))){box.value='';run(true)}});
  const q=new URLSearchParams(location.search).get('q');if(q){box.value=q;run(false)}
 })();
 </script>
