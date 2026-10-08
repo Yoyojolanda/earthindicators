@@ -13,6 +13,7 @@ window.CLAIMS = {
   'always-changed':   '"The climate has always changed"',
   'trace-gas':        '"CO₂ is a trace gas, it can\'t matter"',
   'antarctic-ice':    '"Antarctic sea ice is growing"',
+  'glacier-growing':  '"That glacier is bigger than ten years ago"',
   'stopped-1998':     '"Warming stopped in 1998"',
   'sea-level':        '"Sea level rise is tiny"',
   'data-manipulated': '"The data is manipulated"',
@@ -53,7 +54,7 @@ window.IN_SHORT = {
       'Greenland and Antarctica hold most of the world\'s fresh water as ice; mountain glaciers hold far less, but react quickly to warming. Since 2002 the GRACE satellites have weighed the two ice sheets every month; glaciers are measured on the ground and from space once a year. Unlike sea ice, ice that melts or slides off land adds water to the ocean and raises sea level.',
       'Latest ({land.date}): {land.vd}. Since 2002–03 Greenland has lost about {land.gl} and Antarctica about {land.an}, together adding {land.mm} to global sea level. The world\'s glaciers lost {land.glac} in the hydrological year {land.gh}.',
     ],
-    claims: ['sea-level', 'antarctic-ice'],
+    claims: ['glacier-growing', 'sea-level', 'antarctic-ice'],
   },
   'slow.html': {
     units: "CO₂ emissions of about 38 billion tonnes a year are close to 5 tonnes for every person on Earth, about 13 kg a day. The Atlantic overturning moves about 16–17 sverdrups (Sv; 1 Sv = 1 million cubic metres per second): some 6,500 to 6,800 Olympic swimming pools every second, or about 14 times the flow of all the world's rivers together. A drop of 0.1 in pH means about 26% more acidity. A hectare is 100 × 100 m, about one and a half soccer pitches.",
