@@ -1,0 +1,1 @@
+This site's own calculation minus Copernicus's published value, 958 days (2024-02-19 to 2026-10-03): mean -0.0001 °C, largest difference 0.0062 °C. Since this check the site uses Copernicus's values for these days.
