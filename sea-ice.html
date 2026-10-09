@@ -131,7 +131,9 @@ function zchart(){
  $('t5').textContent=`${r.name} sea-ice extent: standard deviations from the ${zb}–${zb+29} daily mean, ${r.cur} vs every prior year (${r.ys[1]}–${r.cur-1}); ${ZSRC[zs]}`;
  { const zn=zof(r,st,r.cur,r.L),at=prior.filter(y=>r.by[y][r.L]!=null).map(y=>[y,zof(r,st,y,r.L)]),rk=at.filter(a=>a[1]<zn).length+1,lo=at.reduce((m,a)=>a[1]<m[1]?a:m,[0,9]);
    $('zn').textContent=`On ${fmtDate(r.L)}, ${r.cur} is ${zn<0?'−':'+'}${Math.abs(zn).toFixed(2)} standard deviations from the ${zb}–${zb+29} mean: ${rk===1?'the lowest for this date in this record':ord(rk)+' lowest for this date, behind '+lo[0]+' ('+(lo[1]<0?'−':'+')+Math.abs(lo[1]).toFixed(2)+')'}. `
-    +(ZR.jaxa?'NSIDC and JAXA are two independent satellite records with their own processing; when two years are this close, they can rank them differently.':''); }
+    +(ZR.jaxa?'NSIDC and JAXA are two independent satellite records with their own processing; when two years are this close, they can rank them differently. ':'')
+    +(zs==='jaxa'?'The JAXA lines look more jagged because they are single days, as JAXA publishes them: a storm that pushes the ice edge together or spreads it out shows up as a dip or spike of a day or two. The NSIDC lines are a 5-day average, which smooths those out; that is also why a sharp one-day low, like 8 October 2023, stands out more in the JAXA record.'
+     :'The NSIDC lines are a 5-day average, which smooths out the day-to-day jumps caused by storms pushing the ice edge together or spreading it out; JAXA\'s single-day values look more jagged.'); }
  document.querySelectorAll('#zs .nb').forEach(b=>b.classList.toggle('on',b.dataset.s===zs));
  document.querySelectorAll('#zh .nb').forEach(b=>b.classList.toggle('on',+b.dataset.h===zh));
  document.querySelectorAll('#zb .nb').forEach(b=>b.classList.toggle('on',+b.dataset.b===zb));
