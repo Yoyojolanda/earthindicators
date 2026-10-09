@@ -1,0 +1,11 @@
+Season ACE calculated here from IBTrACS, compared with published season totals.
+
+North Atlantic 1995: here 227.4, published 227.1, difference +0.3 (+0.1%)
+North Atlantic 2004: here 226.9, published 226.9, difference -0.0 (-0.0%)
+North Atlantic 2005: here 245.3, published 245.3, difference +0.0 (+0.0%)
+North Atlantic 2017: here 224.9, published 224.9, difference -0.0 (-0.0%)
+Northeast Pacific 1992: here 294.3, published 294.3, difference -0.0 (-0.0%)
+Northeast Pacific 2015: here 288.9, published 287.0, difference +1.9 (+0.7%)
+Northeast Pacific 2018: here 318.1, published 318.1, difference -0.0 (-0.0%)
+
+Largest difference: 0.7%.
