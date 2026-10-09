@@ -9,6 +9,7 @@ Each page shows one of Earth's vital signs, updated automatically from the agenc
 | Global air temperature | Copernicus ERA5 |
 | Sea surface temperature | NOAA OISST |
 | El Niño (Niño 3.4) | NOAA OISST |
+| Hurricane season energy (ACE), on the El Niño page | NOAA NCEI IBTrACS |
 | Pacific Decadal Oscillation | NOAA NCEI |
 | Solar cycle (sunspots) | WDC-SILSO, Royal Observatory of Belgium |
 | Ocean heat content | NOAA NCEI |
@@ -41,6 +42,7 @@ The files in `data/` are of two kinds:
   - `scripts/build_era5.py` and `build_era5_regions.py`: air temperature from Copernicus ERA5 (`era5_*`). In `era5_t2_global_daily.csv` the `source` column marks each day as Copernicus's published value (`c3s`) or calculated here (`cds`).
   - `scripts/build_glaciers.py`: world glacier mass change per year (`glaciers_global.csv`), added up from the WGMS/Copernicus grid.
   - `scripts/build_seaice_volume.py`: sea ice volume for both poles from Copernicus Marine thickness and concentration grids, model (`seaice_volume_glorys.csv`) and satellite (`seaice_volume_cs2smos.csv`).
+  - `scripts/build_ace.py`: hurricane season energy (ACE) for the North Atlantic and Northeast Pacific, added up from every 6-hourly storm position in NOAA IBTrACS (`ace_daily.csv`, one row per storm per day).
   - `scripts/build_ceres.py`: NASA CERES EBAF-TOA Ed4.2.1 global monthly means (`ceres_ebaf_global.csv`), taken from the file's own global-mean variables.
 
 Calculated series are checked against independently published ones; the results are saved as `data/nino34_check.txt`, `data/era5_seam_check.txt` and `data/era5_overlap_check.txt` and shown on the methods page.

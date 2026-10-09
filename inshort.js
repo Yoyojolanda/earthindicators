@@ -82,7 +82,7 @@ window.IN_SHORT = {
       '{nino.vd}. The central Pacific is {nino.now} compared with the 1991–2020 average for {nino.date}. These swings come and go; the long-term warming continues through both phases.',
       'This is the traditional daily index. NOAA\'s official index averages three months and subtracts the warming of the whole tropics (the "relative" index), so it reads lower; both show the same event.',
     ],
-    claims: ['natural-cycles', 'stopped-1998'],
+    claims: ['natural-cycles', 'stopped-1998', 'hurricanes'],
   },
   'land-ice.html': {
     units: "A gigatonne (Gt) is a billion tonnes: a block of ice about one kilometre long, wide and high. It takes 362 Gt of melted ice to raise the world's sea level by 1 mm.",

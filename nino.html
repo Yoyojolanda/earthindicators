@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="site.css">
 <style>
 :root{--h:420px;--hs:280px;--ph:280px;--phs:190px}
+.acesum{margin:0 0 8px;font-size:14px}.acesum b{font-size:17px}
 
 </style></head><body><main>
 <h1>Niño 3.4 sea-surface temperature tracker</h1>
@@ -37,6 +38,13 @@
 <div class="box" id="b3" data-nav="Actual temperature"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Anomaly = daily SST minus the 1991–2020 daily mean. Recent values are preliminary and may be revised by NOAA. Not the relative index NOAA uses to classify El Niño strength. Data: NOAA OISST v2.1, provided by the NOAA PSL, Boulder, Colorado, USA, from their website at <a href="https://psl.noaa.gov" target="_blank" rel="noopener">psl.noaa.gov</a>.</p>
+</div>
+<div id="ace" class="hide">
+<h2 style="font-size:18px;margin:26px 0 6px">El Niño and the hurricane seasons</h2>
+<p style="margin:0 0 12px">El Niño warms the eastern and central Pacific and changes the winds high over the Atlantic. That usually makes the Pacific hurricane season busier and the Atlantic season quieter; La Niña tends to do the opposite. The charts add up each season's <b>accumulated cyclone energy</b> (ACE), which counts every storm by how strong it was and how long it lasted, so one long-lived major hurricane weighs far more than several short tropical storms.</p>
+<div class="box" data-nav="Pacific hurricanes"><h2 id="tA0"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><p class="acesum" id="sA0"></p><div class="wrap s"><canvas id="cA0"></canvas></div><p class="sub" id="pA0" style="margin:8px 0 0"></p></div>
+<div class="box" data-nav="Atlantic hurricanes"><h2 id="tA1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><p class="acesum" id="sA1"></p><div class="wrap s"><canvas id="cA1"></canvas></div><p class="sub" id="pA1" style="margin:8px 0 0"></p></div>
+<p class="sub">Most of the swing from one season to the next comes from El Niño, La Niña and other natural patterns, and the yearly totals show no clear long-term trend. Warming shows up in how storms behave instead: a larger share become the most intense, they strengthen faster and they bring more rain (see <a href="claims.html#hurricanes">Hurricanes aren't getting worse</a>). ACE = sum of the squared maximum wind (knots) every 6 hours while a storm is at least a tropical storm (34 kt), divided by 10,000. Northeast Pacific includes the central Pacific up to the date line. <span id="aceThru"></span> Data: NOAA NCEI IBTrACS v04r01, with NHC's operational data for the current season, which is replaced by best-track data after review.</p>
 </div>
 <script>
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -116,7 +124,52 @@ function run(raw){
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc,stepSize:.5},grid:{color:THEME.grid,lineWidth:1}}}}});
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize()}));
-document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1]],expName)};
+document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...aceCh.map((c,k)=>[c,'tA'+k,1])],expName)};
+// ---- hurricane season energy (ACE) per basin, from data/ace_daily.csv (scripts/build_ace.py)
+let aceCh=[];
+function ace(text,meta){
+ const BN=[['EP','Northeast Pacific'],['NA','Atlantic']],N=365,Y0=1971;
+ const idx=s=>{const m=+s.slice(5,7)-1,d=+s.slice(8,10);return m===1&&d===29?58:MS[m]+d-1};   // 29 Feb counts with 28 Feb
+ const thru=[meta.latest.NA,meta.latest.EP].sort().pop(),cur=+thru.slice(0,4),last=idx(thru);
+ const daily={},storms={};BN.forEach(([b])=>{daily[b]={};storms[b]={}});
+ text.trim().split('\n').slice(1).forEach(l=>{const[d,b,sid,name,v]=l.split(',');if(!daily[b])return;const y=+d.slice(0,4);
+  (daily[b][y]=daily[b][y]||new Array(N).fill(0))[idx(d)]+=+v;
+  if(y===cur){const s=storms[b][sid]=storms[b][sid]||{name,v:0};s.v+=+v}});
+ const cum=a=>{let s=0;return a.map(v=>s+=v)};
+ aceCh.forEach(c=>c.destroy());aceCh=[];
+ BN.forEach(([b,label],k)=>{
+  const prior=[];for(let y=Y0;y<cur;y++)prior.push(y);
+  const C={};[...prior,cur].forEach(y=>C[y]=cum(daily[b][y]||new Array(N).fill(0)));
+  const mn=[],mx=[],p10=[],p90=[],avg=[],norm=prior.filter(y=>y>=1991&&y<=2020);
+  for(let i=0;i<N;i++){const v=prior.map(y=>C[y][i]);mn.push(Math.min(...v));mx.push(Math.max(...v));p10.push(q(v,.1));p90.push(q(v,.9));
+   avg.push(norm.reduce((s,y)=>s+C[y][i],0)/norm.length)}
+  const recY=prior.reduce((a,y)=>C[y][N-1]>C[a][N-1]?y:a,prior[0]),now=C[cur][last],pct=Math.round(now/avg[last]*100);
+  const beaten=prior.filter(y=>C[y][N-1]<now).length;
+  document.getElementById('tA'+k).textContent=`${label}: hurricane season energy (ACE) added up day by day, ${cur} compared with every season since ${Y0}`;
+  document.getElementById('sA'+k).innerHTML=`<b>${now.toFixed(0)}</b> so far in ${cur} · 1991–2020 average by ${fmtDate(last)}: ${avg[last].toFixed(0)} (${pct}% of average) · average for a whole season: ${avg[N-1].toFixed(0)}`
+   +`<br>${beaten?`Already more than the whole season in ${beaten} of the ${prior.length} years since ${Y0}. `:''}Highest since ${Y0}: ${recY}, with ${C[recY][N-1].toFixed(0)}.`;
+  const top=Object.values(storms[b]).sort((x,y)=>y.v-x.v).slice(0,6).filter(s=>s.v>=.5);
+  document.getElementById('pA'+k).textContent=top.length?`Largest contributions in ${cur}: `+top.map(s=>`${s.name} ${s.v.toFixed(1)}`).join(', ')+'.':`No storms in ${cur} so far.`;
+  const poly=(ch,lo,hi,c)=>{const{ctx,scales:{x,y}}=ch;ctx.save();ctx.beginPath();for(let i=0;i<N;i++){const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}for(let i=N-1;i>=0;i--)ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]));ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()};
+  const shown=['1991–2020 average',String(recY),String(cur)],tc=col('--fg');
+  aceCh.push(new Chart(document.getElementById('cA'+k),{type:'line',plugins:[{id:'aceband',beforeDraw(ch){poly(ch,mn,mx,THEME.band1);poly(ch,p10,p90,THEME.band2)}}],
+   data:{labels:[...Array(N).keys()],datasets:[
+    {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},
+    {label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},
+    {label:'1991–2020 average',data:avg,borderColor:THEME.clim,borderWidth:1.3,borderDash:[5,4],pointRadius:0,fill:false,order:4},
+    {label:String(recY),data:C[recY],borderColor:'#7b5ea7',borderWidth:1.3,pointRadius:0,fill:false,order:5},
+    {label:String(cur),data:C[cur].map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1}]},
+   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:tc,filter:i=>shown.includes(i.text)}},tooltip:{callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(1))}}},
+    scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},
+     y:{beginAtZero:true,title:{display:true,text:'ACE, added up since 1 January',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}}));
+ });
+ document.getElementById('aceThru').textContent=`Storm data through ${fmtDate(last)} ${cur}, ${thru.slice(11)} UTC; IBTrACS is updated a few times a week.`;
+ document.getElementById('ace').classList.remove('hide');
+ document.getElementById('exp').disabled=!c1;
+}
+Promise.all([fetch('data/ace_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}),fetch('data/ace_meta.json').then(r=>{if(!r.ok)throw 0;return r.json()})])
+ .then(([t,m])=>ace(t,m)).catch(()=>{});
 fetch('data/oisst2.1_nino3.4_sst_day.json').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
  .catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script></main></body></html>

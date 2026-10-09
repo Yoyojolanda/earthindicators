@@ -1,0 +1,30 @@
+name: Update hurricane energy (ACE) data
+
+on:
+  schedule:
+    - cron: "45 15 * * *"     # daily, 15:45 UTC; NOAA updates IBTrACS a few times a week
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build data
+        timeout-minutes: 30
+        run: python -u scripts/build_ace.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ace_daily.csv data/ace_check.txt data/ace_meta.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update hurricane energy (ACE) data"
+            git pull --rebase && git push
+          fi
