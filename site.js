@@ -185,7 +185,7 @@
       'NOAA\'s values are shown unchanged; trends and heating rates are calculated by this page.', ['ohc.html'], 'data/h22-w0-2000m.dat'],
     'sea-level.html': ['NASA-SSH Global Mean Sea Level, version 1 (<a href="https://doi.org/10.5067/NSIND-GMSV1">doi:10.5067/NSIND-GMSV1</a>).',
       'NASA\'s values are shown with the average seasonal cycle removed; trends are calculated by this page.', ['sea-level.html'], 'data/NASA_SSH_GMSL_INDICATOR.txt'],
-    'sea-ice.html': ['Extent: NSIDC Sea Ice Index, version 4 (<a href="https://doi.org/10.7265/a98x-0f50">doi:10.7265/a98x-0f50</a>). Volume: Copernicus Marine, Mercator GLORYS12 ocean reanalysis and CryoSat-2 + SMOS satellite thickness.',
+    'sea-ice.html': ['Extent: NSIDC Sea Ice Index, version 4 (<a href="https://doi.org/10.7265/a98x-0f50">doi:10.7265/a98x-0f50</a>). Second extent record for the standard-deviation chart: JAXA AMSR2 via NIPR ViSHOP (Japan). Volume: Copernicus Marine, Mercator GLORYS12 ocean reanalysis and CryoSat-2 + SMOS satellite thickness.',
       'NSIDC\'s daily extent, shown as a 5-day mean; anomalies and standard deviations are calculated by this page. Volume (thickness × concentration × area) is calculated here from the Copernicus grids.',
       ['sea-ice.html', 'scripts/build_seaice_volume.py'], ['data/N_seaice_extent_daily_v4.0.csv', 'data/seaice_volume_glorys.csv', 'data/seaice_volume_cs2smos.csv']],
     'co2.html': ['NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂.',

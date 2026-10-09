@@ -25,6 +25,19 @@ jobs:
           done
           head -3 data/N_seaice_extent_daily_v4.0.csv
           tail -1 data/N_seaice_extent_daily_v4.0.csv
+      - name: Download JAXA sea ice extent (NIPR ViSHOP)
+        continue-on-error: true      # a second, independent record; never blocks the NSIDC update
+        run: |
+          for h in n s; do
+            curl -fsSL --retry 3 --retry-delay 20 -o "data/vishop_extent_$h.csv.tmp" \
+              "https://ads.nipr.ac.jp/vishop/data/SeaIceExtentGraph/seasonal_$h.csv"
+            # keep only a complete file: a header with year columns and at least 360 day rows
+            if head -1 "data/vishop_extent_$h.csv.tmp" | grep -q ',2025,' && [ "$(wc -l < "data/vishop_extent_$h.csv.tmp")" -ge 360 ]; then
+              mv "data/vishop_extent_$h.csv.tmp" "data/vishop_extent_$h.csv"
+            else
+              echo "ViSHOP $h file looks incomplete; keeping the previous one"; rm -f "data/vishop_extent_$h.csv.tmp"
+            fi
+          done
       - name: Commit changes
         run: |
           git config user.name "github-actions"

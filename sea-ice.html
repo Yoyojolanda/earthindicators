@@ -39,7 +39,9 @@
 <div class="box"><h2 id="t5"></h2>
  <div class="seg" id="zh">Region: <button class="nb" type="button" data-h="1">Antarctic</button><button class="nb" type="button" data-h="0">Arctic</button></div>
  <div class="seg" id="zb">Baseline: <button class="nb" type="button" data-b="1981">1981–2010</button><button class="nb" type="button" data-b="1991">1991–2020</button></div>
- <div class="wrap"><canvas id="c5"></canvas></div></div>
+ <div class="seg hide" id="zs">Data: <button class="nb" type="button" data-s="nsidc">NSIDC (US)</button><button class="nb" type="button" data-s="jaxa">JAXA (Japan)</button></div>
+ <div class="wrap"><canvas id="c5"></canvas></div>
+ <p class="sub" id="zn" style="margin:8px 0 0"></p></div>
 <div class="box hide" id="vbox"><h2 id="t6"></h2>
  <div class="seg" id="vh">Region: <button class="nb" type="button" data-p="north">Arctic</button><button class="nb" type="button" data-p="south">Antarctic</button></div>
  <div class="wrap"><canvas id="c6"></canvas></div>
@@ -103,12 +105,19 @@ function anom(id,Rs){
   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return fmtDate(Math.min(NN-1,Math.floor((x-y)*NN)))+', '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' M km²'}}},
   scales:{x:{type:'linear',min:Math.floor(Rs[0].ys[0]),max:Rs[0].cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Million km² vs '+REF[0]+'–'+REF[1]},grid:{color:THEME.grid}}}}}),[0,1]))}
 // ---- standard deviations from a 30-year daily mean (every year as a line)
-let ZR=null,zh=1,zb=1981;
+let ZR={},zh=1,zb=1981,zs='nsidc';
+const ZSRC={nsidc:'NSIDC Sea Ice Index, 5-day mean',jaxa:'JAXA AMSR2 record from NIPR ViSHOP, daily values'};
+// ViSHOP "seasonal" CSV: Month,Day, four decade averages, then one column per year (km², -9999 = no data) -> {year:[365 values]}
+function parseVishop(t){const [h,...rows]=t.trim().split(/\r?\n/),cols=h.split(',').map(s=>s.trim()),o={};
+ cols.forEach((c,j)=>{if(/^\d{4}$/.test(c))o[c]=Array(NN).fill(null)});
+ rows.forEach(l=>{const p=l.split(','),m=+p[0],d=+p[1];if(!(m>=1&&m<=12&&d>=1)||(m==2&&d==29))return;const i=MS[m-1]+d-1;
+  cols.forEach((c,j)=>{if(o[c]){const v=parseFloat(p[j]);if(v>0)o[c][i]=v/1e6}})});
+ Object.keys(o).forEach(y=>{if(!o[y].some(v=>v!=null))delete o[y]});return o}
 function zstats(r,a){const b=a+29,M=[],S=[];for(let i=0;i<NN;i++){const v=[];for(let y=a;y<=b;y++)if(r.by[y]&&r.by[y][i]!=null)v.push(r.by[y][i]);
  const m=v.reduce((s,x)=>s+x,0)/v.length,sd=Math.sqrt(v.reduce((s,x)=>s+(x-m)**2,0)/(v.length-1));M.push(v.length>=20?m:null);S.push(v.length>=20?sd:null)}return{M,S}}
 const zof=(r,st,y,i)=>r.by[y]&&r.by[y][i]!=null&&st.M[i]!=null?(r.by[y][i]-st.M[i])/st.S[i]:null;
 function zchart(){
- const r=ZR[zh],st=zstats(r,zb),z=y=>r.by[y].map((v,i)=>zof(r,st,y,i));
+ const r=(ZR[zs]||ZR.nsidc)[zh],st=zstats(r,zb),z=y=>r.by[y].map((v,i)=>zof(r,st,y,i));
  const prior=r.ys.filter(y=>y<r.cur&&y>r.ys[0]),minz=y=>Math.min(...z(y).filter(v=>v!=null));
  const low=prior.reduce((b,y)=>minz(y)<minz(b)?y:b,prior[0]);
  const hl=[[r.cur,'#d00000',3],[r.cur-1,'#e6a23c',1.6]];if(low!==r.cur-1)hl.push([low,'#7b5ea7',1.6]);
@@ -119,7 +128,11 @@ function zchart(){
  const bd=(label,data,c)=>({label,data:data.map((y,x)=>({x,y})),backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0});
  const ds=[bd('Range of prior years (min–max)',mx,THEME.band1),bd('min',mn),bd('Middle 80% of prior years',p90,THEME.band2),bd('p10',p10)];
  hl.forEach(([y,c,w],k)=>ds.push({label:String(y)+(y===low?' (furthest below normal)':''),data:z(y).map((v,i)=>({x:i,y:v})).filter(p=>y!==r.cur||p.x<=r.L),borderColor:c,borderWidth:w,pointRadius:0,order:-k}));
- $('t5').textContent=`${r.name} sea-ice extent: standard deviations from the ${zb}–${zb+29} daily mean, ${r.cur} vs every prior year (${r.ys[1]}–${r.cur-1})`;
+ $('t5').textContent=`${r.name} sea-ice extent: standard deviations from the ${zb}–${zb+29} daily mean, ${r.cur} vs every prior year (${r.ys[1]}–${r.cur-1}); ${ZSRC[zs]}`;
+ { const zn=zof(r,st,r.cur,r.L),at=prior.filter(y=>r.by[y][r.L]!=null).map(y=>[y,zof(r,st,y,r.L)]),rk=at.filter(a=>a[1]<zn).length+1,lo=at.reduce((m,a)=>a[1]<m[1]?a:m,[0,9]);
+   $('zn').textContent=`On ${fmtDate(r.L)}, ${r.cur} is ${zn<0?'−':'+'}${Math.abs(zn).toFixed(2)} standard deviations from the ${zb}–${zb+29} mean: ${rk===1?'the lowest for this date in this record':ord(rk)+' lowest for this date, behind '+lo[0]+' ('+(lo[1]<0?'−':'+')+Math.abs(lo[1]).toFixed(2)+')'}. `
+    +(ZR.jaxa?'NSIDC and JAXA are two independent satellite records with their own processing; when two years are this close, they can rank them differently.':''); }
+ document.querySelectorAll('#zs .nb').forEach(b=>b.classList.toggle('on',b.dataset.s===zs));
  document.querySelectorAll('#zh .nb').forEach(b=>b.classList.toggle('on',+b.dataset.h===zh));
  document.querySelectorAll('#zb .nb').forEach(b=>b.classList.toggle('on',+b.dataset.b===zb));
  if(charts[4])charts[4].destroy();
@@ -130,6 +143,7 @@ function zchart(){
    y:{min:ymin,max:ymax,title:{display:true,text:'Standard deviations'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})}
 document.querySelectorAll('#zh .nb').forEach(b=>b.onclick=()=>{zh=+b.dataset.h;zchart()});
 document.querySelectorAll('#zb .nb').forEach(b=>b.onclick=()=>{zb=+b.dataset.b;zchart()});
+document.querySelectorAll('#zs .nb').forEach(b=>b.onclick=()=>{zs=b.dataset.s;zchart()});
 function run(nt,st){
  const N=parse(nt),S=parse(st),R=[region(N,'n','Arctic'),region(S,'s','Antarctic'),region(comb(N,S),'g','Global')];
  $('cards').innerHTML=R.map(r=>`<div class="card"><div class="v">${r.v.toFixed(2)} M km²</div><div class="l">${r.name} extent, ${fmtDate(r.L)}, ${r.cur}<br>${sg(r.anom)} vs average · ${r.rank==1?'':ord(r.rank)+' '}lowest of ${r.n}</div></div>`).join('');
@@ -141,7 +155,10 @@ function run(nt,st){
  expName=`sea-ice-${R[0].cur}-${fmtDate(R[0].L).replace(' ','')}.jpg`;
  $('out').classList.remove('hide');
  charts.splice(0).forEach(c=>c.destroy());
- env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR=R;zchart();
+ env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR.nsidc=R;zchart();
+ Promise.all(['n','s'].map(h=>fetch(`data/vishop_extent_${h}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
+  .then(([n,s])=>{const N=parseVishop(n),S=parseVishop(s);ZR.jaxa=[region(N,'n','Arctic'),region(S,'s','Antarctic')];$('zs').classList.remove('hide');zchart()})
+  .catch(()=>{});
  $('exp').disabled=false}
 // ---- sea-ice volume: model (GLORYS12 reanalysis, monthly) and satellite (CryoSat-2 + SMOS, weekly, cold season)
 let VD=null,vp='north',vc=null;
