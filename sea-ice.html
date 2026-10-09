@@ -96,7 +96,7 @@ function env(id,R){
  ds.push({label:String(R.cur),data:R.by[R.cur].map((v,i)=>i<=R.L?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0});
  charts.push(freeze(new Chart($(id),{type:'line',plugins:[band],data:{labels:[...Array(NN).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,spanGaps:true,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>!hid.includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' M km²')}}},
-  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>MS.includes(v)?ML[MS.indexOf(v)]:''},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:THEME.grid}}}}})))}
+  scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'Million km²'},grid:{color:THEME.grid}}}}})))}
 function anom(id,Rs){
  const ds=Rs.map(R=>{const d=[];R.ys.forEach(y=>R.by[y].forEach((v,i)=>{if(v!=null&&R.cl[i]!=null)d.push({x:y+(i+.5)/NN,y:v-R.cl[i]})}));return{label:R.name,data:d,borderColor:COL[R.key],borderWidth:1,pointRadius:0}});
  charts.push(freeze(new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,normalized:true,interaction:{mode:'nearest',axis:'x',intersect:false},
@@ -126,7 +126,7 @@ function zchart(){
  const all=[...mn,...mx,...ds.slice(4).flatMap(d=>d.data.map(p=>p.y))].filter(v=>v!=null),ymin=Math.min(-3,Math.floor(Math.min(...all))),ymax=Math.max(3,Math.ceil(Math.max(...all)));
  charts[4]=new Chart($('c5'),{type:'line',plugins:[band],data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
   plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>i.datasetIndex>=4,callbacks:{title:t=>fmtDate(Math.round(t[0].parsed.x)),label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(2)+' SD'}}},
-  scales:{x:{type:'linear',min:0,max:NN-1,afterBuildTicks:a=>{a.ticks=MS.map(v=>({value:v}))},ticks:{callback:v=>ML[MS.indexOf(v)]},grid:{display:false}},
+  scales:{x:{type:'linear',min:0,max:NN-1,afterBuildTicks:dayTicks,ticks:{maxRotation:0,callback:dayTick},grid:{display:false}},
    y:{min:ymin,max:ymax,title:{display:true,text:'Standard deviations'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})}
 document.querySelectorAll('#zh .nb').forEach(b=>b.onclick=()=>{zh=+b.dataset.h;zchart()});
 document.querySelectorAll('#zb .nb').forEach(b=>b.onclick=()=>{zb=+b.dataset.b;zchart()});

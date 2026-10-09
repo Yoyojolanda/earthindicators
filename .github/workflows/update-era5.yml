@@ -2,11 +2,16 @@ name: Update global air temperature data
 
 on:
   schedule:
-    - cron: "30 17 * * *"      # daily, 17:30 UTC
+    - cron: "23 8 * * *"       # twice a day: Copernicus adds a day to its live series daily, at no fixed time;
+    - cron: "23 20 * * *"      # odd minutes, because GitHub delays runs set on the hour or half hour the most
   workflow_dispatch:           # lets you run it manually from the Actions tab
 
 permissions:
   contents: write
+
+concurrency:                   # never two runs at once: they would write the same cache
+  group: era5-global
+  cancel-in-progress: false
 
 jobs:
   update:

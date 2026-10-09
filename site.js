@@ -393,6 +393,24 @@
     afterDestroy(ch) { const st = LG.get(ch); if (st) { st.box.remove(); LG.delete(ch); } }
   });
 
+  // ---- day-of-year axes (index 0 = 1 January, 365 days): month names on the whole year, and real dates once a
+  //      chart is zoomed in to a few weeks, so a zoomed axis never ends up with no labels or labels outside the chart.
+  //      Category axes: ticks.callback = dayTick (with autoSkip off). Linear axes: also afterBuildTicks = dayTicks.
+  const DMS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334], DML = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dayStep = span => span > 100 ? 0 : span > 45 ? 7 : span > 20 ? 3 : span > 8 ? 2 : 1;   // 0 = month starts only
+  const dayName = i => { let m = 11; while (DMS[m] > i) m--; return DML[m] + ' ' + (i - DMS[m] + 1); };
+  window.dayTick = function (v) {
+    const i = Math.round(v), st = dayStep(this.max - this.min);
+    if (!st) return DMS.includes(i) ? DML[DMS.indexOf(i)] : '';
+    return i % st === 0 ? dayName(i) : '';
+  };
+  window.dayTicks = ax => {
+    const st = dayStep(ax.max - ax.min), t = [];
+    if (!st) DMS.forEach(v => { if (v >= ax.min && v <= ax.max) t.push({ value: v }); });
+    else for (let v = Math.ceil(ax.min / st) * st; v <= ax.max; v += st) t.push({ value: v });
+    ax.ticks = t;
+  };
+
   // ---- zoom: drag a rectangle with the mouse, or pinch with two fingers on a phone or tablet. Shift-drag (mouse) or a
   //      sideways swipe (touch) moves a zoomed chart; double-click or the "Reset zoom" button shows the whole chart again.
   //      Needs hammer.js and chartjs-plugin-zoom, loaded right after Chart.js (not on the overview, whose charts are static).

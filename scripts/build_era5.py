@@ -3,12 +3,16 @@
 
 History: the Copernicus C3S published series (era5_daily_series_2t_global_1940-2024.csv),
          used for every day it marks FINAL.
-New days: computed here from the CDS dataset "ERA5 post-processed daily statistics"
-         (daily mean of all 24 hourly values, UTC), area-weighted over the whole globe,
-         i.e. the same method as the published series.
+Live:    the same series as Copernicus keeps it up to date for Climate Pulse (era5_daily_series_2t_global.csv),
+         about 2 days behind real time; recent days are marked PRELIMINARY and replaced when final. Every run
+         takes all of it, so the site shows Copernicus's own numbers.
+Fallback: if the live file can't be read, or is behind, new days are computed here from the CDS dataset
+         "ERA5 post-processed daily statistics" (daily mean of all 24 hourly values, UTC), area-weighted over
+         the whole globe, i.e. the same method; the CDS runs about 5-6 days behind real time.
+Check:   days computed here earlier are compared with Copernicus's live values (data/era5_live_check.txt).
 
 Outputs
-  data/era5_t2_global_daily.csv   date,temp,source   (cache; source = c3s or cds)
+  data/era5_t2_global_daily.csv   date,temp,source   (cache; source = c3s (final), c3s-prelim or cds (calculated here))
   data/era5_t2_global_day.json    [{"name":"1940","data":[366 values]}, ..., {"name":"1991-2020",...}]
 
 Needs ~/.cdsapirc (url + key) for the CDS part.
@@ -20,6 +24,8 @@ from urllib.request import urlopen
 import numpy as np
 
 HIST_URL = "https://sites.ecmwf.int/data/c3sci/era5-daily/data/era5_daily_series_2t_global_1940-2024.csv"
+LIVE_URL = "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv"
+LIVE_CHECK = "data/era5_live_check.txt"
 DATASET = "derived-era5-single-levels-daily-statistics"
 CACHE = "data/era5_t2_global_daily.csv"
 OUT = "data/era5_t2_global_day.json"
@@ -60,6 +66,46 @@ def load_history():
     if len(rows) < 30000:
         sys.exit("history series looks incomplete; refusing to continue")
     return rows
+
+
+def load_live():
+    """{date: (temp, 'c3s' or 'c3s-prelim')} from Copernicus's live series, or {} if it can't be read."""
+    try:
+        text = urlopen(LIVE_URL, timeout=120).read().decode()
+    except Exception as e:
+        print(f"live series not available ({str(e)[:200]}); falling back to the CDS", flush=True)
+        return {}
+    rows = {}
+    for line in text.splitlines():
+        if not line or line.startswith("#") or line.startswith("date"):
+            continue
+        f = line.split(",")
+        try:
+            d, t = date.fromisoformat(f[0]), float(f[1])
+        except (ValueError, IndexError):
+            continue
+        st = f[-1].strip().upper()
+        rows[d] = (t, "c3s" if st == "FINAL" else "c3s-prelim")
+    if len(rows) < 30000:
+        print(f"live series looks incomplete ({len(rows)} days); falling back to the CDS", flush=True)
+        return {}
+    print(f"  live series: {min(rows)} to {max(rows)}, "
+          f"{sum(1 for v in rows.values() if v[1] != 'c3s')} preliminary days", flush=True)
+    return rows
+
+
+def live_check(rows, live):
+    """Compare days calculated here (cds) with Copernicus's own values for the same days."""
+    both = sorted(d for d, (_, s) in rows.items() if s == "cds" and d in live)
+    if not both:
+        return
+    diffs = np.array([rows[d][0] - live[d][0] for d in both])
+    msg = (f"This site's own calculation minus Copernicus's published value, {len(both)} days ({both[0]} to {both[-1]}): "
+           f"mean {diffs.mean():+.4f} °C, largest difference {np.abs(diffs).max():.4f} °C. "
+           f"Since this check the site uses Copernicus's values for these days.")
+    print("  " + msg, flush=True)
+    with open(LIVE_CHECK, "w") as fh:
+        fh.write(msg + "\n")
 
 
 def open_nc(path):
@@ -140,6 +186,18 @@ def main():
         save_cache(rows)
     hist_end = max(d for d, (_, s) in rows.items() if s == "c3s")
 
+    live = load_live()
+    if live:
+        live_check(rows, live)
+        for d in [d for d, (_, s) in rows.items() if s != "c3s" and d not in live]:
+            if d < max(live):
+                del rows[d]                  # a preliminary day Copernicus no longer lists
+        rows.update(live)
+        save_cache(rows)
+        if (date.today() - max(live)).days <= LAG:
+            build_json(rows)                 # live series is newer than anything the CDS could give
+            return
+
     import cdsapi
     client = cdsapi.Client(quiet=True, progress=False)
 
@@ -160,6 +218,7 @@ def main():
 
     last_ok = date.today() - timedelta(LAG)
     have_cds = [d for d, (_, s) in rows.items() if s == "cds"]
+    hist_end = max(d for d, (_, s) in rows.items() if s != "cds")       # incl. live days, if any
     start = max(hist_end, max(have_cds) - timedelta(REFETCH) if have_cds else hist_end) + timedelta(1)
     todo = [start + timedelta(k) for k in range((last_ok - start).days + 1)]
     months = {}
