@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""One share link per chart, with that chart as its link preview (like build_claim_cards.py does for claims).
+
+X, Bluesky and others ignore the #part of a link and show one card per page. This script opens every data page in
+a headless browser (Chromium, via Playwright), the same way a reader sees it in the light theme, and for every box
+that holds a chart makes:
+  og/s/<page>-<canvas id>.png   1200x630 preview: the chart as drawn on the site, with the site name above it
+  s/<page>-<canvas id>.html     a tiny page whose preview tags show that chart and its title; people who open it
+                                are sent straight on to <page>.html#<box id>
+The "Copy link to this chart" buttons (site.js) copy the s/... link. Charts whose box is hidden (for example
+because its data did not load) are skipped; files for charts that no longer exist are removed.
+
+Run from the repo root: python scripts/build_chart_cards.py
+  --libs DIR   serve the cdnjs chart libraries from local copies in DIR (only for testing without internet)
+"""
+import functools, html, io, os, re, sys, threading
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from PIL import Image, ImageDraw, ImageFont
+
+SITE = "https://earthindicators.org"
+SKIP = {"index.html", "claims.html", "methods.html"}
+W, H, HEAD = 1200, 630, 74
+UMBER, MUTED = (51, 43, 25), (95, 99, 104)
+
+
+def pages():
+    out = []
+    for f in sorted(os.listdir(".")):
+        if f.endswith(".html") and f not in SKIP:
+            s = open(f, encoding="utf-8").read()
+            if "<canvas" in s and "site.js" in s:
+                out.append(f)
+    return out
+
+
+def serve():
+    class Quiet(SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.getcwd()))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv.server_address[1]
+
+
+def font(path, size):
+    for p in (path, "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"):
+        try:
+            return ImageFont.truetype(p, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+def card(png):
+    img = Image.new("RGB", (W, H), "white")
+    d = ImageDraw.Draw(img)
+    logo = Image.open("img/logo-240.png").convert("RGBA").resize((52, 52))
+    img.paste(logo, (28, 11), logo)
+    d.text((92, 14), "Earth Indicators", font=font("fonts/PoiretOne-Regular.ttf", 36), fill=UMBER)
+    f2 = font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20)
+    t = "earthindicators.org"
+    d.text((W - 28 - d.textlength(t, font=f2), 26), t, font=f2, fill=MUTED)
+    shot = Image.open(io.BytesIO(png)).convert("RGB")
+    k = min((W - 40) / shot.width, (H - HEAD - 12) / shot.height)
+    shot = shot.resize((round(shot.width * k), round(shot.height * k)), Image.LANCZOS)
+    img.paste(shot, ((W - shot.width) // 2, HEAD + (H - HEAD - 12 - shot.height) // 2))
+    return img
+
+
+def share_page(name, title, desc, target):
+    e = lambda x: html.escape(x, quote=True)
+    url, img = f"{SITE}/s/{name}.html", f"{SITE}/og/s/{name}.png"
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{e(title)} | Earth Indicators</title>
+<meta name="robots" content="noindex">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(desc)}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{img}">
+<meta property="og:image:width" content="{W}">
+<meta property="og:image:height" content="{H}">
+<meta property="og:image:alt" content="Chart: {e(title)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="{e(desc)}">
+<script>location.replace('../{target}')</script>
+<style>body{{font:17px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px}}</style>
+</head><body>
+<p><a href="../{target}">{e(title)}: see the chart on Earth Indicators</a></p>
+</body></html>
+"""
+
+
+def main():
+    from playwright.sync_api import sync_playwright
+    libs = sys.argv[sys.argv.index("--libs") + 1] if "--libs" in sys.argv else None
+    port = serve()
+    os.makedirs("s", exist_ok=True); os.makedirs("og/s", exist_ok=True)
+    made = set()
+    with sync_playwright() as p:
+        br = p.chromium.launch()
+        ctx = br.new_context(viewport={"width": 1100, "height": 900}, device_scale_factor=1.25)
+        ctx.add_init_script("try{localStorage.setItem('ei-theme','light')}catch(e){}")
+        if libs:
+            ctx.route(re.compile(r"https://cdnjs\.cloudflare\.com/.*"),
+                      lambda r: r.fulfill(path=os.path.join(libs, r.request.url.rsplit("/", 1)[-1])))
+        ctx.route(re.compile(r"https://gc\.zgo\.at/.*|https://.*goatcounter.*"), lambda r: r.abort())   # no visits counted
+        for f in pages():
+            pg = ctx.new_page()
+            try:
+                pg.goto(f"http://127.0.0.1:{port}/{f}", wait_until="networkidle", timeout=90000)
+            except Exception as ex:
+                print(f"{f}: page did not finish loading ({str(ex)[:120]}); using what is there", flush=True)
+            pg.wait_for_timeout(2500)
+            pg.add_style_tag(content=".cbar,.zreset,.secnav,#totop,.box > p{display:none!important}")   # chart and title only, no notes
+            desc = pg.evaluate("(document.querySelector('meta[name=description]')||{}).content||''")
+            boxes = pg.evaluate("""() => [...document.querySelectorAll('main .box')].map(b => {
+                const c = b.querySelector('canvas[id]'), h = b.querySelector('h2');
+                return c && {cid: c.id, id: b.id, title: h ? h.textContent.trim() : '', shown: b.offsetParent !== null && b.getClientRects().length > 0};
+              }).filter(Boolean)""")
+            stem = f[:-5]
+            for b in boxes:
+                if not b["shown"] or not b["title"]:
+                    continue
+                name = f"{stem}-{b['cid']}"
+                el = pg.locator(f"canvas#{b['cid']}").locator("xpath=ancestor::div[contains(concat(' ',normalize-space(@class),' '),' box ')][1]")
+                el.scroll_into_view_if_needed(); pg.wait_for_timeout(200)
+                card(el.screenshot()).save(f"og/s/{name}.png", optimize=True)
+                with open(f"s/{name}.html", "w", encoding="utf-8") as fh:
+                    fh.write(share_page(name, b["title"], desc, f"{f}#{b['id'] or 'ch-' + b['cid']}"))
+                made.add(name)
+            print(f"{f}: {sum(1 for m in made if m.startswith(stem + '-'))} charts", flush=True)
+            pg.close()
+        br.close()
+    if len(made) < 10:
+        sys.exit(f"only {len(made)} charts captured; keeping the previous share files")
+    for d, ext in (("s", ".html"), ("og/s", ".png")):
+        for x in os.listdir(d):
+            if x.endswith(ext) and x[:-len(ext)] not in made:
+                os.remove(os.path.join(d, x))
+    print(f"{len(made)} chart share links")
+
+
+if __name__ == "__main__":
+    main()

@@ -138,7 +138,7 @@ function zchart(){
  document.querySelectorAll('#zh .nb').forEach(b=>b.classList.toggle('on',+b.dataset.h===zh));
  document.querySelectorAll('#zb .nb').forEach(b=>b.classList.toggle('on',+b.dataset.b===zb));
  if(charts[4])charts[4].destroy();
- const all=[...mn,...mx,...ds.slice(4).flatMap(d=>d.data.map(p=>p.y))].filter(v=>v!=null),ymin=Math.min(-3,Math.floor(Math.min(...all))),ymax=Math.max(3,Math.ceil(Math.max(...all)));
+ const all=[...mn,...mx,...ds.slice(4).flatMap(d=>d.data.map(p=>p.y))].filter(v=>v!=null),ymin=Math.min(-4,2*Math.floor(Math.min(...all)/2)),ymax=Math.max(4,2*Math.ceil(Math.max(...all)/2));   // even numbers, so the ticks every 2 SD end on the edges
  charts[4]=new Chart($('c5'),{type:'line',plugins:[band],data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
   plugins:{legend:{labels:{filter:i=>!['min','p10'].includes(i.text)}},tooltip:{filter:i=>i.datasetIndex>=4,callbacks:{title:t=>fmtDate(Math.round(t[0].parsed.x)),label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(2)+' SD'}}},
   scales:{x:{type:'linear',min:0,max:NN-1,afterBuildTicks:dayTicks,ticks:{maxRotation:0,callback:dayTick},grid:{display:false}},

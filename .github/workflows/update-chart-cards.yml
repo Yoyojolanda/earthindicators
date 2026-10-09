@@ -1,0 +1,36 @@
+name: Update chart share links
+
+# One share link per chart (s/<page>-<chart>.html) with the chart itself as link preview (og/s/...png).
+# The charts are drawn by the real pages in a headless browser, so the previews show the latest data.
+on:
+  schedule:
+    - cron: "51 22 * * *"      # daily, after the day's data updates
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chart-cards
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install playwright pillow
+          python -m playwright install --with-deps chromium
+      - name: Draw every chart and make its share page
+        timeout-minutes: 20
+        run: python -u scripts/build_chart_cards.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add s og/s
+          git diff --cached --quiet || (git commit -m "Update chart share links" && git pull --rebase && git push)

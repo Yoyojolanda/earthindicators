@@ -258,6 +258,42 @@
   }, true);
   top.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // ---- one share link per chart, like the claims page: every box with a chart gets a "Copy link to this chart"
+  //      button. The link goes to s/<page>-<canvas id>.html, a small page with that chart's own preview image
+  //      (made daily by scripts/build_chart_cards.py), which sends readers on to <page>#ch-<canvas id>.
+  const stem = page.replace(/\.html$/, '');
+  if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page)) {
+   const shareSetup = () => {
+    document.querySelectorAll('main .box').forEach(box => {
+      const cv = box.querySelector('canvas[id]');
+      if (!cv || box.querySelector('.cbar')) return;
+      if (!box.id) box.id = 'ch-' + cv.id;
+      const url = location.origin + '/s/' + stem + '-' + cv.id + '.html';
+      const bar = document.createElement('div'); bar.className = 'cbar';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'nb'; b.textContent = 'Copy link to this chart';
+      b.onclick = () => {
+        const done = () => { b.textContent = 'Link copied'; setTimeout(() => b.textContent = 'Copy link to this chart', 2000); };
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url)); else prompt('Copy this link:', url);
+        gcEvent('chart-copy/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem);
+      };
+      bar.appendChild(b); box.appendChild(bar);
+    });
+    // arriving from a shared link: charts appear only after their data has loaded, so wait for the box to show
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (h) {
+      let n = 0;
+      const go = () => {
+        const el = document.getElementById(h) || document.getElementById('ch-' + h);
+        if (el && el.offsetParent !== null && el.querySelector('h2') && el.querySelector('h2').textContent) {
+          setTimeout(() => el.scrollIntoView({ block: 'start' }), 150);
+        } else if (++n < 60) setTimeout(go, 250);
+      };
+      window.addEventListener('load', go);
+    }
+   };
+   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shareSetup); else shareSetup();
+  }
+
   // ---- section menu on wide screens: the page's sections down the empty right-hand side, as a timeline whose dot
   //      turns red for the section being read. Built from the page itself, so new sections appear in it by themselves;
   //      rebuilt when page scripts show sections or fill in chart titles after their data has loaded.
