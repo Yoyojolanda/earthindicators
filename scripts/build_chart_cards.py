@@ -12,6 +12,7 @@ because its data did not load) are skipped; files for charts that no longer exis
 
 Run from the repo root: python scripts/build_chart_cards.py
   --libs DIR   serve the cdnjs chart libraries from local copies in DIR (only for testing without internet)
+  --pages LIST only these pages, comma-separated (e.g. ch4.html,co2.html); other pages' share files are left alone
 """
 import functools, html, io, os, re, sys, threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -97,6 +98,11 @@ def share_page(name, title, desc, target):
 def main():
     from playwright.sync_api import sync_playwright
     libs = sys.argv[sys.argv.index("--libs") + 1] if "--libs" in sys.argv else None
+    only = sys.argv[sys.argv.index("--pages") + 1] if "--pages" in sys.argv else ""
+    only = {x.strip() if x.strip().endswith(".html") else x.strip() + ".html" for x in only.split(",") if x.strip()}
+    todo = [f for f in pages() if not only or f in only]
+    if only and not todo:
+        sys.exit(f"none of these are chart pages: {', '.join(sorted(only))}")
     port = serve()
     os.makedirs("s", exist_ok=True); os.makedirs("og/s", exist_ok=True)
     made = set()
@@ -108,7 +114,7 @@ def main():
             ctx.route(re.compile(r"https://cdnjs\.cloudflare\.com/.*"),
                       lambda r: r.fulfill(path=os.path.join(libs, r.request.url.rsplit("/", 1)[-1])))
         ctx.route(re.compile(r"https://gc\.zgo\.at/.*|https://.*goatcounter.*"), lambda r: r.abort())   # no visits counted
-        for f in pages():
+        for f in todo:
             pg = ctx.new_page()
             try:
                 pg.goto(f"http://127.0.0.1:{port}/{f}", wait_until="networkidle", timeout=90000)
@@ -135,11 +141,11 @@ def main():
             print(f"{f}: {sum(1 for m in made if m.startswith(stem + '-'))} charts", flush=True)
             pg.close()
         br.close()
-    if len(made) < 10:
+    if not made or (not only and len(made) < 10):
         sys.exit(f"only {len(made)} charts captured; keeping the previous share files")
     for d, ext in (("s", ".html"), ("og/s", ".png")):
         for x in os.listdir(d):
-            if x.endswith(ext) and x[:-len(ext)] not in made:
+            if x.endswith(ext) and x[:-len(ext)] not in made and (not only or x.rsplit("-", 1)[0] + ".html" in todo):
                 os.remove(os.path.join(d, x))
     print(f"{len(made)} chart share links")
 

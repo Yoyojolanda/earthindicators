@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "51 22 * * *"      # daily, after the day's data updates
   workflow_dispatch:           # lets you run it manually from the Actions tab
+    inputs:
+      pages:
+        description: "Only these pages, comma-separated (e.g. ch4.html,co2.html). Leave empty for all."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -27,7 +32,9 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Draw every chart and make its share page
         timeout-minutes: 20
-        run: python -u scripts/build_chart_cards.py
+        env:
+          PAGES: ${{ github.event.inputs.pages }}
+        run: python -u scripts/build_chart_cards.py ${PAGES:+--pages "$PAGES"}
       - name: Commit changes
         run: |
           git config user.name "github-actions"
