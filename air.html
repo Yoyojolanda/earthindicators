@@ -39,6 +39,7 @@
 <p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
 <div class="box" data-nav="Compared with normal"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
 <div class="box" data-nav="Latest day, every year"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box" id="b8" hidden data-nav="Latest month, every year"><h2 id="t8"></h2><div class="wrap s"><canvas id="c8"></canvas></div><p class="sub" id="n8" style="margin:8px 0 0"></p></div>
 <div class="box" id="b3" data-nav="Actual temperature"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
@@ -175,7 +176,7 @@ function run(raw){
  freeze(c1);freeze(c3);
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize();c4&&c4.resize()}));
-document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[])],expName)};
+document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c8?[[window.c8,'t8',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[])],expName)};
 function load(k){const reg=REGIONS[k];
  return fetch('data/'+reg.f).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{R=reg;run(t);
   document.querySelectorAll('#region .nb').forEach(x=>x.classList.toggle('on',x.dataset.r===k))})}
@@ -184,6 +185,35 @@ document.querySelectorAll('#region .nb').forEach(x=>{if(x.dataset.r==='world')re
  fetch('data/'+REGIONS[x.dataset.r].f,{method:'HEAD'}).then(r=>{if(!r.ok)throw 0}).catch(()=>{x.disabled=true;x.title='The history for this region is still being downloaded from Copernicus'})});
 load('world').catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script><script>
+// ---- the latest complete month, every year since 1940 (world, ERA5), vs that month's 1991–2020 average: the ranking that
+//      NASA, NOAA and Copernicus report each month ("2nd-warmest September on record")
+(function(){
+ const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ fetch('data/era5_t2_global_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  const S={};let last='';
+  t.trim().split('\n').slice(1).forEach(l=>{const d=l.slice(0,10),v=+l.split(',')[1];if(isNaN(v))return;last=d;const k=d.slice(0,7),a=(S[k]??=[0,0]);a[0]+=v;a[1]++});
+  let y=+last.slice(0,4),m=+last.slice(5,7);const dim=(y,m)=>new Date(Date.UTC(y,m,0)).getUTCDate();
+  if(+last.slice(8,10)<dim(y,m)){m--;if(!m){m=12;y--}}                              // latest month with every day in
+  const mm=String(m).padStart(2,'0'),Y=[],V={};
+  for(let x=1940;x<=y;x++){const a=S[x+'-'+mm];if(a&&a[1]===dim(x,m)){Y.push(x);V[x]=a[0]/a[1]}}
+  let b=0,n=0;for(let x=1991;x<=2020;x++)if(V[x]!=null){b+=V[x];n++}
+  if(n<30||!V[y])return;
+  Y.forEach(x=>V[x]-=b/n);
+  const rank=[...Y].sort((p,q)=>V[q]-V[p]),r=rank.indexOf(y)+1,top=rank.slice(0,5);
+  const ord=k=>k+(k%100>10&&k%100<14?'th':['th','st','nd','rd'][k%10]||'th'),f=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2);
+  const col=Y.map(x=>x===y?'#d00000':top.includes(x)?'#e6a23c':'#8fa9c8');
+  document.getElementById('t8').textContent=`${MN[m-1]}, every year ${Y[0]}–${y}: world air temperature compared with the 1991–2020 ${MN[m-1]} average`;
+  window.c8=new Chart(document.getElementById('c8'),{type:'bar',data:{labels:Y.map(String),datasets:[{data:Y.map(x=>V[x]),backgroundColor:col}]},
+   options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{title:t=>`${MN[m-1]} ${Y[t[0].dataIndex]}`,label:c=>{const x=Y[c.dataIndex];return `${f(V[x])} °C, ${ord(rank.indexOf(x)+1)} warmest`}}}},
+    scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020'},grid:{color:THEME.grid}}}}});
+  const others=top.filter(x=>x!==y).slice(0,4);
+  document.getElementById('n8').textContent=`${MN[m-1]} ${y} was ${f(V[y])} °C compared with the 1991–2020 average for ${MN[m-1]}: the ${r===1?'warmest':ord(r)+'-warmest'} ${MN[m-1]} since ${Y[0]}${r>1?`, behind ${rank.slice(0,r-1).map(x=>`${x} (${f(V[x])})`).join(', ')}`:''}. The warmest five: ${top.map(x=>`${x} (${f(V[x])})`).join(', ')}; red is ${y}, orange the other four. Each bar is the average of all days of the month in ERA5 (Copernicus), so it updates as soon as a month is complete, usually a few days before the official monthly bulletins. Other datasets (NASA, NOAA, Berkeley Earth) use different methods and coverage and usually come out a little lower; when two years are that close, they can rank them in a different order.`;
+  document.getElementById('b8').hidden=false;
+ }).catch(e=>console.error('latest month:',e));
+})();
+</script>
+<script>
 // ---- how warm is the world "now"? Three measures each year, from yearly ERA5 global means (complete years only):
 //      the IPCC/Betts 20-year average centred on the year (needs 10 later years), the 30-year average up to the year
 //      (the usual "climate normal", ~15 years behind), and where a straight line through the last 30 years ends.
