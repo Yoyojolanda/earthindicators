@@ -42,7 +42,7 @@
  <div class="wrap"><canvas id="c4"></canvas></div>
  <p class="sub" id="hn" style="margin:8px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences. The decadal rate compares the average of the 10 years up to each month with the average of the 10 years before, using NOAA's Mauna Loa monthly means (back to 1958). Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
+<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences, using NOAA's Mauna Loa monthly means (from 1958, so growth starts in 1959). The decadal rate compares the average of the 10 years up to each month with the average of the 10 years before, from the same monthly means (so it starts in 1978). Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -85,7 +85,11 @@ const grid={color:THEME.grid};
 const ym=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
 
 function run(t){
- const R=compute(t),{cy}=R,gk=R.growth[cy]?cy:cy-1,G=R.growth[gk];
+ const R=compute(t);
+ if(DM){const V=new Map(DM.map(p=>[p.k,p.v])),g={};DM.forEach(p=>{const y=Math.floor(p.k/12);if(g[y])return;const d=[];
+   for(let m=0;m<12;m++){const a=V.get(y*12+m),b=V.get((y-1)*12+m);if(a!=null&&b!=null)d.push(a-b)}
+   if(d.length>=6)g[y]={g:d.reduce((s,x)=>s+x,0)/d.length,n:d.length}});R.growth=g}   // NOAA monthly means, back to 1959
+ const{cy}=R,gk=R.growth[cy]?cy:cy-1,G=R.growth[gk];
  const done=Object.keys(R.growth).map(Number).filter(y=>y<cy);
  const last10=done.slice(-10).map(y=>R.growth[y].g),avg10=last10.reduce((s,x)=>s+x,0)/last10.length;
  const top=done.reduce((b,y)=>R.growth[y].g>R.growth[b].g?y:b,done[0]);
@@ -98,7 +102,7 @@ function run(t){
  $('cards').innerHTML=cards.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
  $('t1').textContent=`Monthly mean CO₂ and long-term trend, ${ymd(R.first)[0]}–${cy}`;
  $('t2').textContent=`Daily CO₂: ${cy} vs recent years (7-day average)`;
- $('t3').textContent=`Annual growth in CO₂, ${ymd(R.first)[0]+1}–${cy}`;
+ $('t3').textContent=`Annual growth in CO₂, ${Math.min(...Object.keys(R.growth).map(Number))}–${cy}`;
  const pct=(R.w?R.w.m:R.v)/PRE*100-100;
  $('read').innerHTML=[
   `On ${lastDate} the daily mean at Mauna Loa was ${R.v.toFixed(2)} ppm. Over the last 30 days it averaged ${R.w.m.toFixed(2)} ppm${R.wp?`, ${Math.abs(R.w.m-R.wp.m).toFixed(2)} ppm ${R.w.m>=R.wp.m?'higher':'lower'} than the same 30 days a year earlier`:''}.`,
@@ -170,9 +174,8 @@ function ddraw(){
  $('dbox').classList.remove('hide');
 }
 // NOAA monthly file: year month decimal average deseasonalized ndays sdev unc
-fetch('data/co2_mm_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{DM=t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l))
-  .map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=4&&r[0]>1900&&r[3]>250).map(r=>({k:r[0]*12+r[1]-1,v:r[3]}));ddraw()})
- .catch(()=>{DM=null;ddraw()});
+const parseMM=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l))
+ .map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=4&&r[0]>1900&&r[3]>250).map(r=>({k:r[0]*12+r[1]-1,v:r[3]}));
 
 // ---- CO2 through Earth's history: Antarctic ice cores (800,000 years) and the CenCO2PIP reconstruction (66 million years)
 let NOW=null,HD=null,hv='ice',hc=null;
@@ -220,6 +223,9 @@ Promise.all(['co2_icecore_bereiter2015','co2_cenozoic_cenco2pip2023'].map(f=>fet
 
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
 $('exp').onclick=()=>{if(charts.length<3)return;siteExport([...[1,2,3].map(k=>[charts[k-1],'t'+k,0]),...(dc?[[dc,'t5',0]]:[]),...(hc?[[hc,'t4',0]]:[])],expName)};
-fetch('data/co2_daily_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).then(run)
+// the daily file drives the page; NOAA's monthly file (optional) adds the years before 1975 to the growth and decadal charts
+Promise.all([fetch('data/co2_daily_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}),
+  fetch('data/co2_mm_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).catch(()=>null)])
+ .then(([d,m])=>{DM=m?parseMM(m):null;if(DM&&DM.length<500)DM=null;run(d)})
  .catch(e=>{console.error(e);$('err').textContent='Could not load the CO₂ data. Please try again later.'});
 </script></main></body></html>
