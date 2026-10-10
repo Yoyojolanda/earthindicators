@@ -2,7 +2,7 @@ name: Update regional sea-surface temperature data
 
 on:
   schedule:
-    - cron: "45 15 * * *"      # daily, 15:45 UTC
+    - cron: "19 9,21 * * *"    # twice a day, odd minutes (see update-nino34.yml)
   workflow_dispatch:           # lets you run it manually from the Actions tab
 
 permissions:

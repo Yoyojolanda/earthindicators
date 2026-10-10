@@ -2,7 +2,7 @@ name: Update Nino 3.4 data
 
 on:
   schedule:
-    - cron: "30 14 * * *"     # daily, 14:30 UTC
+    - cron: "7 9,21 * * *"     # twice a day, odd minutes: NOAA PSL posts new OISST days at no fixed time, and GitHub delays runs set on the hour the most
   workflow_dispatch:           # lets you run it manually from the Actions tab
 
 permissions:
@@ -28,4 +28,4 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
           git add data
-          git diff --cached --quiet || (git commit -m "Update Nino 3.4 data" && git push)
+          git diff --cached --quiet || (git commit -m "Update Nino 3.4 data" && git pull --rebase && git push)
