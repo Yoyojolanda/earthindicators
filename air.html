@@ -44,6 +44,7 @@
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
 <div class="box" id="b7" hidden data-nav="Warming level over time"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div><p class="sub" id="n7" style="margin:8px 0 0"></p><div id="m7"></div></div>
+<div class="box" id="b9" hidden data-nav="How fast it is warming"><h2 id="t9"></h2><div class="wrap s"><canvas id="c9"></canvas></div><p class="sub" id="n9" style="margin:8px 0 0"></p></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <div class="box" id="b6" hidden><h2 id="t6"></h2>
 <div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
@@ -176,7 +177,7 @@ function run(raw){
  freeze(c1);freeze(c3);
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize();c4&&c4.resize()}));
-document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c8?[[window.c8,'t8',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[])],expName)};
+document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c8?[[window.c8,'t8',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[]),...(window.c9?[[window.c9,'t9',0]]:[])],expName)};
 function load(k){const reg=REGIONS[k];
  return fetch('data/'+reg.f).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{R=reg;run(t);
   document.querySelectorAll('#region .nb').forEach(x=>x.classList.toggle('on',x.dataset.r===k))})}
@@ -252,6 +253,32 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   document.getElementById('m7').innerHTML=`<p class="sub" style="margin:8px 0 0">Passing 1.5 °C is not one moment but several milestones (after Richard Betts):</p><ul class="sub" style="margin:4px 0 0">${ms.map(x=>`<li>${x}</li>`).join('')}</ul>`;
   document.getElementById('b7').hidden=false;
  }).catch(e=>console.error('warming level:',e));
+})();
+</script>
+<script>
+// ---- how fast is it warming, and is that speeding up? For each year, the slope of the straight line through the
+//      20 (and 30) years up to it, from yearly ERA5 global means (complete years). No break points chosen by hand.
+(function(){
+ fetch('data/era5_t2_global_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  const S={};t.trim().split('\n').slice(1).forEach(l=>{const y=+l.slice(0,4),v=+l.split(',')[1];if(!isNaN(v)){const a=(S[y]??=[0,0]);a[0]+=v;a[1]++}});
+  const Y=Object.keys(S).map(Number).filter(y=>S[y][1]>=365).sort((a,b)=>a-b),A={};Y.forEach(y=>A[y]=S[y][0]/S[y][1]);
+  const slope=(y,n)=>{for(let x=y-n+1;x<=y;x++)if(A[x]==null)return null;const mx=y-(n-1)/2;let my=0;for(let x=y-n+1;x<=y;x++)my+=A[x]/n;
+   let a=0,q=0;for(let x=y-n+1;x<=y;x++){a+=(x-mx)*(A[x]-my);q+=(x-mx)**2}return a/q*10};          // °C per decade
+  const L=Y[Y.length-1],P20=[],P30=[];
+  Y.forEach(y=>{const a=slope(y,20),b=slope(y,30);if(a!=null)P20.push({x:y,y:a});if(b!=null)P30.push({x:y,y:b})});
+  if(P20.length<10)return;
+  const r20=P20[P20.length-1].y,r30=P30[P30.length-1].y,at=(P,y)=>(P.find(p=>p.x===y)||{}).y,f=v=>v.toFixed(2);
+  document.getElementById('t9').textContent=`How fast the world is warming: the trend over the 20 and 30 years up to each year, ${P20[0].x}–${L} (°C per decade)`;
+  window.c9=new Chart(document.getElementById('c9'),{type:'line',data:{datasets:[
+    {label:'Trend over the last 20 years',data:P20,borderColor:'#d00000',borderWidth:2.5,pointRadius:0},
+    {label:'Trend over the last 30 years',data:P30,borderColor:'#4f81b0',borderWidth:2,borderDash:[6,4],pointRadius:0}]},
+   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'x',intersect:false},
+    plugins:{tooltip:{callbacks:{title:t=>{const y=t[0].parsed.x;return `Years up to ${y}`},label:c=>c.dataset.label.replace('Trend over the last ','')+': '+(c.parsed.y>=0?'+':'')+f(c.parsed.y)+' °C per decade'}}},
+    scales:{x:{type:'linear',min:P20[0].x,max:L+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C per decade'},grid:{color:THEME.grid}}}}});
+  const mid=P20.filter(p=>p.x>=1990&&p.x<=2015),mAvg=mid.reduce((t,p)=>t+p.y,0)/mid.length,mLo=Math.min(...mid.map(p=>p.y)),mHi=Math.max(...mid.map(p=>p.y)),isMax=P20.every(p=>p.y<=r20+1e-9);
+  document.getElementById('n9').textContent=`Each point is the slope of a straight line through the yearly global averages of the 20 (red) or 30 (blue, dashed) years up to that year, so no break points are picked by hand. From 1990 to 2015 the 20-year rate swung between ${f(mLo)} and ${f(mHi)} °C per decade, ${f(mAvg)} on average. Over the 20 years to ${L} it is ${f(r20)} °C per decade${isMax?', the fastest in this record':''}: warming has sped up. The 30-year trend (${f(r30)}) reacts more slowly, so it shows less of the speed-up so far. Shorter windows react faster but swing more with El Niño, La Niña and volcanic eruptions: a 20-year line that starts in a cool spell and ends in a warm one comes out steeper, and the other way round. Studies that first remove the effect of El Niño, volcanoes and the sun put the recent rate at around 0.4 °C per decade. ERA5 global 2 m temperature, complete calendar years; before about 1979 there were far fewer observations, so the early part is less certain.`;
+  document.getElementById('b9').hidden=false;
+ }).catch(e=>console.error('warming rate:',e));
 })();
 </script>
 <script>
