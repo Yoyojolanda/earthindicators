@@ -44,7 +44,7 @@
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
 <div class="box" id="b7" hidden data-nav="Warming level over time"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div><p class="sub" id="n7" style="margin:8px 0 0"></p><div id="m7"></div></div>
-<div class="box" id="b9" hidden data-nav="How fast it is warming"><h2 id="t9"></h2><div class="wrap s"><canvas id="c9"></canvas></div><p class="sub" id="n9" style="margin:8px 0 0"></p></div>
+<div class="box" id="b9" hidden data-nav="Warming speeding up"><h2 id="t9"></h2><div class="wrap"><canvas id="c9"></canvas></div><p class="sub" id="n9" style="margin:8px 0 0"></p></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <div class="box" id="b6" hidden><h2 id="t6"></h2>
 <div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
@@ -256,29 +256,35 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
 })();
 </script>
 <script>
-// ---- how fast is it warming, and is that speeding up? For each year, the slope of the straight line through the
-//      20 (and 30) years up to it, from yearly ERA5 global means (complete years). No break points chosen by hand.
+// ---- is warming speeding up? NYT-style: every month as a dot, with a straight trend line through each of three periods
+//      (1940–1970, 1970–2010, 2010–now) and its rate written next to it. Monthly anomalies vs each month's 1991–2020 mean.
 (function(){
  fetch('data/era5_t2_global_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
-  const S={};t.trim().split('\n').slice(1).forEach(l=>{const y=+l.slice(0,4),v=+l.split(',')[1];if(!isNaN(v)){const a=(S[y]??=[0,0]);a[0]+=v;a[1]++}});
-  const Y=Object.keys(S).map(Number).filter(y=>S[y][1]>=365).sort((a,b)=>a-b),A={};Y.forEach(y=>A[y]=S[y][0]/S[y][1]);
-  const slope=(y,n)=>{for(let x=y-n+1;x<=y;x++)if(A[x]==null)return null;const mx=y-(n-1)/2;let my=0;for(let x=y-n+1;x<=y;x++)my+=A[x]/n;
-   let a=0,q=0;for(let x=y-n+1;x<=y;x++){a+=(x-mx)*(A[x]-my);q+=(x-mx)**2}return a/q*10};          // °C per decade
-  const L=Y[Y.length-1],P20=[],P30=[];
-  Y.forEach(y=>{const a=slope(y,20),b=slope(y,30);if(a!=null)P20.push({x:y,y:a});if(b!=null)P30.push({x:y,y:b})});
-  if(P20.length<10)return;
-  const r20=P20[P20.length-1].y,r30=P30[P30.length-1].y,at=(P,y)=>(P.find(p=>p.x===y)||{}).y,f=v=>v.toFixed(2);
-  document.getElementById('t9').textContent=`How fast the world is warming: the trend over the 20 and 30 years up to each year, ${P20[0].x}–${L} (°C per decade)`;
-  window.c9=new Chart(document.getElementById('c9'),{type:'line',data:{datasets:[
-    {label:'Trend over the last 20 years',data:P20,borderColor:'#d00000',borderWidth:2.5,pointRadius:0},
-    {label:'Trend over the last 30 years',data:P30,borderColor:'#4f81b0',borderWidth:2,borderDash:[6,4],pointRadius:0}]},
-   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'x',intersect:false},
-    plugins:{tooltip:{callbacks:{title:t=>{const y=t[0].parsed.x;return `Years up to ${y}`},label:c=>c.dataset.label.replace('Trend over the last ','')+': '+(c.parsed.y>=0?'+':'')+f(c.parsed.y)+' °C per decade'}}},
-    scales:{x:{type:'linear',min:P20[0].x,max:L+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C per decade'},grid:{color:THEME.grid}}}}});
-  const mid=P20.filter(p=>p.x>=1990&&p.x<=2015),mAvg=mid.reduce((t,p)=>t+p.y,0)/mid.length,mLo=Math.min(...mid.map(p=>p.y)),mHi=Math.max(...mid.map(p=>p.y)),isMax=P20.every(p=>p.y<=r20+1e-9);
-  document.getElementById('n9').textContent=`Each point is the slope of a straight line through the yearly global averages of the 20 (red) or 30 (blue, dashed) years up to that year, so no break points are picked by hand. From 1990 to 2015 the 20-year rate swung between ${f(mLo)} and ${f(mHi)} °C per decade, ${f(mAvg)} on average. Over the 20 years to ${L} it is ${f(r20)} °C per decade${isMax?', the fastest in this record':''}: warming has sped up. The 30-year trend (${f(r30)}) reacts more slowly, so it shows less of the speed-up so far. Shorter windows react faster but swing more with El Niño, La Niña and volcanic eruptions: a 20-year line that starts in a cool spell and ends in a warm one comes out steeper, and the other way round. Studies that first remove the effect of El Niño, volcanoes and the sun put the recent rate at around 0.4 °C per decade. ERA5 global 2 m temperature, complete calendar years; before about 1979 there were far fewer observations, so the early part is less certain.`;
+  const S={};let last='';
+  t.trim().split('\n').slice(1).forEach(l=>{const d=l.slice(0,10),v=+l.split(',')[1];if(isNaN(v))return;last=d;const k=d.slice(0,7),a=(S[k]??=[0,0]);a[0]+=v;a[1]++});
+  const dim=(y,m)=>new Date(Date.UTC(y,m,0)).getUTCDate(),M=[];
+  Object.keys(S).sort().forEach(k=>{const y=+k.slice(0,4),m=+k.slice(5,7);if(S[k][1]===dim(y,m))M.push({y,m,x:y+(m-.5)/12,v:S[k][0]/S[k][1]})});
+  const clim=Array(13).fill(0);for(let m=1;m<=12;m++){const a=M.filter(p=>p.m===m&&p.y>=1991&&p.y<=2020);clim[m]=a.reduce((s,p)=>s+p.v,0)/a.length}
+  M.forEach(p=>p.a=p.v-clim[p.m]+0.88);                               // °C above 1850–1900 (Copernicus's yearly offset)
+  const end=M[M.length-1].x,SEG=[[1940,1970,'#8a96a3'],[1970,2010,'#e0a03c'],[2010,end+.01,'#d00000']];
+  const fit=(a,b)=>{const P=M.filter(p=>p.x>=a&&p.x<b),n=P.length,mx=P.reduce((s,p)=>s+p.x,0)/n,my=P.reduce((s,p)=>s+p.a,0)/n;let u=0,q=0;
+   P.forEach(p=>{u+=(p.x-mx)*(p.a-my);q+=(p.x-mx)**2});const sl=u/q;return{P,sl,line:[{x:P[0].x,y:my+sl*(P[0].x-mx)},{x:P[n-1].x,y:my+sl*(P[n-1].x-mx)}]}};
+  const F=SEG.map(([a,b])=>fit(a,b)),f=v=>v.toFixed(2),yr=x=>Math.floor(x),ly=yr(end);
+  const lab=['1940 to 1970',`1970 to 2010`,`2010 to ${ly}`];
+  const tags={id:'segtags',afterDatasetsDraw(ch){const{ctx,scales:{x,y}}=ch;ctx.save();ctx.font='bold 13px system-ui,sans-serif';ctx.textAlign='right';
+   F.forEach((g,k)=>{if(!ch.isDatasetVisible(3+k))return;const e=g.line[1];ctx.fillStyle=SEG[k][2];const px=x.getPixelForValue(e.x)-(k===2?4:0),py=y.getPixelForValue(e.y)-(k===2?34:22);
+    ctx.fillText(lab[k],px,py);ctx.fillText((g.sl>=0?'+':'')+f(g.sl*10)+' °C per decade',px,py+16)});ctx.restore()}};
+  document.getElementById('t9').textContent=`Warming is speeding up: every month since 1940, with the trend in three periods (°C above 1850–1900)`;
+  window.c9=new Chart(document.getElementById('c9'),{type:'line',plugins:[tags],data:{datasets:[
+    ...F.map((g,k)=>({label:'Months, '+lab[k],data:g.P.map(p=>({x:p.x,y:p.a})),showLine:false,pointRadius:1.6,borderWidth:0,backgroundColor:SEG[k][2]+'55',order:5})),
+    ...F.map((g,k)=>({label:'Trend '+lab[k],data:g.line,borderColor:SEG[k][2],borderWidth:3,pointRadius:0,order:1}))]},
+   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',intersect:false},
+    plugins:{legend:{display:false},tooltip:{filter:i=>i.datasetIndex<3,callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x+1e-6);return ML[Math.round((x-y)*12-.5)]+' '+y},label:c=>f(c.parsed.y)+' °C'}}},
+    scales:{x:{type:'linear',min:1940,max:ly+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}});
+  const r=F.map(g=>g.sl*10);
+  document.getElementById('n9').textContent=`Each dot is one month of world air temperature; each line is the straight-line trend through one period, with its rate. From 1940 to 1970 there was almost no warming (${f(r[0])} °C per decade), as rising greenhouse gases were offset by air pollution that reflects sunlight. From 1970 to 2010 the world warmed ${f(r[1])} °C per decade, and since 2010 ${f(r[2])} °C per decade, ${(r[2]/r[1]).toFixed(1)} times as fast. Likely causes: greenhouse gases still rising, cleaner air (less pollution, including from ships since 2020) and the 2023–24 El Niño. The break years follow a similar chart in The New York Times. Where you put them changes the rates a little: the last period starts in a cool La Niña spell and ends after a strong El Niño, which steepens it somewhat, but studies that remove El Niño's effect also find about 0.3–0.4 °C per decade recently. ERA5 (Copernicus); months are compared with their own 1991–2020 average and shifted by 0.88 °C to 1850–1900, so individual months are approximate. Data before about 1979 rest on far fewer observations.`;
   document.getElementById('b9').hidden=false;
- }).catch(e=>console.error('warming rate:',e));
+ }).catch(e=>console.error('warming periods:',e));
 })();
 </script>
 <script>
