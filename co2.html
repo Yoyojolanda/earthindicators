@@ -42,7 +42,7 @@
  <div class="wrap"><canvas id="c4"></canvas></div>
  <p class="sub" id="hn" style="margin:8px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences. The decadal rate compares each monthly mean with the same month ten years earlier, using NOAA's Mauna Loa monthly means (back to 1958). Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
+<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences. The decadal rate compares the average of the 10 years up to each month with the average of the 10 years before, using NOAA's Mauna Loa monthly means (back to 1958). Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -135,27 +135,29 @@ function run(t){
  NOW={v:(()=>{const a=R.monthly.filter(p=>p.y!=null).slice(-12);return a.reduce((s,p)=>s+p.y,0)/a.length})(),y:cy};hdraw();
  $('exp').disabled=false}
 
-// ---- rise per decade: each month minus the same month ten years earlier. NOAA's monthly file (from 1958) when it
-//      is there, otherwise monthly means from the daily file (from 1974, so the decade comparison starts in 1984)
+// ---- decadal rate: 10-year average minus the 10 years before. NOAA's monthly file (from 1958, so the decadal rate starts in 1978) when it
+//      is there, otherwise monthly means from the daily file (from 1974, so the decadal rate starts in 1994)
 let DM,RM=null,dc=null;
+const w10=(V,e)=>{let s=0,n=0;for(let j=e-119;j<=e;j++){const x=V.get(j);if(x!=null){s+=x;n++}}return n>=110?s/n:null};
 function ddraw(){
  if(DM===undefined||!RM)return;
  const S=DM&&DM.length>500?DM:RM,V=new Map(S.map(p=>[p.k,p.v])),P=[];
- S.forEach(p=>{const o=V.get(p.k-120);if(o!=null)P.push({x:Math.floor(p.k/12)+(p.k%12+.5)/12,y:p.v-o,k:p.k})});
+ // average of the 10 years to this month minus the average of the 10 years before (Jacobson's method): smooth, and needs 20 years of data
+ S.forEach(p=>{const a=w10(V,p.k),b=w10(V,p.k-120);if(a!=null&&b!=null)P.push({x:Math.floor(p.k/12)+(p.k%12+.5)/12,y:a-b,k:p.k})});
  if(P.length<24)return;
  const lab=k=>ML[k%12]+' '+Math.floor(k/12),L=P[P.length-1],F=P[0],y0=Math.floor(F.k/12),ly=Math.floor(L.k/12);
  const yr=y=>{const a=P.filter(p=>Math.floor(p.k/12)===y);return a.length?a.reduce((s,p)=>s+p.y,0)/a.length:null};
  const first=yr(y0+1)!=null?yr(y0+1):F.y,top=P.reduce((b,p)=>p.y>b.y?p:b,P[0]);
  const pl=P.filter(p=>p.x>=1995&&p.x<2003),plv=pl.length?Math.min(...pl.map(p=>p.y)):null;
  $('t5').textContent=`Decadal rate of CO₂ growth (ppm gained per 10 years), ${y0}–${ly}`;
- $('dn').textContent=`In ${lab(L.k)} CO₂ at Mauna Loa was ${V.get(L.k).toFixed(2)} ppm, ${L.y.toFixed(1)} ppm more than in ${lab(L.k-120)}. Each point compares a month with the same month ten years earlier, so the seasonal cycle cancels out. Around ${y0+1} the decadal rate was about ${first.toFixed(0)} ppm; now it is ${L.y.toFixed(0)} ppm${top===L||L.y>=top.y-.3?', close to the highest in the record':` (highest: ${top.y.toFixed(1)} ppm, ${lab(top.k)})`}, so CO₂ is not just rising but rising faster.${plv!=null&&y0<1985?` The flat stretch in the 1990s and early 2000s (about ${plv.toFixed(0)} ppm per decade) followed the economic collapse of the former Soviet Union and the cooling after the 1991 Pinatubo eruption.`:''} For the amount of CO₂ in the air to stop rising, this line has to come down to zero, which needs emissions to fall to about net zero. It has not yet turned down.`;
+ $('dn').textContent=`Over the 10 years to ${lab(L.k)}, CO₂ at Mauna Loa averaged ${L.y.toFixed(1)} ppm more than over the 10 years before. Each point compares two ten-year averages, so the seasonal cycle and year-to-year swings (El Niño, volcanoes) are smoothed out, and the line shows the long-term growth rate. Around ${y0+1} the decadal rate was about ${first.toFixed(0)} ppm; now it is ${L.y.toFixed(0)} ppm${top===L||L.y>=top.y-.3?', close to the highest in the record':` (highest: ${top.y.toFixed(1)} ppm, ${lab(top.k)})`}, so CO₂ is not just rising but rising faster.${plv!=null&&y0<1985?` The flat stretch in the 1990s and early 2000s (about ${plv.toFixed(0)} ppm per decade) followed the economic collapse of the former Soviet Union and the cooling after the 1991 Pinatubo eruption.`:''} For the amount of CO₂ in the air to stop rising, this line has to come down to zero, which needs emissions to fall to about net zero. It has not yet turned down.`;
  if(dc)dc.destroy();
  dc=new Chart($('c5'),{type:'line',data:{datasets:[
-   {label:'Gain over the previous 10 years',data:P,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
+   {label:'Gain per 10 years (10-year average vs the 10 years before)',data:P,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
    {label:`${lab(L.k)}: +${L.y.toFixed(1)} ppm`,data:[{x:L.x,y:L.y}],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false},
    {label:'Zero: CO₂ stops rising',data:[{x:y0,y:0},{x:ly+1,y:0}],borderColor:'#e6a23c',borderDash:[6,4],borderWidth:1.6,pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>{const p=P[t[0].dataIndex];return lab(p.k)+' vs '+lab(p.k-120)},label:c=>'+'+c.parsed.y.toFixed(2)+' ppm in 10 years'}}},
+   plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>{const p=P[t[0].dataIndex];return '10 years to '+lab(p.k)+' vs the 10 years before'},label:c=>'+'+c.parsed.y.toFixed(2)+' ppm in 10 years'}}},
    scales:{x:{type:'linear',min:y0,max:ly+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'ppm per 10 years'},grid}}}});
  $('dbox').classList.remove('hide');
 }
