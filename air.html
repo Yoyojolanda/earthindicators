@@ -42,6 +42,7 @@
 <div class="box" id="b3" data-nav="Actual temperature"><h2 id="t3"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c3"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
 <div class="box" id="b4"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
+<div class="box" id="b7" hidden data-nav="Warming level over time"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div><p class="sub" id="n7" style="margin:8px 0 0"></p><div id="m7"></div></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <div class="box" id="b6" hidden><h2 id="t6"></h2>
 <div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
@@ -174,7 +175,7 @@ function run(raw){
  freeze(c1);freeze(c3);
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize();c4&&c4.resize()}));
-document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[])],expName)};
+document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[])],expName)};
 function load(k){const reg=REGIONS[k];
  return fetch('data/'+reg.f).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{R=reg;run(t);
   document.querySelectorAll('#region .nb').forEach(x=>x.classList.toggle('on',x.dataset.r===k))})}
@@ -183,6 +184,47 @@ document.querySelectorAll('#region .nb').forEach(x=>{if(x.dataset.r==='world')re
  fetch('data/'+REGIONS[x.dataset.r].f,{method:'HEAD'}).then(r=>{if(!r.ok)throw 0}).catch(()=>{x.disabled=true;x.title='The history for this region is still being downloaded from Copernicus'})});
 load('world').catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script><script>
+// ---- how warm is the world "now"? Three measures each year, from yearly ERA5 global means (complete years only):
+//      the IPCC/Betts 20-year average centred on the year (needs 10 later years), the 30-year average up to the year
+//      (the usual "climate normal", ~15 years behind), and where a straight line through the last 30 years ends.
+(function(){
+ fetch('data/era5_t2_global_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  const S={};t.trim().split('\n').slice(1).forEach(l=>{const y=+l.slice(0,4),v=+l.split(',')[1];if(!isNaN(v)){const a=(S[y]??=[0,0]);a[0]+=v;a[1]++}});
+  const Y=Object.keys(S).map(Number).filter(y=>S[y][1]>=365).sort((a,b)=>a-b),A={};Y.forEach(y=>A[y]=S[y][0]/S[y][1]);
+  let b=0;for(let y=1991;y<=2020;y++)b+=A[y]/30;
+  Y.forEach(y=>A[y]=A[y]-b+0.88);                                   // °C above 1850–1900 (Copernicus's offset for ERA5)
+  const L=Y[Y.length-1],X0=1950,has=(a,z)=>{for(let y=a;y<=z;y++)if(A[y]==null)return false;return true};
+  const mean=(a,z)=>{let s=0;for(let y=a;y<=z;y++)s+=A[y];return s/(z-a+1)};
+  const fit=y=>{const mx=y-14.5,my=mean(y-29,y);let a=0,q=0;for(let x=y-29;x<=y;x++){a+=(x-mx)*(A[x]-my);q+=(x-mx)**2}return{v:my+a/q*(y-mx),s:a/q}},trend=y=>fit(y).v;
+  const C=[],T=[],N=[],P=[];
+  for(let y=X0;y<=L;y++){P.push({x:y,y:A[y]});
+   if(has(y-10,y+9))C.push({x:y,y:mean(y-10,y+9)});                 // 20 years centred on y: y-10 … y+9
+   if(has(y-29,y)){N.push({x:y,y:mean(y-29,y)});T.push({x:y,y:trend(y)})}}
+  const k1=Y.find(y=>y>=X0&&A[y]>1.5);
+  const cE=C[C.length-1],tE=T.find(p=>p.x===cE.x),tL=T[T.length-1],nL=N[N.length-1],f=v=>v.toFixed(2);
+  const pl={id:'p15',afterDatasetsDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch,py=y.getPixelForValue(1.5);if(py<a.top||py>a.bottom)return;ctx.save();ctx.strokeStyle='#d00000';ctx.lineWidth=1.2;ctx.setLineDash([6,4]);
+   ctx.beginPath();ctx.moveTo(a.left,py);ctx.lineTo(a.right,py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d00000';ctx.font='12px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('1.5 °C',a.left+4,py-5);ctx.restore()}};
+  document.getElementById('t7').textContent=`How warm is the world "now"? Three ways to measure it, ${X0}–${L} (°C above 1850–1900)`;
+  window.c7=new Chart(document.getElementById('c7'),{type:'line',plugins:[pl],data:{datasets:[
+    {label:'Single years',data:P,borderColor:THEME.mut,backgroundColor:THEME.mut,pointRadius:2.5,showLine:false,order:5},
+    {label:'Average of the last 30 years (the usual way)',data:N,borderColor:'#7b5ea7',borderWidth:2,pointRadius:0,order:3},
+    {label:'20-year average centred on the year (IPCC; needs 10 more years)',data:C,borderColor:'#4f81b0',borderWidth:3,pointRadius:0,order:2},
+    {label:'End of the straight-line trend through the last 30 years',data:T,borderColor:'#d00000',borderWidth:2.5,pointRadius:0,order:1}]},
+   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'x',intersect:false},
+    plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label.replace(/ \(.*/,'')+': '+f(c.parsed.y)+' °C'}}},
+    scales:{x:{type:'linear',min:X0,max:L+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}});
+  document.getElementById('n7').innerHTML=`Each line answers "how warm is the world now?" in a different way. <b>Blue</b> is the definition scientists use for the Paris limits: the 20-year average centred on the year, ten years before and ten after. It smooths out El Niño and La Niña without falling behind, but it can only be drawn up to ${cE.x}, because it needs the ten years that follow. <b>Purple</b> is the average of the 30 years up to each year, the usual "climate normal". An average describes the middle of its period, so this line runs about 15 years behind: in ${L} it says ${f(nL.y)} °C, ${f(tL.y-nL.y)} °C below the red line. With warming that is speeding up, the lag only grows. <b>Red</b> fits a straight line through the 30 years up to each year and reads off where it ends. Wherever the blue line exists, the red one stays close to it (in ${cE.x}: ${f(tE.y)} vs ${f(cE.y)} °C)${tE.y<cE.y?', slightly lower because warming has sped up and a straight line cannot quite keep up':''}. That makes it the best estimate from measurements alone of where we are now: <b>${f(tL.y)} °C in ${L}</b>. Single years (dots) swing up and down by a tenth of a degree or two, mostly with El Niño and La Niña, which is why one warm year above 1.5 °C does not yet mean the Paris limit is passed. Complete calendar years of ERA5 global 2 m temperature, converted to 1850–1900 with Copernicus's offset of 0.88 °C. The centred 20-year average follows <a href="https://www.metoffice.gov.uk/about-us/press-office/news/weather-and-climate/2023/consensus-needed-on-when-global-warming-levels-reach-paris-agreements-1.5-c-guard-rail" target="_blank" rel="noopener">Betts et al. (2023)</a> and the IPCC.`;
+  // slope of the latest 30-year trend line (°C per year), for a rough date when the long-term level reaches 1.5 °C
+  const rate=fit(L).s,yr=rate>0&&tL.y<1.5?Math.round(L+(1.5-tL.y)/rate):null;
+  const ms=[`<b>First year above 1.5 °C</b> in ERA5: ${k1?`${k1} (${f(A[k1])} °C). Passed.`:'not yet.'}`,
+   `<b>The long-term level reaches 1.5 °C</b>, seen in an up-to-date estimate such as the red line: ${tL.y>=1.5?`passed (${f(tL.y)} °C in ${L}).`:`not yet: ${f(tL.y)} °C in ${L}${yr?`, with the current trend of about ${(rate*10).toFixed(2)} °C per decade it would reach 1.5 °C around ${yr}`:''}.`}`,
+   `<b>Confirmed by the 20-year average</b> (the IPCC definition): only about ten years after it happens, once the years that follow have been measured${yr?`, so around ${yr+10} at the current pace`:''}.`];
+  document.getElementById('m7').innerHTML=`<p class="sub" style="margin:8px 0 0">Passing 1.5 °C is not one moment but several milestones (after Richard Betts):</p><ul class="sub" style="margin:4px 0 0">${ms.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  document.getElementById('b7').hidden=false;
+ }).catch(e=>console.error('warming level:',e));
+})();
+</script>
+<script>
 // ---- warming rate by region: linear trend of yearly means since 1979, from ERA5 monthly averages (data/era5_t2_regions_monthly.csv)
 (function(){
  const START=1979, NAMES={arctic:'Arctic',nh:'Northern Hemisphere',world:'World',tropics:'Tropics',sh:'Southern Hemisphere',antarctic:'Antarctic'},
