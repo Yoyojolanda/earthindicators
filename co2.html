@@ -34,7 +34,7 @@
 <p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
 <div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
-<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div><p class="sub" id="n3" style="margin:8px 0 0"></p></div>
 <div class="box hide" id="dbox" data-nav="Decadal rate"><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div>
  <p class="sub" id="dn" style="margin:8px 0 0"></p></div>
 <div class="box hide" id="hbox" data-nav="Over Earth's history"><h2 id="t4"></h2>
@@ -128,7 +128,13 @@ function run(t){
    scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
  // 3. annual growth
  const ys=Object.keys(R.growth).map(Number);
- charts.push(new Chart($('c3'),{type:'bar',data:{labels:ys.map(String),datasets:[{label:'Annual growth',data:ys.map(y=>R.growth[y].g),
+ // decade averages of the annual growth (like NOAA's chart): black line across each decade's bars; dashed while the decade is unfinished
+ const DEC=[];for(let d=Math.ceil(ys[0]/10)*10;d<=cy;d+=10){const a=ys.filter(y=>y>=d&&y<d+10&&y<cy);if(a.length>=3)DEC.push({d,a,v:a.reduce((t,y)=>t+R.growth[y].g,0)/a.length,full:a.length===10})}
+ const decLines={id:'dec',afterDatasetsDraw(ch){const{ctx,scales:{x,y}}=ch,w=x.getPixelForValue(1)-x.getPixelForValue(0);ctx.save();ctx.strokeStyle=THEME.ink;ctx.lineWidth=3;
+  DEC.forEach(D=>{const i0=ys.indexOf(D.a[0]),i1=ys.indexOf(D.a[D.a.length-1]),py=y.getPixelForValue(D.v);ctx.setLineDash(D.full?[]:[6,4]);
+   ctx.beginPath();ctx.moveTo(x.getPixelForValue(i0)-w/2,py);ctx.lineTo(x.getPixelForValue(i1)+w/2,py);ctx.stroke()});ctx.restore()}};
+ $('n3').textContent=`Black lines: average annual growth in each decade${DEC.length?` (${DEC.map(D=>`${D.d}s: ${D.v.toFixed(2)}${D.full?'':` so far, ${D.a.length} years`}`).join('; ')} ppm per year)`:''}. Times ten, that is roughly how many ppm CO₂ gained over the decade. The dashed line is a decade that is not finished yet; the current year is left out of it until it is complete. Purple: largest increase on record; red: ${cy} so far.`;
+ charts.push(new Chart($('c3'),{type:'bar',plugins:[decLines],data:{labels:ys.map(String),datasets:[{label:'Annual growth',data:ys.map(y=>R.growth[y].g),
    backgroundColor:ys.map(y=>y==cy?'#d00000':y==top?'#7b5ea7':'#8fa9c8')}]},
   options:{animation:false,maintainAspectRatio:false,
    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const y=ys[c.dataIndex],g=R.growth[y];return sg(g.g)+' ppm/yr'+(y==cy?` (so far, ${g.n} months)`:g.n<12?` (${g.n} months with data)`:'')}}}},
