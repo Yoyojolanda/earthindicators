@@ -35,10 +35,10 @@
 <div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
-<div class="box" data-nav="Rise per decade"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
+<div class="box" data-nav="Decadal rate"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
  <p class="sub" id="dn" style="margin:8px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">Globally averaged methane at marine surface sites, in parts per billion (ppb). Monthly means are centered on the middle of each month; the trend has the average seasonal cycle removed. The rise per decade compares each monthly mean with the same month ten years earlier. Annual increases are NOAA's own figures (the change in the trend from January 1 of one year to the next). Recent months are preliminary, and NOAA notes that first estimates can be too high by several ppb. Pre-industrial (1750) level: about 729 ppb (IPCC AR6). Data: Lan, X., K.W. Thoning and E.J. Dlugokencky, Trends in globally-averaged CH₄, N₂O and SF₆ determined from NOAA Global Monitoring Laboratory measurements (<a href="https://gml.noaa.gov/ccgg/trends_ch4/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends_ch4</a>).</p>
+<p class="sub">Globally averaged methane at marine surface sites, in parts per billion (ppb). Monthly means are centered on the middle of each month; the trend has the average seasonal cycle removed. The decadal rate compares each monthly mean with the same month ten years earlier. Annual increases are NOAA's own figures (the change in the trend from January 1 of one year to the next). Recent months are preliminary, and NOAA notes that first estimates can be too high by several ppb. Pre-industrial (1750) level: about 729 ppb (IPCC AR6). Data: Lan, X., K.W. Thoning and E.J. Dlugokencky, Trends in globally-averaged CH₄, N₂O and SF₆ determined from NOAA Global Monitoring Laboratory measurements (<a href="https://gml.noaa.gov/ccgg/trends_ch4/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends_ch4</a>).</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -105,10 +105,10 @@ function run(mmT,grT){
  M.forEach(r=>{const k=r.y*12+r.m-1,o=V.get(k-120);if(o!=null)DP.push({x:r.x,y:r.v-o,k})});
  const lk=k=>ML[k%12]+' '+Math.floor(k/12),DL=DP[DP.length-1],dy0=Math.floor(DP[0].x);
  const dmin=DP.filter(p=>p.x>=2000&&p.x<2016).reduce((b,p)=>!b||p.y<b.y?p:b,null),dtop=DP.reduce((b,p)=>p.y>b.y?p:b,DP[0]);
- $('t4').textContent=`How much methane rose over the previous 10 years, ${dy0}–${cy}`;
- $('dn').textContent=`In ${lab(L)} methane was ${DL.y.toFixed(0)} ppb higher than in ${lk(DL.k-120)}. Each point compares a month with the same month ten years earlier, so the seasonal cycle cancels out.${dmin?` Because growth nearly stalled from 2000 to 2006, the rise per decade bottomed out at about ${dmin.y.toFixed(0)} ppb (${lk(dmin.k)}); since then it has climbed again${DL.y>=dtop.y-3?', and it is now close to the highest in the record':` (highest: ${dtop.y.toFixed(0)} ppb, ${lk(dtop.k)})`}.`:''} Because methane breaks down in about a decade, this line would drop toward zero within years if emissions were cut sharply, unlike CO₂, which stays in the air for centuries.`;
+ $('t4').textContent=`Decadal rate of methane growth (ppb gained per 10 years), ${dy0}–${cy}`;
+ $('dn').textContent=`In ${lab(L)} methane was ${DL.y.toFixed(0)} ppb higher than in ${lk(DL.k-120)}. Each point compares a month with the same month ten years earlier, so the seasonal cycle cancels out.${dmin?` Because growth nearly stalled from 2000 to 2006, the decadal rate bottomed out at about ${dmin.y.toFixed(0)} ppb (${lk(dmin.k)}); since then it has climbed again${DL.y>=dtop.y-3?', and it is now close to the highest in the record':` (highest: ${dtop.y.toFixed(0)} ppb, ${lk(dtop.k)})`}.`:''} Because methane breaks down in about a decade, this line would drop toward zero within years if emissions were cut sharply, unlike CO₂, which stays in the air for centuries.`;
  charts.push(new Chart($('c4'),{type:'line',data:{datasets:[
-   {label:'Rise over the previous 10 years',data:DP,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
+   {label:'Gain over the previous 10 years',data:DP,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
    {label:`${lab(L)}: +${DL.y.toFixed(0)} ppb`,data:[{x:DL.x,y:DL.y}],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false},
    {label:'Zero: methane stops rising',data:[{x:dy0,y:0},{x:cy+1,y:0}],borderColor:'#e6a23c',borderDash:[6,4],borderWidth:1.6,pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
