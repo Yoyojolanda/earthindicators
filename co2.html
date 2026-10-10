@@ -46,6 +46,8 @@
 </div>
 <script>
 const $=id=>document.getElementById(id);
+const zl=t=>({id:'zl',afterDatasetsDraw(ch){if(!ch.isDatasetVisible(2))return;const{ctx,chartArea:a,scales:{y}}=ch;ctx.save();ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#d9822b';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t,(a.left+a.right)/2,y.getPixelForValue(0)-5);ctx.restore()}}); // label on the zero line
+
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],NN=365,PRE=280,charts=[];
 const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
 const dn=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);                    // continuous day number
@@ -152,10 +154,10 @@ function ddraw(){
  $('t5').textContent=`Decadal rate of CO₂ growth (ppm gained per 10 years), ${y0}–${ly}`;
  $('dn').textContent=`Over the 10 years to ${lab(L.k)}, CO₂ at Mauna Loa averaged ${L.y.toFixed(1)} ppm more than over the 10 years before. Each point compares two ten-year averages, so the seasonal cycle and year-to-year swings (El Niño, volcanoes) are smoothed out, and the line shows the long-term growth rate. Around ${y0+1} the decadal rate was about ${first.toFixed(0)} ppm; now it is ${L.y.toFixed(0)} ppm${top===L||L.y>=top.y-.3?', close to the highest in the record':` (highest: ${top.y.toFixed(1)} ppm, ${lab(top.k)})`}, so CO₂ is not just rising but rising faster.${plv!=null&&y0<1985?` The flat stretch in the 1990s and early 2000s (about ${plv.toFixed(0)} ppm per decade) followed the economic collapse of the former Soviet Union and the cooling after the 1991 Pinatubo eruption.`:''} For the amount of CO₂ in the air to stop rising, this line has to come down to zero, which needs emissions to fall to about net zero. It has not yet turned down.`;
  if(dc)dc.destroy();
- dc=new Chart($('c5'),{type:'line',data:{datasets:[
+ dc=new Chart($('c5'),{type:'line',plugins:[zl('NET ZERO')],data:{datasets:[
    {label:'Gain per 10 years (10-year average vs the 10 years before)',data:P,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
    {label:`${lab(L.k)}: +${L.y.toFixed(1)} ppm`,data:[{x:L.x,y:L.y}],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false},
-   {label:'Zero: CO₂ stops rising',data:[{x:y0,y:0},{x:ly+1,y:0}],borderColor:'#e6a23c',borderDash:[6,4],borderWidth:1.6,pointRadius:0}]},
+   {label:'Net zero: CO₂ stops rising',data:[{x:y0,y:0},{x:ly+1,y:0}],borderColor:'#d9822b',borderDash:[6,4],borderWidth:2.2,pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>{const p=P[t[0].dataIndex];return '10 years to '+lab(p.k)+' vs the 10 years before'},label:c=>'+'+c.parsed.y.toFixed(2)+' ppm in 10 years'}}},
    scales:{x:{type:'linear',min:y0,max:ly+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'ppm per 10 years'},grid}}}});

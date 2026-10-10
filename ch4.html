@@ -42,6 +42,8 @@
 </div>
 <script>
 const $=id=>document.getElementById(id);
+const zl=t=>({id:'zl',afterDatasetsDraw(ch){if(!ch.isDatasetVisible(2))return;const{ctx,chartArea:a,scales:{y}}=ch;ctx.save();ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#d9822b';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t,(a.left+a.right)/2,y.getPixelForValue(0)-5);ctx.restore()}}); // label on the zero line
+
 const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],PRE=729,charts=[];
 const sg=(x,d=1)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
 const rows=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l)).map(l=>l.trim().split(/\s+/).map(Number));
@@ -109,10 +111,10 @@ function run(mmT,grT){
  const dmin=DP.filter(p=>p.x>=2000&&p.x<2020).reduce((b,p)=>!b||p.y<b.y?p:b,null),dtop=DP.reduce((b,p)=>p.y>b.y?p:b,DP[0]);
  $('t4').textContent=`Decadal rate of methane growth (ppb gained per 10 years), ${dy0}–${cy}`;
  $('dn').textContent=`Over the 10 years to ${lab(L)}, methane averaged ${DL.y.toFixed(0)} ppb more than over the 10 years before. Each point compares two ten-year averages, so the seasonal cycle and year-to-year swings are smoothed out, and the line shows the long-term growth rate.${dmin?` Because growth nearly stalled from 2000 to 2006, the decadal rate bottomed out at about ${dmin.y.toFixed(0)} ppb (${lk(dmin.k)}); since then it has climbed again${DL.y>=dtop.y-3?', and it is now close to the highest in the record':` (highest: ${dtop.y.toFixed(0)} ppb, ${lk(dtop.k)})`}.`:''} Because methane breaks down in about a decade, this line would drop toward zero within years if emissions were cut sharply, unlike CO₂, which stays in the air for centuries.`;
- charts.push(new Chart($('c4'),{type:'line',data:{datasets:[
+ charts.push(new Chart($('c4'),{type:'line',plugins:[zl('METHANE STOPS RISING')],data:{datasets:[
    {label:'Gain per 10 years (10-year average vs the 10 years before)',data:DP,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
    {label:`${lab(L)}: +${DL.y.toFixed(0)} ppb`,data:[{x:DL.x,y:DL.y}],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false},
-   {label:'Zero: methane stops rising',data:[{x:dy0,y:0},{x:cy+1,y:0}],borderColor:'#e6a23c',borderDash:[6,4],borderWidth:1.6,pointRadius:0}]},
+   {label:'Zero: methane stops rising',data:[{x:dy0,y:0},{x:cy+1,y:0}],borderColor:'#d9822b',borderDash:[6,4],borderWidth:2.2,pointRadius:0}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>{const p=DP[t[0].dataIndex];return '10 years to '+lk(p.k)+' vs the 10 years before'},label:c=>sg(c.parsed.y)+' ppb in 10 years'}}},
    scales:{x:{type:'linear',min:dy0,max:cy+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ppb per 10 years'},grid}}}}));
