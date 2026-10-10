@@ -23,6 +23,14 @@ jobs:
           [ "$(grep -vc '^#' data/co2_daily_mlo.txt.tmp)" -gt 10000 ]
           mv data/co2_daily_mlo.txt.tmp data/co2_daily_mlo.txt
           tail -2 data/co2_daily_mlo.txt
+      - name: Download NOAA GML Mauna Loa monthly CO2 (back to 1958, for the rise-per-decade chart)
+        run: |
+          curl -fsSL --retry 3 --retry-delay 20 -o data/co2_mm_mlo.txt.tmp \
+            https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.txt
+          # sanity check: must contain at least 700 monthly lines
+          [ "$(grep -vc '^#' data/co2_mm_mlo.txt.tmp)" -gt 700 ]
+          mv data/co2_mm_mlo.txt.tmp data/co2_mm_mlo.txt
+          tail -1 data/co2_mm_mlo.txt
       - name: Commit changes
         run: |
           git config user.name "github-actions"
