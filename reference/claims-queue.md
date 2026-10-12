@@ -7,16 +7,21 @@ claim can't be answered without them. Covered claims get extra search words (dat
 ## To build
 
 - already-1.5 (heard 2026-10-12): "Some say early 2030s, others 2028, but the math says 1.5 °C was already passed in
-  February 2026. No year in the next 100 years will be below 1.5 °C." Answer points (ERA5 vs 1850-1900, site's +0.88):
-  the three dates are the same data with different fits (linear from 1970 -> 2033, quadratic from 1970 -> 2028,
-  quadratic from 1990 -> early 2026); Paris 1.5 is a 20-year average, and a fit's end point is its least certain part;
-  if the trend sits at 1.5 now, about half of nearby years land below it (Jan-Jun 2026 monthly 1.39-1.44, 12-month mean
-  1.42 in May 2026, 2025 at 1.47); year-to-year spread about 0.12 °C, plus volcanoes (Pinatubo-size about once or
-  twice a century, -0.3 to -0.5 °C for a year or two); "100 years" also assumes no CO2 removal or sunlight-dimming.
-  Fair version: at current emissions, years below 1.5 become rare within about 10-15 years. Link from too-late; maybe
-  a small chart of annual values with the three fits. Source chart: quadratic fit of monthly ERA5 since 1980
-  (reproduced: 1.5 in spring 2026, 2.0 in 2037, R2 0.81; 5 of 8 months since Feb 2026 below 1.5). The trend
-  estimate is reasonable; the 100-year prediction is the overreach.
+  February 2026. No year in the next 100 years will be below 1.5 °C." Source chart: quadratic fit of monthly ERA5
+  since 1980 vs 1850-1900.
+  Shown by data (ERA5, site's +0.88 offset, as of 2026-10-12):
+  - Same data, different fits, different dates: linear from 1970 -> 2033; quadratic from 1970 -> 2028; quadratic from
+    1980 (the source chart, reproduced) -> spring 2026, 2.0 °C in 2037.
+  - 2025 annual 1.47; Jan-Jun 2026 monthly 1.39-1.44; 12-month mean 1.42 in May 2026; 5 of 8 months since Feb 2026
+    below 1.5. Annual values scatter about 0.10 °C around the fitted curve (1980-2025).
+  Estimates (say so on the page; they rest on assumptions):
+  - Where the long-term trend is now: depends on the fit; "around 1.5 °C" is defensible, an exact month is not.
+  - The 100-year prediction, counted from 2026-10-12 (calendar years 2027-2126): if warming follows the source curve
+    and years keep scattering as in the past, the chance that no year falls below 1.5 is roughly 45-50%; volcanoes,
+    rolling 12-month windows or a multi-dataset average lower it. So: not supported by the data, but not shown wrong
+    either; it will very likely be settled by about 2031. Do not call it wrong.
+  - Paris 1.5 is defined as a 20-year average, so "passed" in that sense can only be confirmed years later.
+  Link from too-late; maybe a small chart of annual values with the three fits.
 
 ## Built
 
