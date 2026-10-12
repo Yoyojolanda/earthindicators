@@ -18,6 +18,7 @@ window.CLAIMS = {
   'stopped-1998':     '"Warming stopped in 1998"',
   'sea-level':        '"Sea level rise is tiny"',
   'data-manipulated': '"The data is manipulated"',
+  'us-adjustments':   '"NOAA\'s adjustments create the US warming"',
   'saturated':        '"The CO₂ effect is saturated"',
   'volcano':          '"Mauna Loa is a volcano"',
   'plant-food':       '"CO₂ is plant food"',
@@ -73,7 +74,7 @@ window.IN_SHORT = {
       'The average temperature of the air near the surface, across the whole planet. It is the warming people feel, and the measure the Paris Agreement limits of 1.5 °C and 2 °C refer to.',
       'Right now: {air.vd}, {air.now} compared with the 1991–2020 average for {air.date}. Over the last 12 months the planet was about {air.pre12} warmer than before industrialization (1850–1900).',
     ],
-    claims: ['stopped-1998', 'cooling', 'weather-blame', 'natural-cycles', 'records-short', 'urban-heat', 'data-manipulated'],
+    claims: ['stopped-1998', 'cooling', 'weather-blame', 'natural-cycles', 'records-short', 'urban-heat', 'data-manipulated', 'us-adjustments'],
   },
   'nino.html': {
     units: 'The Niño 3.4 region is a strip of the equatorial Pacific about 5,500 km long and 1,100 km wide, roughly three-quarters the size of the lower 48 US states. An El Niño is declared when it stays at least 0.5 °C above average for several months; above about 1.5 °C counts as strong.',
