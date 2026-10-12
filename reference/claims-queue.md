@@ -23,6 +23,14 @@ claim can't be answered without them. Covered claims get extra search words (dat
   - Paris 1.5 is defined as a 20-year average, so "passed" in that sense can only be confirmed years later.
   Link from too-late; maybe a small chart of annual values with the three fits.
 
+- climate-optimum (heard 2026-10-12): "Enjoy your climate alarmism, while humanity enjoys our climate optimum." Answer:
+  "climate optimum" (Holocene, Medieval) is an old name for past warm periods, not a finding that warmth is best;
+  society is built for the stable climate of the last 10,000 years; what hurts is speed and going past that range
+  (link crop-records, dinosaurs, medieval-warm, two-degrees); fewer cold deaths don't offset heat (link cold-deaths).
+  Search words: optimum, climate optimum, warmer is better, beneficial warming, good for humanity.
+- Additions: fire weather / longer fire seasons (Jolly et al. 2015) to wildfires; marine heatwaves roughly doubled
+  since the 1980s (IPCC) to extreme-picks.
+
 ## Built
 
 - 2026-10-08: ice-age-1970s (A), how-much-human (B), models-unreliable (C), little-ice-age (D), wildfires (E), co2-not-ours (F),
