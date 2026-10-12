@@ -6,7 +6,15 @@ claim can't be answered without them. Covered claims get extra search words (dat
 
 ## To build
 
-(empty)
+- already-1.5 (heard 2026-10-12): "Some say early 2030s, others 2028, but the math says 1.5 °C was already passed in
+  February 2026. No year in the next 100 years will be below 1.5 °C." Answer points (ERA5 vs 1850-1900, site's +0.88):
+  the three dates are the same data with different fits (linear from 1970 -> 2033, quadratic from 1970 -> 2028,
+  quadratic from 1990 -> early 2026); Paris 1.5 is a 20-year average, and a fit's end point is its least certain part;
+  if the trend sits at 1.5 now, about half of nearby years land below it (Jan-Jun 2026 monthly 1.39-1.44, 12-month mean
+  1.42 in May 2026, 2025 at 1.47); year-to-year spread about 0.12 °C, plus volcanoes (Pinatubo-size about once or
+  twice a century, -0.3 to -0.5 °C for a year or two); "100 years" also assumes no CO2 removal or sunlight-dimming.
+  Fair version: at current emissions, years below 1.5 become rare within about 10-15 years. Link from too-late; maybe
+  a small chart of annual values with the three fits.
 
 ## Built
 
