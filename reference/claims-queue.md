@@ -14,7 +14,9 @@ claim can't be answered without them. Covered claims get extra search words (dat
   1.42 in May 2026, 2025 at 1.47); year-to-year spread about 0.12 °C, plus volcanoes (Pinatubo-size about once or
   twice a century, -0.3 to -0.5 °C for a year or two); "100 years" also assumes no CO2 removal or sunlight-dimming.
   Fair version: at current emissions, years below 1.5 become rare within about 10-15 years. Link from too-late; maybe
-  a small chart of annual values with the three fits.
+  a small chart of annual values with the three fits. Source chart: quadratic fit of monthly ERA5 since 1980
+  (reproduced: 1.5 in spring 2026, 2.0 in 2037, R2 0.81; 5 of 8 months since Feb 2026 below 1.5). The trend
+  estimate is reasonable; the 100-year prediction is the overreach.
 
 ## Built
 
