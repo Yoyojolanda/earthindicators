@@ -258,6 +258,76 @@
   }, true);
   top.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // ---- several charts, from any pages, combined into one JPG. "Add to image" stores a snapshot of the chart as it
+  //      looks then (zoom, region, switches, hidden lines) in this browser; the tray at the bottom combines them.
+  const MAXP = 6, PK = 'ei-picks';
+  const picks = {
+    labels: [],
+    list() { try { return JSON.parse(localStorage.getItem(PK) || '[]'); } catch (e) { return []; } },
+    save(l) { try { localStorage.setItem(PK, JSON.stringify(l)); return true; } catch (e) { return false; } },
+    refresh() { this.labels.forEach(f => f()); tray(); },
+    toggle(key, box, cv, page, label) {
+      let l = this.list();
+      if (l.some(i => i.k === key)) { this.save(l.filter(i => i.k !== key)); return this.refresh(); }
+      if (l.length >= MAXP) { alert('An image holds up to ' + MAXP + ' charts. Remove one first.'); return; }
+      const ch = window.Chart && Chart.getChart(cv), h2 = box.querySelector('h2');
+      if (!ch || !h2 || !window.siteRender) return;
+      const c = siteRender([[ch, h2, /Middle 80% of prior years/.test(box.textContent) ? 1 : 0]]);
+      const s = Math.min(1, 1400 / c.width), o = document.createElement('canvas');
+      o.width = Math.round(c.width * s); o.height = Math.round(c.height * s);
+      o.getContext('2d').drawImage(c, 0, 0, o.width, o.height);
+      l.push({ k: key, p: page, t: h2.textContent, d: o.toDataURL('image/jpeg', .85) });
+      if (!this.save(l)) { alert('This browser has no room to store more charts. Remove one, or make the image now.'); return; }
+      gcEvent('chart-pick/' + key, h2.textContent);
+      this.refresh();
+    },
+    async make() {
+      const l = this.list(); if (!l.length) return;
+      const imgs = await Promise.all(l.map(i => new Promise(ok => { const m = new Image(); m.onload = () => ok(m); m.onerror = () => ok(null); m.src = i.d; })));
+      const W = 2400, pad = 40, gap = 32, capH = 40, footH = 64, n = l.length, cols = n === 1 ? 1 : n <= 4 ? 2 : 3;
+      const cw = (W - 2 * pad - (cols - 1) * gap) / cols, rows = [];
+      for (let k = 0; k < n; k += cols) rows.push(imgs.slice(k, k + cols).map((m, j) => [m, l[k + j]]));
+      const rh = rows.map(r => Math.max(...r.map(([m]) => m ? m.height * cw / m.width : 0)) + capH);
+      const H = pad + rh.reduce((a, b) => a + b, 0) + gap * (rows.length - 1) + footH;
+      const o = document.createElement('canvas'); o.width = W; o.height = H;
+      const x = o.getContext('2d'), F = 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+      x.fillStyle = THEME.card; x.fillRect(0, 0, W, H); x.textBaseline = 'top';
+      let y = pad;
+      rows.forEach((r, ri) => {
+        r.forEach(([m, it], j) => {
+          const cx = pad + j * (cw + gap);
+          if (m) x.drawImage(m, cx, y, cw, m.height * cw / m.width);
+          x.font = '22px ' + F; x.fillStyle = THEME.mut;
+          x.fillText('earthindicators.org/' + it.p + '.html', cx + 16, y + rh[ri] - capH + 6);
+        });
+        y += rh[ri] + gap;
+      });
+      y = H - footH + 16; x.strokeStyle = THEME.grid; x.beginPath(); x.moveTo(pad, y - 8); x.lineTo(W - pad, y - 8); x.stroke();
+      x.font = '600 26px ' + F; x.fillStyle = THEME.ink; x.fillText('Earth Indicators · earthindicators.org', pad, y);
+      x.font = '22px ' + F; x.fillStyle = THEME.mut; x.textAlign = 'right';
+      x.fillText('Free to share with credit (CC BY 4.0)', W - pad, y + 4);
+      const a = document.createElement('a'); a.download = 'earth-indicators-charts.jpg'; a.href = o.toDataURL('image/jpeg', .9);
+      document.body.appendChild(a); a.click(); a.remove();
+      gcEvent('chart-pick-make/' + n, n + ' charts');
+    }
+  };
+  let trayEl = null;
+  function tray() {
+    const n = picks.list().length;
+    if (!n) { if (trayEl) trayEl.hidden = true; return; }
+    if (!trayEl) {
+      trayEl = document.createElement('div'); trayEl.className = 'ptray';
+      trayEl.innerHTML = '<span></span><button type="button" class="nb pmake">Make image</button><button type="button" class="nb pclear">Clear</button>';
+      trayEl.querySelector('.pmake').onclick = () => picks.make();
+      trayEl.querySelector('.pclear').onclick = () => { if (confirm('Remove all charts from your image?')) { picks.save([]); picks.refresh(); } };
+      document.body.appendChild(trayEl);
+    }
+    trayEl.hidden = false;
+    trayEl.querySelector('span').textContent = n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ')';
+  }
+  window.addEventListener('storage', e => { if (e.key === PK) picks.refresh(); });   // picked in another tab
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tray); else tray();
+
   // ---- one share link per chart, like the claims page: every box with a chart gets a "Copy link to this chart"
   //      button. The link goes to s/<page>-<canvas id>.html, a small page with that chart's own preview image
   //      (made daily by scripts/build_chart_cards.py), which sends readers on to <page>#ch-<canvas id>.
@@ -276,7 +346,12 @@
         if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url)); else prompt('Copy this link:', url);
         gcEvent('chart-copy/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem);
       };
-      bar.appendChild(b); box.appendChild(bar);
+      bar.appendChild(b);
+      const key = stem + '-' + cv.id, pb = document.createElement('button'); pb.type = 'button'; pb.className = 'nb pick';
+      const label = () => { const on = picks.list().some(i => i.k === key); pb.textContent = on ? 'In your image ✓' : 'Add to image'; pb.classList.toggle('on', on); };
+      pb.onclick = () => picks.toggle(key, box, cv, stem, label);
+      label(); picks.labels.push(label);
+      bar.appendChild(pb); box.appendChild(bar);
     });
     // arriving from a shared link: charts appear only after their data has loaded, so wait for the box to show
     const h = decodeURIComponent(location.hash.slice(1));
@@ -511,7 +586,8 @@
 
   // ---- JPG export of several charts with their titles and legends
   // sections: [[chart, titleElementId, showBandKey], ...]
-  window.siteExport = function (sections, filename) {
+  // titles can be an element id or the element itself
+  window.siteRender = function (sections) {
     const r = sections[0][0].currentDevicePixelRatio || 1, pad = 16 * r, tH = 24 * r, kH = 22 * r, gap = 20 * r, rowH = 18 * r, colW = 175 * r;
     const W = Math.max(...sections.map(s => s[0].canvas.width)) + pad * 2, cols = Math.max(1, Math.floor((W - 2 * pad) / colW));
     const leg = sections.map(([ch]) => { const st = LG.get(ch); return st ? items(ch).filter(i => !i.hidden) : []; });
@@ -523,7 +599,7 @@
     let y = pad;
     sections.forEach(([ch, tid, key], n) => {
       if (n) y += gap;
-      font(15, 1); x.fillStyle = THEME.ink; x.fillText(document.getElementById(tid).textContent, pad, y); y += tH;
+      font(15, 1); x.fillStyle = THEME.ink; x.fillText((typeof tid === 'string' ? document.getElementById(tid) : tid).textContent, pad, y); y += tH;
       font(12);
       if (key) {
         let kx = pad;
@@ -543,6 +619,10 @@
       if (leg[n].length) y += Math.ceil(leg[n].length / cols) * rowH + 6 * r;
       x.drawImage(ch.canvas, pad, y); y += ch.canvas.height;
     });
+    return o;
+  };
+  window.siteExport = function (sections, filename) {
+    const o = siteRender(sections);
     const a = document.createElement('a'); a.download = filename; a.href = o.toDataURL('image/jpeg', .92);
     document.body.appendChild(a); a.click(); a.remove();
   };
