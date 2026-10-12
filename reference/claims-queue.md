@@ -6,21 +6,7 @@ claim can't be answered without them. Covered claims get extra search words (dat
 
 ## To build
 
-- existential: "Is there an existential climate crisis?" (gotcha: no extinction = no crisis). Answer: no mainstream
-  science predicts human extinction; existential for low-lying island nations' land; for everyone else a damage
-  problem (food, heat, coasts). Not the end of the world is not the same as not a problem. Search words: existential,
-  extinction, end of the world, alarmism, crisis, doom.
-- tornadoes: "Strong tornadoes (EF2+) are decreasing since 1950" (Shewchuk chart). Answer: pre-mid-1970s ratings were
-  assigned afterwards from newspaper reports and skew too strong, so early counts are inflated; science doesn't claim
-  warming increases tornadoes (too small for models, IPCC low confidence). Possibly mention clustering into bigger
-  outbreak days. Search words: tornado, tornadoes, EF2, twister, Storm Prediction Center.
-- extreme-picks: "Extreme weather is decreasing" (collage of hurricane counts, tornadoes, burned area, disaster deaths).
-  Answer: the collage leaves out heatwaves and heavy rainfall, the extremes predicted to rise first, and both have.
-  Link out to hurricanes, wildfires, fewer-affected, tornadoes. Search words: extreme weather decreasing, fewer extremes.
-- Additions to existing answers: stratospheric cooling (CO2 fingerprint vs sun) in no-experiment / solar-heat;
-  HITRAN (Air Force Cambridge Research Laboratories, 1960s, infrared for heat-seeking missiles) in no-experiment.
-- wildfires: add that the pre-satellite part of long burned-area series is a model reconstruction, and that the
-  global decline is mostly savanna/grassland turned to farmland while forest fire grows.
+(empty)
 
 ## Built
 
@@ -34,3 +20,6 @@ claim can't be answered without them. Covered claims get extra search words (dat
   folded into fewer-affected; last group renamed "Nothing can be done".
 - 2026-10-11: us-adjustments (raw vs adjusted US highs, time of observation, sensors, reference network test,
   grouped-by-reading-time charts, filled-in stations); linked from data-manipulated and the air page.
+- 2026-10-12: existential, tornadoes, extreme-picks (new); HITRAN added to no-experiment; global burned area (savanna,
+  reconstruction, extreme forest fires) added to wildfires; deaths chart ending 2021 and 2022 European heat added to
+  fewer-affected. Stratospheric cooling was already covered (no-experiment, natural-cycles, how-much-human).
