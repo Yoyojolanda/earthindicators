@@ -22,6 +22,10 @@ claim can't be answered without them. Covered claims get extra search words (dat
   - Filled-in estimates for closed stations change the trend little (in the claim's own numbers 1.74 vs 1.64 °F per
     century), and NOAA's official US record has used nClimDiv instead of USHCN since 2014.
   - The heatmap itself shows the cherry-picking point: a trend depends on the start and end years you choose.
+  - Follow-up seen 2026-10-11: "time of observation is an excuse; trends are the same either way", shown with USHCN
+    highs grouped by 1936 reading time (both groups flat). Answer: grouping by 1936 time doesn't isolate the switch
+    (both groups changed later, and both got the new sensors); averaging raw °F over a changing set of stations mixes
+    in geography; the clean test is stations that never changed, or the unadjusted reference network.
   - Keep it general: no named critic.
 
 ## Built
