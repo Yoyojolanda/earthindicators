@@ -4,7 +4,8 @@
 X, Bluesky and others ignore the #part of a link and show one card per page. This script opens every data page in
 a headless browser (Chromium, via Playwright), the same way a reader sees it in the light theme, and for every box
 that holds a chart makes:
-  og/s/<page>-<canvas id>.png   1200x630 preview: the chart as drawn on the site, with the site name above it
+  og/s/<page>-<canvas id>.jpg   1200x630 preview: the chart as drawn on the site, with the site name above it
+                                (JPEG, about a third of the size of a PNG, to keep the repository's history small)
   s/<page>-<canvas id>.html     a tiny page whose preview tags show that chart and its title; people who open it
                                 are sent straight on to <page>.html#<box id>
 The "Copy link to this chart" buttons (site.js) copy the s/... link. Charts whose box is hidden (for example
@@ -70,7 +71,7 @@ def card(png):
 
 def share_page(name, title, desc, target):
     e = lambda x: html.escape(x, quote=True)
-    url, img = f"{SITE}/s/{name}.html", f"{SITE}/og/s/{name}.png"
+    url, img = f"{SITE}/s/{name}.html", f"{SITE}/og/s/{name}.jpg"
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -82,6 +83,7 @@ def share_page(name, title, desc, target):
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{img}">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="{W}">
 <meta property="og:image:height" content="{H}">
 <meta property="og:image:alt" content="Chart: {e(title)}">
@@ -134,7 +136,7 @@ def main():
                 name = f"{stem}-{b['cid']}"
                 el = pg.locator(f"canvas#{b['cid']}").locator("xpath=ancestor::div[contains(concat(' ',normalize-space(@class),' '),' box ')][1]")
                 el.scroll_into_view_if_needed(); pg.wait_for_timeout(200)
-                card(el.screenshot()).save(f"og/s/{name}.png", optimize=True)
+                card(el.screenshot()).save(f"og/s/{name}.jpg", quality=85, optimize=True, progressive=True)
                 with open(f"s/{name}.html", "w", encoding="utf-8") as fh:
                     fh.write(share_page(name, b["title"], desc, f"{f}#{b['id'] or 'ch-' + b['cid']}"))
                 made.add(name)
@@ -143,7 +145,10 @@ def main():
         br.close()
     if not made or (not only and len(made) < 10):
         sys.exit(f"only {len(made)} charts captured; keeping the previous share files")
-    for d, ext in (("s", ".html"), ("og/s", ".png")):
+    for x in os.listdir("og/s"):              # the earlier PNG previews
+        if x.endswith(".png") and (not only or x.rsplit("-", 1)[0] + ".html" in todo):
+            os.remove(os.path.join("og/s", x))
+    for d, ext in (("s", ".html"), ("og/s", ".jpg")):
         for x in os.listdir(d):
             if x.endswith(ext) and x[:-len(ext)] not in made and (not only or x.rsplit("-", 1)[0] + ".html" in todo):
                 os.remove(os.path.join(d, x))

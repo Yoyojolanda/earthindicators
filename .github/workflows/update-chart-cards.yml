@@ -1,10 +1,12 @@
 name: Update chart share links
 
-# One share link per chart (s/<page>-<chart>.html) with the chart itself as link preview (og/s/...png).
+# One share link per chart (s/<page>-<chart>.html) with the chart itself as link preview (og/s/...jpg).
 # The charts are drawn by the real pages in a headless browser, so the previews show the latest data.
 on:
   schedule:
-    - cron: "51 22 * * *"      # daily, after the day's data updates
+    - cron: "51 22 * * 1"      # weekly, Monday evening after the day's data updates: a preview only has to look
+                               # about right (the link always opens the live chart), and each redraw adds every
+                               # changed image to the repository's history for good
   workflow_dispatch:           # lets you run it manually from the Actions tab
     inputs:
       pages:
