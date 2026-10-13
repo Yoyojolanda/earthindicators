@@ -35,9 +35,13 @@
 <div class="cards" id="cards"></div>
 <p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
 <div class="box"><h2 id="t1"></h2>
- <div class="seg">Show: <button class="nb on" data-u="pct">% of normal</button><button class="nb" data-u="kg">kg/m² (mm)</button></div>
+ <div class="seg" id="u1">Show: <button class="nb on" data-u="pct">% of normal</button><button class="nb" data-u="kg">kg/m² (mm)</button></div>
  <div class="wrap"><canvas id="c1"></canvas></div>
  <p class="sub" id="n1" style="margin:8px 0 0"></p></div>
+<div class="box"><h2 id="t4"></h2>
+ <div class="seg" id="b4">Region: <button class="nb" data-b="world">World</button><button class="nb" data-b="nh">Northern Hemisphere</button><button class="nb" data-b="sh">Southern Hemisphere</button><button class="nb" data-b="tropics">Tropics</button><button class="nb" data-b="nhmid">30–60°N</button></div>
+ <div class="wrap"><canvas id="c4"></canvas></div>
+ <p class="sub" id="n4" style="margin:8px 0 0"></p></div>
 <div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div>
  <p class="sub" id="n2" style="margin:8px 0 0"></p></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div>
@@ -56,9 +60,10 @@ const fit=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.
 const run=(a,w)=>a.map((_,i)=>i+1<w?null:mean(a.slice(i+1-w,i+1)));
 const ord=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
 const SAT=1979;   // first year with satellite humidity data in ERA5; trends and the scatter start here
-let D,unit='pct',expName='water-vapour.jpg';
+let D,unit='pct',expName='water-vapour.jpg',band='world';
+const BANDS={world:'the whole globe',nh:'the Northern Hemisphere',sh:'the Southern Hemisphere',tropics:'the tropics (23.5°S–23.5°N)',nhmid:'the northern mid-latitudes (30–60°N)'};
 
-function parse(t,col='world'){const L=t.trim().split(/\r?\n/),h=L[0].split(','),j=h.indexOf(col);
+function parse(t,col='world'){const L=t.trim().split(/\r?\n/),h=L[0].split(','),j=h.indexOf(col);if(j<0)return[];
  return L.slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])&&p[j]!=='').map(p=>({m:p[0],y:+p[0].slice(0,4),k:+p[0].slice(5)-1,v:+p[j]}))}
 function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
 const grid={color:THEME.grid};
@@ -71,6 +76,7 @@ const preSat=i1=>({id:'preSat',beforeDatasetsDraw(ch){const{ctx,chartArea:a,scal
  ctx.fillText('before satellites: less certain',a.left+6,a.top+6);ctx.restore()}});
 
 function build(tw,tt){
+ bandChart(tw);
  D=parse(tw);if(D.length<120)throw new Error('too few months');
  const N=D.length,last=D[N-1],cur=last.y;
  // 1991-2020 normal for each calendar month
@@ -123,9 +129,9 @@ function build(tw,tt){
       label:c=>c.datasetIndex==2?'Record '+MLONG[D[c.dataIndex].k]:c.dataset.label+': '+sg(c.parsed.y,d)+u,
       footer:t=>{const r=D[t[0].dataIndex];return t[0].datasetIndex==0?`${r.v.toFixed(2)} kg/m² (normal ${clim[r.k].toFixed(2)})`:''}}}},
     scales:{x:xYears(labels),y:{title:{display:true,text:pct?'% above or below normal':'kg/m² (= mm of water) above or below normal'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
-  document.querySelectorAll('.seg .nb').forEach(b=>b.classList.toggle('on',b.dataset.u==unit))}
+  document.querySelectorAll('#u1 .nb').forEach(b=>b.classList.toggle('on',b.dataset.u==unit))}
  chart1();
- document.querySelectorAll('.seg .nb').forEach(b=>b.onclick=()=>{unit=b.dataset.u;chart1()});
+ document.querySelectorAll('#u1 .nb').forEach(b=>b.onclick=()=>{unit=b.dataset.u;chart1()});
  $('n1').textContent=`Purple dots: the highest value on record for each calendar month. ${[...recIdx].filter(i=>D[i].y>=cur-2).length} of the 12 were set in ${cur-2} or later.`;
 
  // ---- chart 2: each year month by month: range of all earlier years, normal, last year and this year
@@ -177,8 +183,27 @@ function build(tw,tt){
  $('out').classList.remove('hide');
  $('exp').disabled=false}
 
+// ---- chart 4: one latitude band, every month and its 36-month running average (kg/m², not vs normal)
+function bandChart(tw){
+ if(parse(tw,band).length<120)band='world';   // a band whose history is not filled in yet
+ document.querySelectorAll('#b4 .nb').forEach(b=>{b.hidden=parse(tw,b.dataset.b).length<120;b.classList.toggle('on',b.dataset.b==band);
+  b.onclick=()=>{band=b.dataset.b;bandChart(tw)}});
+ const B=parse(tw,band),labels=B.map(r=>r.m),v=B.map(r=>r.v),r36=run(v,36),iSat=labels.indexOf(SAT+'-01'),n=B.length;
+ const last=B[n-1],cur=last.y,top=r36.reduce((b,x,i)=>x!=null&&(b<0||x>r36[b])?i:b,-1),prevTop=r36.slice(0,-1).reduce((b,x,i)=>x!=null&&(b<0||x>r36[b])?i:b,-1);
+ $('t4').textContent=`Water vapour over ${BANDS[band]}: 36-month running average, ${B[0].y}–${cur}`;
+ if(charts[3])charts[3].destroy();
+ charts[3]=new Chart($('c4'),{type:'line',plugins:[preSat(iSat)],data:{labels,datasets:[
+   {label:'Monthly',data:v,borderColor:THEME.thin,borderWidth:1,pointRadius:0,order:1},
+   {label:'36-month running average',data:r36,borderColor:'#d00000',borderWidth:2.5,pointRadius:0,order:0}]},   // average on top
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>mlab(labels[t[0].dataIndex]),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' kg/m²'}}},
+   scales:{x:xYears(labels),y:{title:{display:true,text:'kg/m² (= mm of water)'},grid}}}});
+ $('n4').textContent=`The 36-month average smooths out the seasons and most of the El Niño / La Niña swings. In the 36 months to ${mlab(last.m)} it was ${r36[n-1].toFixed(2)} kg/m², `
+  +(top===n-1?`the highest in the record (previous high ${r36[prevTop].toFixed(2)}, 36 months to ${mlab(labels[prevTop])}).`:`below the record of ${r36[top].toFixed(2)} (36 months to ${mlab(labels[top])}).`)
+  +' Bands nearer the equator hold more water because the air there is warmer; compare the change over time, not the level between bands.'}
+
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>siteExport([1,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),expName);
+$('exp').onclick=()=>siteExport([1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),expName);
 const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
 Promise.all([txt('era5_tcwv_monthly.csv'),txt('era5_t2_regions_monthly.csv').catch(()=>null)]).then(([a,b])=>build(a,b))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the water vapour data. Please try again later.'});
