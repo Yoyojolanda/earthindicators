@@ -346,17 +346,34 @@
   //      button. The link goes to s/<page>-<canvas id>.html, a small page with that chart's own preview image
   //      (made daily by scripts/build_chart_cards.py), which sends readers on to <page>#ch-<canvas id>.
   const stem = page.replace(/\.html$/, '');
+  // switch settings in a link: the index of the selected button in each switch that applies to a chart, page-wide
+  // switches first (e.g. the region on the air page), then the chart's own; "3.1" = 4th button, then 2nd button
+  const segsFor = box => [...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box')).concat([...box.querySelectorAll('.seg')]);
+  const segCode = box => segsFor(box).map(g => [...g.querySelectorAll('.nb')].findIndex(b => b.classList.contains('on'))).join('.');
+  let segDefault = null;   // every switch as the page first set it, captured just before the reader's first click on one
+  document.addEventListener('click', e => { if (!segDefault && e.target.closest('.seg')) segDefault = new Map(
+    [...document.querySelectorAll('main .box')].map(b => [b, segCode(b)])); }, true);
+  async function applySegs(box, code) {
+    const want = code.split('.').map(Number);
+    for (let i = 0; i < want.length; i++) {
+      const g = segsFor(box)[i], b = g && g.querySelectorAll('.nb')[want[i]];
+      if (b && !b.hidden && !b.classList.contains('on')) { b.click(); await new Promise(r => setTimeout(r, 120)); }
+    }
+  }
   if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page)) {
    const shareSetup = () => {
     document.querySelectorAll('main .box').forEach(box => {
       const cv = box.querySelector('canvas[id]');
       if (!cv || box.querySelector('.cbar')) return;
       if (!box.id) box.id = 'ch-' + cv.id;
-      const url = location.origin + '/s/' + stem + '-' + cv.id + '.html';
+      // the link carries the switches as set now, unless they are still as the page opened (the preview image
+      // always shows that default version; opening the link restores the reader's settings)
+      const urlNow = () => { const c = segCode(box), d = segDefault ? segDefault.get(box) : c;
+        return location.origin + '/s/' + stem + '-' + cv.id + '.html' + (c && c !== d && !/-1/.test(c) ? '#' + c : ''); };
       const bar = document.createElement('div'); bar.className = 'cbar';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'nb'; b.textContent = 'Copy link to this chart';
       b.onclick = () => {
-        const done = () => { b.textContent = 'Link copied'; setTimeout(() => b.textContent = 'Copy link to this chart', 2000); };
+        const url = urlNow(), done = () => { b.textContent = 'Link copied'; setTimeout(() => b.textContent = 'Copy link to this chart', 2000); };
         if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url)); else prompt('Copy this link:', url);
         gcEvent('chart-copy/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem);
       };
@@ -372,13 +389,14 @@
       bar.appendChild(pb); box.appendChild(bar);
     });
     // arriving from a shared link: charts appear only after their data has loaded, so wait for the box to show
-    const h = decodeURIComponent(location.hash.slice(1));
+    const [h, code] = decodeURIComponent(location.hash.slice(1)).split('~');
     if (h) {
       let n = 0;
       const go = () => {
         const el = document.getElementById(h) || document.getElementById('ch-' + h);
         if (el && el.offsetParent !== null && el.querySelector('h2') && el.querySelector('h2').textContent) {
-          setTimeout(() => el.scrollIntoView({ block: 'start' }), 150);
+          (code && /^[0-9.]+$/.test(code) ? applySegs(el, code) : Promise.resolve())
+            .then(() => setTimeout(() => el.scrollIntoView({ block: 'start' }), 150));
         } else if (++n < 60) setTimeout(go, 250);
       };
       window.addEventListener('load', go);

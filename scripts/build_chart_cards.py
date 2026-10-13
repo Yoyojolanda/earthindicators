@@ -87,7 +87,7 @@ def share_page(name, title, desc, target):
 <meta property="og:image:alt" content="Chart: {e(title)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="{e(desc)}">
-<script>location.replace('../{target}')</script>
+<script>location.replace('../{target}'+(/^#[0-9.]+$/.test(location.hash)?'~'+location.hash.slice(1):''))</script>
 <style>body{{font:17px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px}}</style>
 </head><body>
 <p><a href="../{target}">{e(title)}: see the chart on Earth Indicators</a></p>
