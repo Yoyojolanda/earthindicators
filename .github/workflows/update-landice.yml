@@ -40,6 +40,8 @@ jobs:
           print(max(links, key=lambda u: u.rsplit('/', 1)[-1]) if links else '')") || true
             [ -n "$url" ] || { echo "::warning::no file found in the catalogue for $short"; continue; }
             echo "$name: $url"
+            # the file name changes with every new month, so the same name as last time means nothing new
+            if [ "$url" = "$(cat "data/grace_${name}_source.txt" 2>/dev/null)" ]; then echo "$name: no new file"; continue; fi
             f="data/grace_${name}.txt"
             if curl -fL --retry 3 --netrc -c /tmp/edl_cookies -b /tmp/edl_cookies -o "$f.tmp" "$url"; then
               n=$(grep -cE '^ *20[0-9]{2}\.[0-9]+ ' "$f.tmp" || true)

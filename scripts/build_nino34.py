@@ -9,7 +9,7 @@ Output: list of {"name": "<year>", "data": [366 values by day-of-year]} plus
         {"name": "1991-2020", "data": [...]} (day-of-year mean, 5-day circular smoothing).
 """
 import argparse, csv, json, os, sys, time
-from datetime import date
+from datetime import date, timedelta
 
 import numpy as np
 
@@ -39,13 +39,16 @@ def _load(piece):
     raise RuntimeError("chunk failed after retries")
 
 
-def _fetch_year_engine(url, weighting, engine, chunk=30, lat_box=LAT, lon_box=LON, stride=1):
+def _fetch_year_engine(url, weighting, engine, chunk=30, lat_box=LAT, lon_box=LON, stride=1, since=None):
     ds = _open(url, engine)
     lat, lon = ds["lat"].values, ds["lon"].values
     li = np.where((lat >= lat_box[0]) & (lat <= lat_box[1]))[0]
     lo = np.where((lon >= lon_box[0]) & (lon <= lon_box[1]))[0]
     # stride > 1 samples every n-th grid point (server-side), to keep large regions fast
     sst = ds["sst"].isel(lat=slice(li.min(), li.max() + 1, stride), lon=slice(lo.min(), lo.max() + 1, stride))
+    if since is not None:   # only the days from `since` on (opening the file reads just its metadata)
+        times = ds["time"].values.astype("datetime64[D]")
+        sst = sst.isel(time=slice(int(np.searchsorted(times, np.datetime64(since))), None))
     out = {}
     for i in range(0, sst.sizes["time"], chunk):
         sub = _load(sst.isel(time=slice(i, i + chunk)))
@@ -60,12 +63,12 @@ def _fetch_year_engine(url, weighting, engine, chunk=30, lat_box=LAT, lon_box=LO
     return out
 
 
-def fetch_year(year, weighting, url_template=URL, lat_box=LAT, lon_box=LON, stride=1):
+def fetch_year(year, weighting, url_template=URL, lat_box=LAT, lon_box=LON, stride=1, since=None):
     url = url_template.format(year=year)
     last = None
     for engine in ("netcdf4", "pydap"):
         try:
-            return _fetch_year_engine(url, weighting, engine, lat_box=lat_box, lon_box=lon_box, stride=stride)
+            return _fetch_year_engine(url, weighting, engine, lat_box=lat_box, lon_box=lon_box, stride=stride, since=since)
         except Exception as e:
             last = e
             print(f"  engine {engine} failed for {year}: {e}", flush=True)
@@ -139,6 +142,9 @@ def main():
     ap.add_argument("--start", type=int, default=1982)
     ap.add_argument("--url-template", default=URL)
     ap.add_argument("--full", action="store_true", help="refetch every year")
+    ap.add_argument("--recent-days", type=int, default=30,
+                    help="refetch only this many days before the last cached day (OISST replaces its preliminary "
+                         "values with final ones after about two weeks); complete earlier years are kept as they are")
     ap.add_argument("--lat", type=float, nargs=2, default=list(LAT), metavar=("S", "N"), help="latitude box (default: Nino 3.4)")
     ap.add_argument("--lon", type=float, nargs=2, default=list(LON), metavar=("W", "E"), help="longitude box in degrees east (default: Nino 3.4)")
     ap.add_argument("--stride", type=int, default=1, help="use every n-th grid point (default 1 = all)")
@@ -151,14 +157,25 @@ def main():
     counts = {}
     for d in daily:
         counts[d.year] = counts.get(d.year, 0) + 1
-    years = [y for y in range(a.start, this + 1) if y >= this - 1 or counts.get(y, 0) < 360]
-    for n, y in enumerate(years, 1):
-        print(f"[{n}/{len(years)}] fetching {y} ...", flush=True)
-        got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride)
+    # refetch window: the last few weeks before the newest cached day (nothing cached = everything)
+    since = max(daily) - timedelta(days=a.recent_days) if daily else None
+    jobs = []   # (year, first day to fetch or None for the whole year)
+    for y in range(a.start, this + 1):
+        if y < this and counts.get(y, 0) >= 360:
+            if since is not None and since.year <= y and since <= date(y, 12, 31):
+                jobs.append((y, since if since.year == y else None))
+        elif y == this and since is not None and since.year == y:
+            jobs.append((y, since))
+        else:
+            jobs.append((y, None))
+    for n, (y, first) in enumerate(jobs, 1):
+        print(f"[{n}/{len(jobs)}] fetching {y}" + (f" from {first}" if first else "") + " ...", flush=True)
+        got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride, since=first)
         print(f"    {len(got)} days", flush=True)
-        if y < this and len(got) < 360:
+        if first is None and y < this and len(got) < 360:
             sys.exit(f"{y}: only {len(got)} days returned; refusing to continue")
-        for d in [d for d in daily if d.year == y]:
+        start = first or date(y, 1, 1)
+        for d in [d for d in daily if d.year == y and d >= start]:
             del daily[d]
         daily.update(got)
         save_cache(a.cache, daily)   # checkpoint after every year

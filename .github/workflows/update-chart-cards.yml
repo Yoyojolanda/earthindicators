@@ -24,17 +24,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Installing the headless browser is the heavy part (~150 MB), so first check whether anything the charts
+      # are drawn from (data, pages, scripts, styles, fonts) changed since the last drawing. The fingerprint
+      # leaves out the outputs (s/, og/) and the visitor statistics (stats/). A manual run always draws.
+      - name: Anything new to draw?
+        id: check
+        run: |
+          fp=$(git ls-tree -r HEAD | grep -vE $'\t(s|og|stats)/' | sha1sum | cut -d' ' -f1)
+          echo "fp=$fp" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$fp" = "$(cat s/.source_fingerprint 2>/dev/null)" ]; then
+            echo "draw=no" >> "$GITHUB_OUTPUT"; echo "Nothing changed since the last drawing"
+          else
+            echo "draw=yes" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-python@v5
+        if: steps.check.outputs.draw == 'yes'
         with:
           python-version: "3.12"
-      - run: |
+      - if: steps.check.outputs.draw == 'yes'
+        run: |
           pip install playwright pillow
           python -m playwright install --with-deps chromium
       - name: Draw every chart and make its share page
+        if: steps.check.outputs.draw == 'yes'
         timeout-minutes: 20
         env:
           PAGES: ${{ github.event.inputs.pages }}
-        run: python -u scripts/build_chart_cards.py ${PAGES:+--pages "$PAGES"}
+        run: |
+          python -u scripts/build_chart_cards.py ${PAGES:+--pages "$PAGES"}
+          [ -n "$PAGES" ] || echo "${{ steps.check.outputs.fp }}" > s/.source_fingerprint
       - name: Commit changes
         run: |
           git config user.name "github-actions"
