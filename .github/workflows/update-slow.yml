@@ -25,6 +25,9 @@ jobs:
       - name: CO2 history records (downloaded once; kept afterwards)
         continue-on-error: true
         run: python -u scripts/build_co2_history.py
+      - name: El Niño tree-ring winters, Cook and Cane 2024 (downloaded once; kept afterwards)
+        continue-on-error: true
+        run: python -u scripts/build_nino_treering.py
       - name: Commit changes
         if: always()
         run: |
