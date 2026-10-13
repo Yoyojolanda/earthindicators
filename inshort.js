@@ -171,7 +171,7 @@ window.IN_SHORT = {
   'water.html': {
     units: '1 kg/m² of water vapour is a 1 mm layer of water if it all fell as rain at once. The whole atmosphere holds about 25 mm, some 13,000 km³: if it all rained out, it would fill Lake Erie about 26 times. The air recycles that water every 10 days or so.',
     text: [
-      'How much water vapour the air holds, averaged over the whole globe. Warmer air holds more: about 7% more for every 1 °C (basic physics). More water in the air means heavier downpours, and, with rain coming in bigger bursts, longer dry spells in between (IPCC).',
+      'How much water vapour the air holds, averaged over the whole globe. Warmer air holds more: about 7% more for every 1 °C (basic physics). More water in the air means heavier downpours, and, with rain coming in bigger bursts, longer dry spells in between (IPCC). A downpour does not make up for a dry spell: rain that falls faster than the soil can soak it up runs off, causing floods, instead of reaching the roots and groundwater.',
       'Latest ({wv.date}): {wv.now}, {wv.an} vs the 1991–2020 average for that month; {wv.rank}. Last 12 months: {wv.l12}.',
     ],
     claims: ['weather-blame', 'trace-gas'],
