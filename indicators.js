@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, wv (water vapour), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -208,6 +208,15 @@ const LOAD={
   const F=Y[0],L=Y[Y.length-1],pct=(L.v-F.v)/F.v*100;
   return{src:'IUCN and BirdLife (UN SDG database)',vd:pct<0?'Species are, on balance, moving closer to extinction':'No overall increase in extinction risk',now:L.v.toFixed(3),first:F.v.toFixed(3),y0:F.y,pct:(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',date:L.y,through:L.y,spark:Y.map(r=>({x:+r.y,y:r.v}))}}),
 
+ wv:()=>get('era5_tcwv_monthly.csv').then(t=>{const L=t.trim().split(/\r?\n/),j=L[0].split(',').indexOf('world');
+  const R=L.slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])&&p[j]!=='').map(p=>({m:p[0],y:+p[0].slice(0,4),k:+p[0].slice(5)-1,v:+p[j]}));
+  const clim=[...Array(12)].map((_,k)=>mean(R.filter(r=>r.k==k&&r.y>=1991&&r.y<=2020).map(r=>r.v)));R.forEach(r=>r.p=(r.v/clim[r.k]-1)*100);
+  const N=R[R.length-1],dt=`${ML[N.k]} ${N.y}`,same=R.filter(r=>r.k==N.k).sort((a,b)=>b.v-a.v),rank=same.findIndex(r=>r==N)+1,mon=['January','February','March','April','May','June','July','August','September','October','November','December'][N.k];
+  const l12=mean(R.slice(-12).map(r=>r.p)),run=R.map((_,i)=>i<11?null:{x:i,y:mean(R.slice(i-11,i+1).map(r=>r.p))}).filter(Boolean);
+  const vd=rank==1?`Highest ${mon} on record (since ${R[0].y})`:l12>0?`The air holds more water vapour than normal (${rankTxt(rank,'highest '+mon,'highest '+mon)})`:'Water vapour is below the 1991–2020 average right now';
+  return{src:'Copernicus ERA5',vd,now:N.v.toFixed(1)+' kg/m²',an:sg(N.p,1)+'%',l12:sg(l12,1)+'%',rank:rankTxt(rank,'the highest '+mon,'highest '+mon),date:dt,through:dt,
+   tile:{v:sg(l12,1)+'%',l:'water vapour, last 12 months vs 1991–2020',s:`${dt}: ${N.v.toFixed(1)} kg/m², ${sg(N.p,1)}% vs normal`,spark:run,sparkLabel:`12-month mean, ${R[11].y}–${N.y}`}}}),
+
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);
   const run=n.map((_,i)=>i<11?null:{x:i,y:mean(n.slice(i-11,i+1))}).filter(Boolean);
@@ -216,7 +225,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',wv:'water vapour',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

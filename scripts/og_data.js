@@ -20,6 +20,7 @@ const PAGES = {
   co2:         { id: 'co2',  title: 'Carbon dioxide (CO₂)' },
   ch4:         { id: 'ch4',  title: 'Methane' },
   eei:         { id: 'eei',  title: "Earth's energy imbalance" },
+  water:       { id: 'wv',   title: 'Water vapour in the air' },
 };
 
 (async () => {

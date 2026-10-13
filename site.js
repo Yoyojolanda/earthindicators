@@ -36,6 +36,7 @@
     ['co2.html',       'CO₂'],
     ['ch4.html',       'Methane'],
     ['eei.html',       'Energy imbalance'],
+    ['water.html',     'Water cycle'],
     ['slow.html',      'Slow signals'],
   ];
 
@@ -200,6 +201,8 @@
       'SILSO\'s monthly and 13-month smoothed values are shown unchanged; cycle minima and maxima and the yearly averages are calculated by this page.', ['sun.html'], ['data/SN_m_tot_V2.0.csv', 'data/SN_ms_tot_V2.0.csv']],
     'eei.html': ['NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://doi.org/10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1">doi:10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1</a>).',
       'NASA\'s own global monthly means; the imbalance is absorbed solar minus outgoing longwave radiation. Running means are calculated by this page.', ['scripts/build_ceres.py'], 'data/ceres_ebaf_global.csv'],
+    'water.html': ['Copernicus Climate Change Service, ERA5 monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7">doi:10.24381/cds.f17050d7</a>): total column water vapour and 2 m air temperature.',
+      'Global means (weighted by area) are calculated here from the ERA5 grids; normals, records, trends and the water-vapour-per-°C slope are calculated by this page.', ['water.html', 'scripts/build_era5_tcwv.py'], ['data/era5_tcwv_monthly.csv', 'data/era5_t2_regions_monthly.csv']],
     'slow.html': ['Fossil CO₂: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters, Zenodo). Ocean pH: Hawaii Ocean Time-series, Station ALOHA. AMOC: RAPID-MOCHA-WBTS array at 26.5°N (<a href="https://rapid.ac.uk/">rapid.ac.uk</a>). Red List Index: IUCN and BirdLife International, via the UN SDG database (indicator 15.5.1). Tree cover loss: University of Maryland and Global Forest Watch, via Our World in Data. Crop yields: FAO, FAOSTAT. Cherry blossom: Y. Aono, via the GMU cherry blossom prediction competition.',
       'Emissions, pH and the Red List Index are shown unchanged; RAPID\'s twice-daily transports are averaged here to months. Trends, 12-month averages and changes are calculated by this page.', ['scripts/build_slow.py'], ['data/fossil_co2_global.csv', 'data/hot_surface_ph.csv', 'data/amoc_rapid_monthly.csv', 'data/redlist_index_world.csv', 'data/tree_cover_loss_world.csv', 'data/fao_crop_yields_world.csv', 'data/kyoto_cherry_blossom.csv']],
   };
