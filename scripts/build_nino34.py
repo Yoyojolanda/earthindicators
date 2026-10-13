@@ -16,6 +16,9 @@ import numpy as np
 URL = "https://psl.noaa.gov/thredds/dodsC/Datasets/noaa.oisst.v2.highres/sst.day.mean.{year}.nc"
 LAT, LON = (-5.0, 5.0), (190.0, 240.0)   # 5S-5N, 170W-120W (degrees east)
 CLIM = (1991, 2020)
+# Once PSL keeps answering 429 (too many requests), later runs of this script in the same job leave it alone.
+BUSY_FLAG = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "psl_busy")
+SAW_429 = False
 
 
 def _open(url, engine):
@@ -25,6 +28,8 @@ def _open(url, engine):
             return xr.open_dataset(url, engine=engine)
         except Exception as e:
             # a busy server answers 429 (too many requests): back off for minutes, not seconds
+            global SAW_429
+            SAW_429 = SAW_429 or "429" in str(e) or "Too Many Requests" in str(e)
             wait = 60 * 2 ** attempt if "429" in str(e) or "Access failure" in str(e) else 8 * (attempt + 1)
             print(f"  [{engine}] open failed ({e}); retry {attempt+1} in {wait} s", flush=True)
             time.sleep(wait)
@@ -154,6 +159,8 @@ def main():
     ap.add_argument("--compare", help="reference Climate Reanalyzer JSON to compare against")
     ap.add_argument("--check-out", help="write a one-line summary of the comparison to this file")
     a = ap.parse_args()
+    if os.path.exists(BUSY_FLAG):
+        sys.exit("PSL refused an earlier series in this run (429 Too Many Requests); not asking again until the next run")
 
     daily = {} if a.full else load_cache(a.cache)
     this = date.today().year
@@ -173,7 +180,12 @@ def main():
             jobs.append((y, None))
     for n, (y, first) in enumerate(jobs, 1):
         print(f"[{n}/{len(jobs)}] fetching {y}" + (f" from {first}" if first else "") + " ...", flush=True)
-        got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride, since=first)
+        try:
+            got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride, since=first)
+        except RuntimeError:
+            if SAW_429:
+                open(BUSY_FLAG, "w").close()
+            raise
         print(f"    {len(got)} days", flush=True)
         if first is None and y < this and len(got) < 360:
             sys.exit(f"{y}: only {len(got)} days returned; refusing to continue")
