@@ -4,11 +4,13 @@
 The box defaults to Nino 3.4; --lat/--lon/--stride let the same script build other regions
 (e.g. world 60S-60N with --lat -60 60 --lon 0 360 --stride 4). Defaults leave Nino 3.4 unchanged.
 
-Source: NOAA PSL OPeNDAP (yearly files, subset to the Nino 3.4 box only).
+Source: NOAA PSL OPeNDAP (yearly files, subset to the Nino 3.4 box only). If PSL fails (it sometimes answers
+429 Too Many Requests), the same days are read from NCEI's daily files instead: NCEI is the original distributor
+of OISST v2.1 and PSL repackages its files, on the same 0.25-degree grid.
 Output: list of {"name": "<year>", "data": [366 values by day-of-year]} plus
         {"name": "1991-2020", "data": [...]} (day-of-year mean, 5-day circular smoothing).
 """
-import argparse, csv, json, os, sys, time
+import argparse, csv, json, os, re, sys, time, urllib.request
 from datetime import date, timedelta
 
 import numpy as np
@@ -20,6 +22,65 @@ CLIM = (1991, 2020)
 BUSY_FLAG = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "psl_busy")
 SAW_429 = False
 
+# Fallback source: one global file per day (~1.6 MB), "_preliminary" in the name until the final version replaces it.
+NCEI = "https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/"
+NCEI_DIR = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "ncei_oisst")   # shared by every series in a run
+_listings = {}
+
+
+def _get(url, path=None):
+    req = urllib.request.Request(url, headers={"User-Agent": "earthindicators.org data update"})
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                data = r.read()
+            if path:
+                with open(path + ".part", "wb") as fh:
+                    fh.write(data)
+                os.replace(path + ".part", path)
+            return data
+        except Exception as e:
+            wait = 60 * 2 ** attempt if "429" in str(e) else 8 * (attempt + 1)
+            print(f"  NCEI {url.rsplit('/', 1)[-1] or url}: {e}; retry {attempt+1} in {wait} s", flush=True)
+            time.sleep(wait)
+    raise RuntimeError(f"NCEI download failed: {url}")
+
+
+def _ncei_files(ym):
+    """{date: file name} for one month folder, the final file where there is one, else the preliminary one."""
+    if ym not in _listings:
+        html = _get(NCEI + ym + "/").decode("utf-8", "replace")
+        files = {}
+        for fn, d, pre in re.findall(r'href="(oisst-avhrr-v02r01\.(\d{8})(_preliminary)?\.nc)"', html):
+            day = date(int(d[:4]), int(d[4:6]), int(d[6:]))
+            if day not in files or not pre:
+                files[day] = fn
+        _listings[ym] = files
+    return _listings[ym]
+
+
+def fetch_ncei(year, weighting, lat_box=LAT, lon_box=LON, stride=1, since=None, base=NCEI):
+    import xarray as xr
+    os.makedirs(NCEI_DIR, exist_ok=True)
+    d, end, out = since or date(year, 1, 1), min(date(year, 12, 31), date.today()), {}
+    while d <= end:
+        fn = _ncei_files(f"{d.year}{d.month:02d}").get(d)
+        if fn:
+            path = os.path.join(NCEI_DIR, fn)
+            if not os.path.exists(path):
+                _get(base + f"{d.year}{d.month:02d}/" + fn, path)
+            with xr.open_dataset(path) as ds:
+                sst = ds["sst"].isel(time=0, zlev=0) if "zlev" in ds["sst"].dims else ds["sst"].isel(time=0)
+                lat, lon = ds["lat"].values, ds["lon"].values
+                li = np.where((lat >= lat_box[0]) & (lat <= lat_box[1]))[0]
+                lo = np.where((lon >= lon_box[0]) & (lon <= lon_box[1]))[0]
+                sub = sst.isel(lat=slice(li.min(), li.max() + 1, stride), lon=slice(lo.min(), lo.max() + 1, stride)).load()
+            m = sub.weighted(np.cos(np.deg2rad(sub["lat"]))).mean(("lat", "lon")) if weighting == "cos" else sub.mean(("lat", "lon"))
+            if np.isfinite(float(m)):
+                out[d] = float(m)
+        d += timedelta(days=1)
+    return out
+
 
 def _open(url, engine):
     import xarray as xr
@@ -30,6 +91,8 @@ def _open(url, engine):
             # a busy server answers 429 (too many requests): back off for minutes, not seconds
             global SAW_429
             SAW_429 = SAW_429 or "429" in str(e) or "Too Many Requests" in str(e)
+            if SAW_429 and attempt >= 1:   # still refusing after a minute's pause: let the caller switch to NCEI
+                break
             wait = 60 * 2 ** attempt if "429" in str(e) or "Access failure" in str(e) else 8 * (attempt + 1)
             print(f"  [{engine}] open failed ({e}); retry {attempt+1} in {wait} s", flush=True)
             time.sleep(wait)
@@ -80,6 +143,8 @@ def fetch_year(year, weighting, url_template=URL, lat_box=LAT, lon_box=LON, stri
         except Exception as e:
             last = e
             print(f"  engine {engine} failed for {year}: {e}", flush=True)
+            if SAW_429:   # the server is refusing, not the engine: no point trying the other one
+                break
     raise RuntimeError(f"all engines failed for {year}: {last}")
 
 
@@ -159,8 +224,9 @@ def main():
     ap.add_argument("--compare", help="reference Climate Reanalyzer JSON to compare against")
     ap.add_argument("--check-out", help="write a one-line summary of the comparison to this file")
     a = ap.parse_args()
-    if os.path.exists(BUSY_FLAG):
-        sys.exit("PSL refused an earlier series in this run (429 Too Many Requests); not asking again until the next run")
+    psl_busy = os.path.exists(BUSY_FLAG)
+    if psl_busy:
+        print("PSL refused an earlier series in this run; using NCEI's daily files", flush=True)
 
     daily = {} if a.full else load_cache(a.cache)
     this = date.today().year
@@ -180,12 +246,16 @@ def main():
             jobs.append((y, None))
     for n, (y, first) in enumerate(jobs, 1):
         print(f"[{n}/{len(jobs)}] fetching {y}" + (f" from {first}" if first else "") + " ...", flush=True)
-        try:
-            got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride, since=first)
-        except RuntimeError:
-            if SAW_429:
-                open(BUSY_FLAG, "w").close()
-            raise
+        got = None
+        if not psl_busy:
+            try:
+                got = fetch_year(y, a.weighting, a.url_template, tuple(a.lat), tuple(a.lon), a.stride, since=first)
+            except RuntimeError as e:
+                print(f"    PSL failed ({e}); trying NCEI's daily files", flush=True)
+                if SAW_429:
+                    open(BUSY_FLAG, "w").close(); psl_busy = True
+        if got is None:
+            got = fetch_ncei(y, a.weighting, tuple(a.lat), tuple(a.lon), a.stride, since=first)
         print(f"    {len(got)} days", flush=True)
         if first is None and y < this and len(got) < 360:
             sys.exit(f"{y}: only {len(got)} days returned; refusing to continue")
