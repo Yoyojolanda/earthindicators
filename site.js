@@ -309,25 +309,36 @@
       x.font = '600 26px ' + F; x.fillStyle = THEME.ink; x.fillText('Earth Indicators · earthindicators.org', pad, y);
       x.font = '22px ' + F; x.fillStyle = THEME.mut; x.textAlign = 'right';
       x.fillText('Free to share with credit (CC BY 4.0)', W - pad, y + 4);
-      const a = document.createElement('a'); a.download = 'earth-indicators-charts.jpg'; a.href = o.toDataURL('image/jpeg', .9);
-      document.body.appendChild(a); a.click(); a.remove();
+      made = o.toDataURL('image/jpeg', .9); saveMade();
       gcEvent('chart-pick-make/' + n, n + ' charts');
+      // the page cannot tell whether the download was saved or cancelled, so: empty the queue, and keep the
+      // finished image on offer ("Download again") until the tray is closed or the page is left
+      this.save([]); this.refresh();
     }
   };
-  let trayEl = null;
+  let trayEl = null, made = null;
+  const saveMade = () => { const a = document.createElement('a'); a.download = 'earth-indicators-charts.jpg'; a.href = made;
+    document.body.appendChild(a); a.click(); a.remove(); };
   function tray() {
     const n = picks.list().length;
-    if (!n) { if (trayEl) trayEl.hidden = true; return; }
+    if (!n && !made) { if (trayEl) trayEl.hidden = true; return; }
     if (!trayEl) {
       trayEl = document.createElement('div'); trayEl.className = 'ptray';
-      trayEl.innerHTML = '<span></span><button type="button" class="nb pmake">Make image</button><button type="button" class="nb pclear">Clear</button>';
-      trayEl.querySelector('.pmake').onclick = () => picks.make();
-      trayEl.querySelector('.pclear').onclick = () => { if (confirm('Remove all charts from your image?')) { picks.save([]); picks.refresh(); } };
+      trayEl.innerHTML = '<span></span><button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
+      trayEl.querySelector('.pmake').onclick = () => n2() ? picks.make() : made && saveMade();
+      trayEl.querySelector('.pclear').onclick = () => {
+        if (n2()) { if (confirm('Remove all charts from your image?')) { picks.save([]); picks.refresh(); } }
+        else { made = null; tray(); } };
       document.body.appendChild(trayEl);
     }
     trayEl.hidden = false;
-    trayEl.querySelector('span').textContent = n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ')';
+    const ready = !n && made;   // just made, queue empty: offer the same image again
+    trayEl.querySelector('span').textContent = ready ? 'Image made. Not saved?' : n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ')';
+    trayEl.querySelector('.pmake').textContent = ready ? 'Download again' : 'Make image';
+    trayEl.querySelector('.pclear').textContent = ready ? 'Close' : 'Clear';
+    if (n) made = null;           // a new pick starts a new image
   }
+  const n2 = () => picks.list().length;
   window.addEventListener('storage', e => { if (e.key === PK) picks.refresh(); });   // picked in another tab
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tray); else tray();
 
