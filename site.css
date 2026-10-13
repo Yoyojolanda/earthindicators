@@ -164,16 +164,22 @@ a{color:var(--link)}
 .dd{position:relative}
 .dd-btn svg{transition:transform .15s}
 .dd.open .dd-btn svg{transform:rotate(180deg)}
-.dd-list{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:210px;padding:6px;background:var(--card);
- border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px var(--shadow)}
-.dd.open .dd-list{display:block}
+.dd-list{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:20;padding:10px 8px;background:var(--card);
+ border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 24px var(--shadow);
+ grid-auto-flow:column;grid-auto-columns:max-content;gap:0 6px}   /* horizontal: one column per group */
+.dd.open .dd-list{display:grid}
+.dd-col{display:flex;flex-direction:column;min-width:0;padding:0 4px}
+.dd-col + .dd-col{border-left:1px solid var(--rule2);padding-left:10px}
+.dd-h{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mut2);padding:2px 10px 6px;white-space:nowrap}
+/* wide screens: the wide panel hangs from the whole header, so it never runs off the left edge */
+@media (min-width:861px){.dd{position:static}.dd-list{top:100%;right:0}}
 /* on computers with a mouse, the dropdown also opens on hover (touch screens keep tap-to-open) */
 @media (hover:hover) and (min-width:861px){
- .dd:hover .dd-list,.dd:focus-within .dd-list{display:block}
+ .dd:hover .dd-list,.dd:focus-within .dd-list{display:grid}
  .dd:hover .dd-btn svg{transform:rotate(180deg)}
- .dd-list::before{content:"";position:absolute;left:0;right:0;top:-8px;height:8px}   /* bridges the gap so the menu stays open while the mouse moves down */
+ .dd-list::before{content:"";position:absolute;left:0;right:0;top:-30px;height:30px}   /* bridges the gap so the menu stays open while the mouse moves down */
 }
-.dd-list a{display:flex;padding:7px 10px;border-radius:6px}
+.dd-list a{display:flex;padding:7px 10px;border-radius:6px;white-space:nowrap}
 .dd-list a[aria-current="page"]{box-shadow:none;border-radius:6px;background:var(--curbg)}
 .dd-label{display:none}
 .burger{display:none;background:none;border:0;padding:8px;margin:-8px -8px -8px 0;color:var(--ink);cursor:pointer;border-radius:6px}
@@ -204,6 +210,10 @@ a{color:var(--link)}
  .dd-label{display:block;font-size:12px;color:var(--mut2);padding:6px 4px 2px}
  .dd-list a{padding:8px 4px}
  .dd-list a[aria-current="page"]{background:none;color:var(--acc)}
+ .dd.open .dd-list{display:block}
+ .dd-col + .dd-col{border-left:0;padding-left:0}
+ .dd-col{padding:0}
+ .dd-h{padding:8px 4px 0;font-size:11px}
 }
 @media (max-width:520px){.site-head img{height:48px}.site-head .wm{font-size:27px;line-height:30px}.site-head .tag{font-size:12px;line-height:16px}}
 

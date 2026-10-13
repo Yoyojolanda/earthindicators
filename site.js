@@ -40,6 +40,19 @@
     ['slow.html',      'Slow signals'],
   ];
 
+  // Indicators dropdown: one column per group (same story as the overview page), side by side on computers.
+  // A page in PAGES that is missing here gets an "Other" column, so a new page never disappears from the menu.
+  const MENU_GROUPS = [
+    ['Getting hotter',  ['air.html', 'sst.html', 'ohc.html']],
+    ['The cause',       ['co2.html', 'ch4.html', 'eei.html']],
+    ['What it is doing',['sea-level.html', 'sea-ice.html', 'land-ice.html', 'water.html']],
+    ['Natural swings',  ['nino.html', 'pdo.html', 'sun.html']],
+    ['Yearly data',     ['slow.html']],
+  ];
+  { const listed = MENU_GROUPS.flatMap(g => g[1]);
+    const rest = PAGES.map(p => p[0]).filter(f => !['index.html', 'claims.html'].includes(f) && !listed.includes(f));
+    if (rest.length) MENU_GROUPS.push(['Other', rest]); }
+
   // ---- site header: logo, name and tagline, with the menu next to it (a hamburger menu on narrow screens).
   //      A slim copy (.mini) slides in at the top when the reader scrolls back up, and hides again when scrolling down.
   const here = location.pathname.split('/').pop() || 'index.html';
@@ -61,7 +74,9 @@
       link(PAGES[0]) +
       '<div class="dd"><button class="dd-btn' + (onInd ? ' on' : '') + '" type="button" aria-expanded="false">Indicators' +
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-      '<div class="dd-list"><span class="dd-label">Indicators</span>' + ind.map(p => link(p)).join('') + '</div></div>' +
+      '<div class="dd-list"><span class="dd-label">Indicators</span>' + MENU_GROUPS.map(([h, hrefs]) =>
+        '<div class="dd-col"><span class="dd-h">' + h + '</span>' + hrefs.map(f => link(PAGES.find(p => p[0] === f))).join('') + '</div>').join('') +
+      '</div></div>' +
       link([PAGES[1][0], claimIcon + PAGES[1][1]], 'm-claims') +
       '</nav><button class="theme-btn" type="button" title="' + themeLabel[stored] + '" aria-label="' + themeLabel[stored] + '">' + themeIcon(stored) + '</button></header>';
     // dropdown and hamburger behaviour, for either header
