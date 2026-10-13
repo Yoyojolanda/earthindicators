@@ -43,11 +43,11 @@
   // Indicators dropdown: one column per group (same story as the overview page), side by side on computers.
   // A page in PAGES that is missing here gets an "Other" column, so a new page never disappears from the menu.
   const MENU_GROUPS = [
-    ['Getting hotter',  ['air.html', 'sst.html', 'ohc.html']],
-    ['The cause',       ['co2.html', 'ch4.html', 'eei.html']],
-    ['What it is doing',['sea-level.html', 'sea-ice.html', 'land-ice.html', 'water.html']],
-    ['Natural swings',  ['nino.html', 'pdo.html', 'sun.html']],
-    ['Yearly data',     ['slow.html']],
+    ['Getting Hotter',  ['air.html', 'sst.html', 'ohc.html']],
+    ['The Cause',       ['co2.html', 'ch4.html', 'eei.html']],
+    ['What It Is Doing',['sea-level.html', 'sea-ice.html', 'land-ice.html', 'water.html']],
+    ['Natural Swings',  ['nino.html', 'pdo.html', 'sun.html']],
+    ['Yearly Data',     ['slow.html']],
   ];
   { const listed = MENU_GROUPS.flatMap(g => g[1]);
     const rest = PAGES.map(p => p[0]).filter(f => !['index.html', 'claims.html'].includes(f) && !listed.includes(f));
