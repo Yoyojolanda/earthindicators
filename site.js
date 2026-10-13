@@ -595,13 +595,22 @@
   // sections: [[chart, titleElementId, showBandKey], ...]
   // titles can be an element id or the element itself
   window.siteRender = function (sections) {
-    const r = sections[0][0].currentDevicePixelRatio || 1, pad = 16 * r, tH = 24 * r, kH = 22 * r, gap = 20 * r, rowH = 18 * r, colW = 175 * r;
-    const W = Math.max(...sections.map(s => s[0].canvas.width)) + pad * 2, cols = Math.max(1, Math.floor((W - 2 * pad) / colW));
+    const r = sections[0][0].currentDevicePixelRatio || 1, pad = 16 * r, tH = 24 * r, kH = 22 * r, gap = 20 * r, rowH = 18 * r;
+    const W = Math.max(...sections.map(s => s[0].canvas.width)) + pad * 2;
     const leg = sections.map(([ch]) => { const st = LG.get(ch); return st ? items(ch).filter(i => !i.hidden) : []; });
+    const F = 'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    // legend items flow left to right with their measured width and wrap to a new row when the line is full
+    // (fixed columns let long labels run into each other)
+    const mx = document.createElement('canvas').getContext('2d'); mx.font = 12 * r + F;
+    const flow = leg.map(L => { let lx = pad, row = 0; return L.map(it => {
+      const w = 29 * r + mx.measureText(it.text).width;
+      if (lx > pad && lx + w > W - pad) { lx = pad; row++; }
+      const at = { lx, row }; lx += w + 22 * r; return at; }); });
+    const rows = flow.map(f => f.length ? f[f.length - 1].row + 1 : 0);
     const H = pad * 2 + gap * (sections.length - 1) + sections.reduce((h, [ch, , key], n) =>
-      h + tH + (key ? kH : 0) + (leg[n].length ? Math.ceil(leg[n].length / cols) * rowH + 6 * r : 0) + ch.canvas.height, 0);
+      h + tH + (key ? kH : 0) + (rows[n] ? rows[n] * rowH + 6 * r : 0) + ch.canvas.height, 0);
     const o = document.createElement('canvas'); o.width = W; o.height = H;
-    const x = o.getContext('2d'), font = (px, b) => x.font = (b ? '600 ' : '') + px * r + 'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    const x = o.getContext('2d'), font = (px, b) => x.font = (b ? '600 ' : '') + px * r + F;
     x.fillStyle = THEME.card; x.fillRect(0, 0, W, H); x.textBaseline = 'top';
     let y = pad;
     sections.forEach(([ch, tid, key], n) => {
@@ -617,13 +626,13 @@
         y += kH;
       }
       leg[n].forEach((it, k) => {
-        const lx = pad + (k % cols) * colW, ly = y + Math.floor(k / cols) * rowH;
+        const lx = flow[n][k].lx, ly = y + flow[n][k].row * rowH;
         if (it.line) { x.strokeStyle = it.color; x.lineWidth = 3 * r; x.setLineDash(it.dash ? [4 * r, 3 * r] : []);
           x.beginPath(); x.moveTo(lx, ly + 7 * r); x.lineTo(lx + 22 * r, ly + 7 * r); x.stroke(); x.setLineDash([]); }
         else { x.fillStyle = it.fill || it.color; x.fillRect(lx, ly + 2 * r, 22 * r, 11 * r); }
         x.fillStyle = THEME.mut; x.fillText(it.text, lx + 29 * r, ly);
       });
-      if (leg[n].length) y += Math.ceil(leg[n].length / cols) * rowH + 6 * r;
+      if (rows[n]) y += rows[n] * rowH + 6 * r;
       x.drawImage(ch.canvas, pad, y); y += ch.canvas.height;
     });
     return o;
