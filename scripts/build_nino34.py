@@ -90,7 +90,8 @@ def _open(url, engine):
         except Exception as e:
             # a busy server answers 429 (too many requests): back off for minutes, not seconds
             global SAW_429
-            SAW_429 = SAW_429 or "429" in str(e) or "Too Many Requests" in str(e)
+            # netCDF4 reports a refused request only as "Access failure" (the 429 page goes to the log), so count that too
+            SAW_429 = SAW_429 or any(k in str(e) for k in ("429", "Too Many Requests", "Access failure"))
             if SAW_429 and attempt >= 1:   # still refusing after a minute's pause: let the caller switch to NCEI
                 break
             wait = 60 * 2 ** attempt if "429" in str(e) or "Access failure" in str(e) else 8 * (attempt + 1)
