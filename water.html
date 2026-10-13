@@ -134,11 +134,11 @@ function build(tw,tt){
  const prevRec=k=>{const P=prior.filter(r=>r.k==k);return P.find(r=>r.v==mx[k]).y};
  $('t2').textContent=`Each month of ${cur} and ${cur-1} vs all earlier years (${y0}–${cur-1})`;
  charts[1]=freeze(new Chart($('c2'),{type:'line',data:{labels:ML,datasets:[
-   {label:`Highest, ${y0}–${cur-1}`,data:mx,borderColor:THEME.band2,borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:THEME.band1},
-   {label:`Lowest, ${y0}–${cur-1}`,data:mn,borderColor:THEME.band2,borderWidth:1,pointRadius:0},
-   {label:'1991–2020 average',data:clim,borderColor:THEME.clim,borderWidth:1.5,borderDash:[5,4],pointRadius:0},
-   {label:String(cur-1),data:yr(cur-1),borderColor:'#e08a00',borderWidth:2,pointRadius:2.5},
-   {label:String(cur),data:yr(cur),borderColor:'#d00000',borderWidth:3,pointRadius:3.5,backgroundColor:'#d00000'}]},
+   {label:`Highest, ${y0}–${cur-1}`,data:mx,borderColor:THEME.band2,borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:THEME.band1,order:4},
+   {label:`Lowest, ${y0}–${cur-1}`,data:mn,borderColor:THEME.band2,borderWidth:1,pointRadius:0,order:4},
+   {label:'1991–2020 average',data:clim,borderColor:THEME.clim,borderWidth:1.5,borderDash:[5,4],pointRadius:0,order:3},
+   {label:String(cur-1),data:yr(cur-1),borderColor:'#e08a00',borderWidth:2,pointRadius:2.5,order:1},
+   {label:String(cur),data:yr(cur),borderColor:'#d00000',borderWidth:3,pointRadius:3.5,backgroundColor:'#d00000',order:0}]},   // lower order = drawn on top
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
    plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>MLONG[t[0].dataIndex],label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' kg/m²',
      footer:t=>`Highest before ${cur}: ${prevRec(t[0].dataIndex)}`}}},
