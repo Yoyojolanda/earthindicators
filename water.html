@@ -193,12 +193,12 @@ function bandChart(tw){
  $('t4').textContent=`Water vapour over ${BANDS[band]}: 36-month running average, ${B[0].y}–${cur}`;
  if(charts[3])charts[3].destroy();
  charts[3]=new Chart($('c4'),{type:'line',plugins:[preSat(iSat)],data:{labels,datasets:[
-   {label:'Monthly',data:v,borderColor:THEME.thin,borderWidth:1,pointRadius:0,order:1},
+   {label:'Monthly',data:v,borderColor:THEME.thin,borderWidth:1,pointRadius:0,order:1,hidden:true},   // hidden at first: its seasonal swing would flatten the average
    {label:'36-month running average',data:r36,borderColor:'#d00000',borderWidth:2.5,pointRadius:0,order:0}]},   // average on top
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
    plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>mlab(labels[t[0].dataIndex]),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' kg/m²'}}},
    scales:{x:xYears(labels),y:{title:{display:true,text:'kg/m² (= mm of water)'},grid}}}});
- $('n4').textContent=`The 36-month average smooths out the seasons and most of the El Niño / La Niña swings. In the 36 months to ${mlab(last.m)} it was ${r36[n-1].toFixed(2)} kg/m², `
+ $('n4').textContent=`The 36-month average smooths out the seasons and most of the El Niño / La Niña swings (click Monthly in the legend to see the seasonal swing it averages out). In the 36 months to ${mlab(last.m)} it was ${r36[n-1].toFixed(2)} kg/m², `
   +(top===n-1?`the highest in the record (previous high ${r36[prevTop].toFixed(2)}, 36 months to ${mlab(labels[prevTop])}).`:`below the record of ${r36[top].toFixed(2)} (36 months to ${mlab(labels[top])}).`)
   +' Bands nearer the equator hold more water because the air there is warmer; compare the change over time, not the level between bands.'}
 
