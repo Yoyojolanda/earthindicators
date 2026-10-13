@@ -360,6 +360,10 @@
       if (b && !b.hidden && !b.classList.contains('on')) { b.click(); await new Promise(r => setTimeout(r, 120)); }
     }
   }
+  // share pages made for other switch settings (s/<page>-<chart>_<code>.html, with their own preview image)
+  let variants = new Set();
+  if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page))
+    fetch('s/variants.json').then(r => r.ok ? r.json() : []).then(l => { variants = new Set(l); }).catch(() => {});
   if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page)) {
    const shareSetup = () => {
     document.querySelectorAll('main .box').forEach(box => {
@@ -368,8 +372,10 @@
       if (!box.id) box.id = 'ch-' + cv.id;
       // the link carries the switches as set now, unless they are still as the page opened (the preview image
       // always shows that default version; opening the link restores the reader's settings)
-      const urlNow = () => { const c = segCode(box), d = segDefault ? segDefault.get(box) : c;
-        return location.origin + '/s/' + stem + '-' + cv.id + '.html' + (c && c !== d && !/-1/.test(c) ? '#' + c : ''); };
+      const urlNow = () => { const c = segCode(box), d = segDefault ? segDefault.get(box) : c, base = stem + '-' + cv.id;
+        if (!c || c === d || /-1/.test(c)) return location.origin + '/s/' + base + '.html';
+        // a variant with its own preview if there is one; otherwise the default preview, and the page restores the settings
+        return variants.has(base + '_' + c) ? location.origin + '/s/' + base + '_' + c + '.html' : location.origin + '/s/' + base + '.html#' + c; };
       const bar = document.createElement('div'); bar.className = 'cbar';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'nb'; b.textContent = 'Copy link to this chart';
       b.onclick = () => {

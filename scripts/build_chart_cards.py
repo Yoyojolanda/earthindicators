@@ -8,20 +8,29 @@ that holds a chart makes:
                                 (JPEG, about a third of the size of a PNG, to keep the repository's history small)
   s/<page>-<canvas id>.html     a tiny page whose preview tags show that chart and its title; people who open it
                                 are sent straight on to <page>.html#<box id>
-The "Copy link to this chart" buttons (site.js) copy the s/... link. Charts whose box is hidden (for example
+Charts with switches (a page-wide region, or the chart's own region/baseline/band buttons) also get one preview
+and share page per combination of settings: s/<page>-<canvas id>_<code>.html, where <code> is the selected button's
+position in each switch, page-wide ones first, as site.js writes it (e.g. air-c1_3.0 = 4th region, 1st button of the
+chart's own switch). The default settings keep the plain name. s/variants.json lists every variant, so site.js only
+links to previews that exist. The "Copy link to this chart" buttons (site.js) copy the s/... link. Charts whose box is hidden (for example
 because its data did not load) are skipped; files for charts that no longer exist are removed.
 
 Run from the repo root: python scripts/build_chart_cards.py
   --libs DIR   serve the cdnjs chart libraries from local copies in DIR (only for testing without internet)
   --pages LIST only these pages, comma-separated (e.g. ch4.html,co2.html); other pages' share files are left alone
 """
-import functools, html, io, os, re, sys, threading
+import functools, html, io, itertools, json, os, re, sys, threading, time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from PIL import Image, ImageDraw, ImageFont
 
 SITE = "https://earthindicators.org"
 SKIP = {"index.html", "claims.html", "methods.html"}
 W, H, HEAD = 1200, 630, 74
+MAXV = 40   # most variants made for one chart; more combinations than this are linked without their own preview
+
+# the same switch code as site.js: index of the selected button per switch, page-wide switches first
+JS_SEGS = """box => [...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box')).concat([...box.querySelectorAll('.seg')])"""
+JS_CODE = "box => (" + JS_SEGS + ")(box).map(g => [...g.querySelectorAll('.nb')].findIndex(b => b.classList.contains('on'))).join('.')"
 UMBER, MUTED = (51, 43, 25), (95, 99, 104)
 
 
@@ -107,7 +116,7 @@ def main():
         sys.exit(f"none of these are chart pages: {', '.join(sorted(only))}")
     port = serve()
     os.makedirs("s", exist_ok=True); os.makedirs("og/s", exist_ok=True)
-    made = set()
+    made, variants = set(), set()
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1100, "height": 900}, device_scale_factor=1.25)
@@ -130,16 +139,79 @@ def main():
                 return c && {cid: c.id, id: b.id, title: h ? h.textContent.trim() : '', shown: b.offsetParent !== null && b.getClientRects().length > 0};
               }).filter(Boolean)""")
             stem = f[:-5]
-            for b in boxes:
-                if not b["shown"] or not b["title"]:
-                    continue
-                name = f"{stem}-{b['cid']}"
+            inflight = [0]
+            pg.on("request", lambda r: inflight.__setitem__(0, inflight[0] + 1))
+            for ev in ("requestfinished", "requestfailed"):
+                pg.on(ev, lambda r: inflight.__setitem__(0, max(0, inflight[0] - 1)))
+
+            def settle():
+                """after a click: wait for any data it loads, then for the charts to be redrawn"""
+                pg.wait_for_timeout(250)
+                t = time.time()
+                while inflight[0] and time.time() - t < 30:
+                    pg.wait_for_timeout(100)
+                pg.wait_for_timeout(250)
+
+            def boxes_now():
+                return pg.evaluate("""() => [...document.querySelectorAll('main .box')].map((b, i) => {
+                    const c = b.querySelector('canvas[id]'), h = b.querySelector('h2');
+                    return c && {i, cid: c.id, id: b.id, title: h ? h.textContent.trim() : '',
+                                 shown: b.offsetParent !== null && b.getClientRects().length > 0,
+                                 code: (""" + JS_CODE + """)(b),
+                                 own: [...b.querySelectorAll('.seg')].map(g => [...g.querySelectorAll('.nb')].map(x => !x.hidden))};
+                  }).filter(Boolean)""")
+
+            def click(sel_js):   # sel_js: JS expression returning the button to click (or null)
+                done = pg.evaluate("() => { const b = " + sel_js + "; if (b && !b.hidden && !b.classList.contains('on')) { b.click(); return true } return false }")
+                if done:
+                    settle()
+
+            page_segs = pg.evaluate("""() => [...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box'))
+                .map(g => [...g.querySelectorAll('.nb')].map(x => !x.hidden))""")
+            page_default = pg.evaluate("""() => [...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box'))
+                .map(g => [...g.querySelectorAll('.nb')].findIndex(b => b.classList.contains('on')))""")
+            defaults = {b["cid"]: b["code"] for b in boxes_now()}
+            page_combos = [tuple(page_default)] + [c for c in itertools.product(*[[k for k, ok in enumerate(g) if ok] for g in page_segs])
+                                                     if c != tuple(page_default)]
+
+            def set_page(combo):
+                for gi, k in enumerate(combo):
+                    click(f"[...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box'))[{gi}].querySelectorAll('.nb')[{k}]")
+
+            def shoot(b, code):
+                name = f"{stem}-{b['cid']}" if code == defaults.get(b["cid"]) else f"{stem}-{b['cid']}_{code}"
+                if name in made or "-1" in code.split("."):
+                    return
                 el = pg.locator(f"canvas#{b['cid']}").locator("xpath=ancestor::div[contains(concat(' ',normalize-space(@class),' '),' box ')][1]")
-                el.scroll_into_view_if_needed(); pg.wait_for_timeout(200)
+                el.scroll_into_view_if_needed(); pg.wait_for_timeout(150)
+                title = pg.evaluate(f"() => (document.querySelectorAll('main .box')[{b['i']}].querySelector('h2') || {{}}).textContent || ''").strip()
                 card(el.screenshot()).save(f"og/s/{name}.jpg", quality=85, optimize=True, progressive=True)
+                anchor = b["id"] or "ch-" + b["cid"]
                 with open(f"s/{name}.html", "w", encoding="utf-8") as fh:
-                    fh.write(share_page(name, b["title"], desc, f"{f}#{b['id'] or 'ch-' + b['cid']}"))
+                    fh.write(share_page(name, title or b["title"], desc, f"{f}#{anchor}" + ("" if name == f"{stem}-{b['cid']}" else f"~{code}")))
                 made.add(name)
+                if name != f"{stem}-{b['cid']}":
+                    variants.add(name)
+
+            for pc in page_combos[:MAXV]:
+                set_page(pc)
+                for b in boxes_now():
+                    if not b["shown"] or not b["title"]:
+                        continue
+                    own = [[k for k, ok in enumerate(g) if ok] for g in b["own"]]
+                    combos = list(itertools.product(*own)) if own else [()]
+                    if len(combos) * len(page_combos) > MAXV:
+                        combos = combos[:max(1, MAXV // len(page_combos))]
+                    start = [int(x) for x in b["code"].split(".")[len(pc):]] if own else []
+                    for oc in combos:
+                        for gi, k in enumerate(oc):
+                            click(f"document.querySelectorAll('main .box')[{b['i']}].querySelectorAll('.seg')[{gi}].querySelectorAll('.nb')[{k}]")
+                        now = next((x for x in boxes_now() if x["i"] == b["i"]), None)
+                        if now and now["shown"]:
+                            shoot(now, now["code"])
+                    for gi, k in enumerate(start):   # back to how this chart was
+                        click(f"document.querySelectorAll('main .box')[{b['i']}].querySelectorAll('.seg')[{gi}].querySelectorAll('.nb')[{k}]")
+            set_page(page_combos[0])
             print(f"{f}: {sum(1 for m in made if m.startswith(stem + '-'))} charts", flush=True)
             pg.close()
         br.close()
@@ -152,7 +224,13 @@ def main():
         for x in os.listdir(d):
             if x.endswith(ext) and x[:-len(ext)] not in made and (not only or x.rsplit("-", 1)[0] + ".html" in todo):
                 os.remove(os.path.join(d, x))
-    print(f"{len(made)} chart share links")
+    # list of variant share pages, read by site.js (kept for pages not redrawn in this run)
+    vf, keep = "s/variants.json", []
+    if only and os.path.exists(vf):
+        keep = [v for v in json.load(open(vf)) if v.rsplit("-", 1)[0].split("_")[0] + ".html" not in todo]
+    with open(vf, "w") as fh:
+        json.dump(sorted(set(keep) | variants), fh, separators=(",", ":"))
+    print(f"{len(made)} chart share links ({len(variants)} of them for other switch settings)")
 
 
 if __name__ == "__main__":
