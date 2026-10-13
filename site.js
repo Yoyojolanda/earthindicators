@@ -350,9 +350,13 @@
         gcEvent('chart-copy/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem);
       };
       bar.appendChild(b);
-      const key = stem + '-' + cv.id, pb = document.createElement('button'); pb.type = 'button'; pb.className = 'nb pick';
-      const label = () => { const on = picks.list().some(i => i.k === key); pb.textContent = on ? 'In your image ✓' : 'Add to image'; pb.classList.toggle('on', on); };
-      pb.onclick = () => picks.toggle(key, box, cv, stem, label);
+      // the key includes the switches as they are set now (region, baseline, data source...), so the same chart
+      // can be added once per setting, e.g. Arctic and Antarctic volume side by side in one image
+      const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'nb pick';
+      const key = () => [stem + '-' + cv.id, ...[...box.querySelectorAll('.seg .nb.on')].map(e => e.textContent.trim())].join(' · ');
+      const label = () => { const on = picks.list().some(i => i.k === key()); pb.textContent = on ? 'In your image ✓' : 'Add to image'; pb.classList.toggle('on', on); };
+      pb.onclick = () => picks.toggle(key(), box, cv, stem, label);
+      box.addEventListener('click', e => { if (e.target.closest('.seg')) setTimeout(label, 0); });   // after the page has switched
       label(); picks.labels.push(label);
       bar.appendChild(pb); box.appendChild(bar);
     });

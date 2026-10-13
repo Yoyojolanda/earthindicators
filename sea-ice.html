@@ -36,6 +36,10 @@
 <div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
 <div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<div class="box"><h2 id="t7"></h2>
+ <div class="seg" id="rh">Region: <button class="nb" type="button" data-r="2">Global</button><button class="nb" type="button" data-r="0">Arctic</button><button class="nb" type="button" data-r="1">Antarctic</button></div>
+ <div class="wrap s"><canvas id="c7"></canvas></div>
+ <p class="sub" id="rn" style="margin:8px 0 0"></p></div>
 <div class="box"><h2 id="t5"></h2>
  <div class="seg" id="zh">Region: <button class="nb" type="button" data-h="1">Antarctic</button><button class="nb" type="button" data-h="0">Arctic</button></div>
  <div class="seg" id="zb">Baseline: <button class="nb" type="button" data-b="1981">1981–2010</button><button class="nb" type="button" data-b="1991">1991–2020</button></div>
@@ -43,7 +47,7 @@
  <div class="wrap"><canvas id="c5"></canvas></div>
  <p class="sub" id="zn" style="margin:8px 0 0"></p></div>
 <div class="box hide" id="vbox"><h2 id="t6"></h2>
- <div class="seg" id="vh">Region: <button class="nb" type="button" data-p="north">Arctic</button><button class="nb" type="button" data-p="south">Antarctic</button></div>
+ <div class="seg" id="vh">Region: <button class="nb" type="button" data-p="north">Arctic</button><button class="nb" type="button" data-p="south">Antarctic</button><button class="nb" type="button" data-p="global">Global</button></div>
  <div class="wrap"><canvas id="c6"></canvas></div>
  <p class="sub" id="vnote"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
@@ -146,6 +150,31 @@ function zchart(){
 document.querySelectorAll('#zh .nb').forEach(b=>b.onclick=()=>{zh=+b.dataset.h;zchart()});
 document.querySelectorAll('#zb .nb').forEach(b=>b.onclick=()=>{zb=+b.dataset.b;zchart()});
 document.querySelectorAll('#zs .nb').forEach(b=>b.onclick=()=>{zs=b.dataset.s;zchart()});
+// ---- 12-month average: the mean of the last 365 days, every day, so the seasonal cycle drops out
+let RR=null,rr=2,rc=null;
+function roll12(R){
+ const by=R.by,ys=R.ys,k0=ys[0]*NN,a=[];ys.forEach(y=>by[y].forEach((v,i)=>a[y*NN+i-k0]=v));
+ const pts=[];let sum=0,n=0;
+ for(let k=0;k<a.length;k++){if(a[k]!=null){sum+=a[k];n++}const o=k-NN;if(o>=0&&a[o]!=null){sum-=a[o];n--}
+  if(k>=NN-1&&n>=330&&(k%5===0||k===a.length-1)){const y=Math.floor((k+k0)/NN),i=k+k0-y*NN;pts.push({x:y+(i+.5)/NN,y:sum/n,d:fmtDate(i)+' '+y})}}
+ return pts}
+function rchart(){
+ if(!RR)return;const R=RR[rr],P=roll12(R),last=P[P.length-1];
+ document.querySelectorAll('#rh .nb').forEach(b=>b.classList.toggle('on',+b.dataset.r===rr));
+ const ref=P.filter(p=>p.x>=REF[0]+1&&p.x<REF[1]+1),av=ref.reduce((s,p)=>s+p.y,0)/ref.length;   // windows ending in 1981-2010 = years 1981-2010
+ const lo=P.slice(0,-1).reduce((m,p)=>p.y<m.y?p:m),rec=last.y<=lo.y;
+ $('t7').textContent=`${R.name} sea-ice extent, 12-month average, ${Math.floor(P[0].x)}–${R.cur}`;
+ $('rn').textContent=`Each point is the average of the 365 days up to that date, so the seasons cancel out and only the year-to-year change is left. Latest (${last.d}): ${last.y.toFixed(2)} million km², ${Math.abs(last.y-av).toFixed(2)} ${last.y<av?'below':'above'} the ${REF[0]}–${REF[1]} average of ${av.toFixed(2)}. `
+  +(rec?'This is the lowest 12-month average in the record.':`The record low is ${lo.y.toFixed(2)} million km² (12 months to ${lo.d}).`);
+ if(rc)rc.destroy();
+ rc=new Chart($('c7'),{type:'line',data:{datasets:[
+   {label:'12-month average',data:P,borderColor:COL[R.key],borderWidth:2,pointRadius:0},
+   {label:`${REF[0]}–${REF[1]} average`,data:[{x:P[0].x,y:av},{x:last.x,y:av}],borderColor:THEME.clim,borderDash:[5,4],borderWidth:1.3,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>'12 months to '+t[0].raw.d,label:c=>c.parsed.y.toFixed(2)+' M km²'}}},
+   scales:{x:{type:'linear',min:Math.floor(P[0].x),max:R.cur+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},
+    y:{title:{display:true,text:'Million km²'},grid:{color:THEME.grid}}}}})}
+document.querySelectorAll('#rh .nb').forEach(b=>b.onclick=()=>{rr=+b.dataset.r;rchart()});
 function run(nt,st){
  const N=parse(nt),S=parse(st),R=[region(N,'n','Arctic'),region(S,'s','Antarctic'),region(comb(N,S),'g','Global')];
  $('cards').innerHTML=R.map(r=>`<div class="card"><div class="v">${r.v.toFixed(2)} M km²</div><div class="l">${r.name} extent, ${fmtDate(r.L)}, ${r.cur}<br>${sg(r.anom)} vs average · ${r.rank==1?'':ord(r.rank)+' '}lowest of ${r.n}</div></div>`).join('');
@@ -157,7 +186,7 @@ function run(nt,st){
  expName=`sea-ice-${R[0].cur}-${fmtDate(R[0].L).replace(' ','')}.jpg`;
  $('out').classList.remove('hide');
  charts.splice(0).forEach(c=>c.destroy());
- env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR.nsidc=R;zchart();
+ env('c1',R[0]);env('c2',R[1]);env('c3',R[2]);anom('c4',R);ZR.nsidc=R;zchart();RR=R;rchart();
  Promise.all(['n','s'].map(h=>fetch(`data/vishop_extent_${h}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
   .then(([n,s])=>{const N=parseVishop(n),S=parseVishop(s);ZR.jaxa=[region(N,'n','Arctic'),region(S,'s','Antarctic')];$('zs').classList.remove('hide');zchart()})
   .catch(()=>{});
@@ -167,9 +196,11 @@ let VD=null,vp='north',vc=null;
 const csvRows=t=>{const [h,...r]=t.trim().split(/\r?\n/),k=h.split(',');return r.map(l=>{const v=l.split(',');return Object.fromEntries(k.map((x,i)=>[x,v[i]]))})};
 const decY=s=>{const y=+s.slice(0,4),t=Date.parse(s+'T00:00Z');return y+(t-Date.UTC(y,0,1))/(Date.UTC(y+1,0,1)-Date.UTC(y,0,1))};
 const mName=m=>['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];
-const VN={north:'Arctic',south:'Antarctic'};
+const VN={north:'Arctic',south:'Antarctic',global:'Global'};
 function vstats(pole){
- const G=VD.g.filter(r=>r.pole==pole).map(r=>({d:r.date,y:+r.date.slice(0,4),m:+r.date.slice(5,7),v:+r.volume}));
+ const one=p=>VD.g.filter(r=>r.pole==p).map(r=>({d:r.date,y:+r.date.slice(0,4),m:+r.date.slice(5,7),v:+r.volume}));
+ // global = Arctic + Antarctic, month by month (only months both poles have)
+ const G=pole!=='global'?one(pole):(()=>{const s=new Map(one('south').map(r=>[r.d,r.v]));return one('north').filter(r=>s.has(r.d)).map(r=>({...r,v:r.v+s.get(r.d)}))})();
  const X=(y,m)=>y+(m-.5)/12;
  // month of the yearly maximum and minimum, from the 1993-2020 average seasonal cycle
  const cl=Array(13).fill(0),cn=Array(13).fill(0);G.forEach(r=>{if(r.y<=2020){cl[r.m]+=r.v;cn[r.m]++}});
@@ -193,15 +224,16 @@ function vchart(){
  document.querySelectorAll('#vh .nb').forEach(b=>b.classList.toggle('on',b.dataset.p===vp));
  const V=vstats(vp),{G,X}=V,WC='#1f6fb5',SC='#e08a00',SAT='#0b2f55';
  const y0=G[0].y,x1=G[G.length-1].y+1,flat=v=>[{x:y0,y:v},{x:x1,y:v}];
- $('t6').textContent=`${VN[vp]} sea-ice volume: winter maximum and summer minimum, ${y0}–${x1-1}`;
+ $('t6').textContent=`${VN[vp]} sea-ice volume: ${vp==='global'?'yearly':'winter'} maximum and ${vp==='global'?'yearly':'summer'} minimum, ${y0}–${x1-1}`;
+ $('vnote').textContent=vp==='global'?'Global = Arctic + Antarctic, month by month. The poles have opposite seasons, so the global total swings less over the year than either pole. No satellite points here: the two poles\' measuring seasons (their winters) never overlap.':'';
  if(vc)vc.destroy();
  vc=new Chart($('c6'),{type:'line',data:{datasets:[
    {label:'Monthly values (model)',data:G.map(r=>({x:X(r.y,r.m),y:r.v})),borderColor:'rgba(128,128,128,.35)',borderWidth:1,pointRadius:0,order:9},
-   {label:`Winter maximum (model, usually ${mName(V.maxM)})`,data:V.W,borderColor:WC,backgroundColor:WC,borderWidth:2.2,pointRadius:2.5,order:2},
-   {label:`Summer minimum (model, usually ${mName(V.minM)})`,data:V.S,borderColor:SC,backgroundColor:SC,borderWidth:2.2,pointRadius:2.5,order:2},
-   {label:'Winter maximum, 1993–2020 average',data:flat(V.aW),borderColor:WC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
-   {label:'Summer minimum, 1993–2020 average',data:flat(V.aS),borderColor:SC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
-   {label:'Winter maximum (satellite, CryoSat-2 + SMOS)',data:V.sat,showLine:false,borderColor:SAT,backgroundColor:SAT,pointStyle:'rectRot',pointRadius:6,order:1}]},
+   {label:`${vp==='global'?'Yearly':'Winter'} maximum (model, usually ${mName(V.maxM)})`,data:V.W,borderColor:WC,backgroundColor:WC,borderWidth:2.2,pointRadius:2.5,order:2},
+   {label:`${vp==='global'?'Yearly':'Summer'} minimum (model, usually ${mName(V.minM)})`,data:V.S,borderColor:SC,backgroundColor:SC,borderWidth:2.2,pointRadius:2.5,order:2},
+   {label:`${vp==='global'?'Yearly':'Winter'} maximum, 1993–2020 average`,data:flat(V.aW),borderColor:WC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
+   {label:`${vp==='global'?'Yearly':'Summer'} minimum, 1993–2020 average`,data:flat(V.aS),borderColor:SC,borderDash:[5,4],borderWidth:1.2,pointRadius:0,order:5},
+   ...(vp==='global'?[]:[{label:'Winter maximum (satellite, CryoSat-2 + SMOS)',data:V.sat,showLine:false,borderColor:SAT,backgroundColor:SAT,pointStyle:'rectRot',pointRadius:6,order:1}])]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',intersect:true},
    plugins:{tooltip:{callbacks:{
     title:t=>{const r=t[0].raw;if(r.d)return r.d;if(r.yr)return mName(r.m)+' '+r.yr;const x=t[0].parsed.x,y=Math.floor(x);return mName(Math.min(12,Math.floor((x-y)*12)+1))+' '+y},
@@ -222,8 +254,8 @@ function vtext(){
 document.querySelectorAll('#vh .nb').forEach(b=>b.onclick=()=>{vp=b.dataset.p;vchart()});
 Promise.all(['glorys','cs2smos'].map(k=>fetch(`data/seaice_volume_${k}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
  .then(([g,s])=>{VD={g:csvRows(g),s:csvRows(s)};vchart();vtext()}).catch(e=>console.error('volume data',e));
-['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>[...charts,vc].forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>{if(charts.length<5)return;siteExport([...[1,2,3,4,5].map(k=>[charts[k-1],'t'+k,0]),...(vc?[[vc,'t6',0]]:[])],expName)};
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>[...charts,vc,rc].forEach(c=>c&&c.resize())));
+$('exp').onclick=()=>{if(charts.length<5)return;siteExport([...[1,2,3,4].map(k=>[charts[k-1],'t'+k,0]),...(rc?[[rc,'t7',0]]:[]),[charts[4],'t5',0],...(vc?[[vc,'t6',0]]:[])],expName)};
 Promise.all(['N','S'].map(h=>fetch(`data/${h}_seaice_extent_daily_v4.0.csv`).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([n,s])=>run(n,s))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the sea ice data. Please try again later.'});
 </script></main></body></html>

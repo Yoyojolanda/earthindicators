@@ -24,8 +24,10 @@ def _open(url, engine):
         try:
             return xr.open_dataset(url, engine=engine)
         except Exception as e:
-            print(f"  [{engine}] open failed ({e}); retry {attempt+1}", flush=True)
-            time.sleep(8 * (attempt + 1))
+            # a busy server answers 429 (too many requests): back off for minutes, not seconds
+            wait = 60 * 2 ** attempt if "429" in str(e) or "Access failure" in str(e) else 8 * (attempt + 1)
+            print(f"  [{engine}] open failed ({e}); retry {attempt+1} in {wait} s", flush=True)
+            time.sleep(wait)
     raise RuntimeError(f"could not open {url} with {engine}")
 
 
@@ -34,8 +36,9 @@ def _load(piece):
         try:
             return piece.load()
         except Exception as e:
-            print(f"    chunk failed ({e}); retry {attempt+1}", flush=True)
-            time.sleep(8 * (attempt + 1))
+            wait = 60 * 2 ** attempt if "429" in str(e) else 8 * (attempt + 1)
+            print(f"    chunk failed ({e}); retry {attempt+1} in {wait} s", flush=True)
+            time.sleep(wait)
     raise RuntimeError("chunk failed after retries")
 
 
