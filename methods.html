@@ -52,7 +52,7 @@
 </dl>
 
 <ul class="toc">
-<li><a class="nb" href="#air">Air temperature</a></li><li><a class="nb" href="#nino">El Niño</a></li><li><a class="nb" href="#pdo">PDO</a></li><li><a class="nb" href="#sun">The Sun</a></li><li><a class="nb" href="#sst">Sea surface temperature</a></li><li><a class="nb" href="#ohc">Ocean heat</a></li><li><a class="nb" href="#sea-level">Sea level</a></li><li><a class="nb" href="#water">Water vapor</a></li><li><a class="nb" href="#sea-ice">Sea ice</a></li><li><a class="nb" href="#land-ice">Land ice</a></li><li><a class="nb" href="#co2">CO₂</a></li><li><a class="nb" href="#ch4">Methane</a></li><li><a class="nb" href="#eei">Energy imbalance</a></li><li><a class="nb" href="#reuse">Reproducing and citing</a></li>
+<li><a class="nb" href="#air">Air temperature</a></li><li><a class="nb" href="#nino">El Niño</a></li><li><a class="nb" href="#pdo">PDO</a></li><li><a class="nb" href="#sun">The Sun</a></li><li><a class="nb" href="#sst">Sea surface temperature</a></li><li><a class="nb" href="#ohc">Ocean heat</a></li><li><a class="nb" href="#sea-level">Sea level</a></li><li><a class="nb" href="#water">Water vapor</a></li><li><a class="nb" href="#sea-ice">Sea ice</a></li><li><a class="nb" href="#land-ice">Land ice</a></li><li><a class="nb" href="#co2">CO₂</a></li><li><a class="nb" href="#ch4">Methane</a></li><li><a class="nb" href="#ghg">Other greenhouse gases</a></li><li><a class="nb" href="#eei">Energy imbalance</a></li><li><a class="nb" href="#reuse">Reproducing and citing</a></li>
 </ul>
 
 <section class="m" id="air"><h2>Air temperature</h2><p class="pg">Used on: <a href="air.html">Air temperature</a>, the overview and the claims page.</p><dl>
@@ -107,7 +107,7 @@
 <section class="m" id="sun"><h2>The Sun (solar cycle)</h2><p class="pg">Used on: <a href="sun.html">The Sun</a>.</p><dl>
 <dt>Dataset</dt><dd>WDC-SILSO, Royal Observatory of Belgium, Brussels: International Sunspot Number, version 2 (<a href="https://doi.org/10.24414/qnza-ac80">doi:10.24414/qnza-ac80</a>), monthly means from 1749 and 13-month smoothed values. License CC BY-NC 4.0.</dd>
 <dt>What this site does</dt><dd>Shows SILSO's values unchanged and marks values SILSO flags as provisional. Calculated here: cycle minima (the lowest smoothed value within five years on either side), each cycle's maximum, cycle numbers (counted from cycle 25, which began at the minimum of late 2019), yearly averages, and the comparison with global temperature (yearly averages of the ERA5 series from the air temperature page, relative to 1991–2020).</dd>
-<dt>Updates</dt><dd>Daily check; SILSO publishes the provisional value for a month on its first day of the next month and finalises values quarterly.</dd>
+<dt>Updates</dt><dd>Daily check; SILSO publishes the provisional value for a month on its first day of the next month and finalizes values quarterly.</dd>
 <dt>Code</dt><dd>Download: <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/.github/workflows/update-sun-pdo.yml">update-sun-pdo.yml</a>. Calculations: the script inside <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/sun.html">sun.html</a>.</dd>
 <dt>Data as used</dt><dd><a href="data/SN_m_tot_V2.0.csv">SN_m_tot_V2.0.csv</a>, <a href="data/SN_ms_tot_V2.0.csv">SN_ms_tot_V2.0.csv</a>, unchanged.</dd>
 </dl></section>
@@ -197,10 +197,18 @@
 
 <section class="m" id="ch4"><h2>Methane</h2><p class="pg">Used on: <a href="ch4.html">Methane</a>.</p><dl>
 <dt>Dataset</dt><dd>NOAA Global Monitoring Laboratory, globally averaged methane at marine surface sites: monthly means <a href="https://gml.noaa.gov/webdata/ccgg/trends/ch4/ch4_mm_gl.txt">ch4_mm_gl.txt</a> and annual increases <a href="https://gml.noaa.gov/webdata/ccgg/trends/ch4/ch4_gr_gl.txt">ch4_gr_gl.txt</a>. Lan, X., K.W. Thoning and E.J. Dlugokencky (<a href="https://gml.noaa.gov/ccgg/trends_ch4/">gml.noaa.gov/ccgg/trends_ch4</a>).</dd>
-<dt>What this site does</dt><dd>Plots NOAA's monthly means, de-seasonalised trend and annual increases unchanged. Pre-industrial reference (1750): about 729 ppb (IPCC AR6).</dd>
+<dt>What this site does</dt><dd>Plots NOAA's monthly means, de-seasonalized trend and annual increases unchanged. Pre-industrial reference (1750): about 729 ppb (IPCC AR6).</dd>
 <dt>Updates</dt><dd>Checked daily; NOAA updates monthly. First estimates for recent months can be revised by several ppb.</dd>
 <dt>Code</dt><dd>Download: <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/.github/workflows/update-ch4.yml">update-ch4.yml</a>. Display: <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/ch4.html">ch4.html</a>.</dd>
 <dt>Data as used</dt><dd><a href="data/ch4_mm_gl.txt">ch4_mm_gl.txt</a>, <a href="data/ch4_gr_gl.txt">ch4_gr_gl.txt</a>, unchanged.</dd>
+</dl></section>
+
+<section class="m" id="ghg"><h2>Other greenhouse gases</h2><p class="pg">Used on: <a href="ghg.html">Other gases</a>.</p><dl>
+<dt>Dataset</dt><dd>NOAA Global Monitoring Laboratory, <a href="https://gml.noaa.gov/aggi/aggi.html">Annual Greenhouse Gas Index</a>: the warming effect (effective radiative forcing since 1750) of each group of long-lived gases, <a href="https://gml.noaa.gov/aggi/AGGI_Table.csv">AGGI_Table.csv</a>, and the yearly global mean of each gas behind it, <a href="https://gml.noaa.gov/aggi/NOAA_Annual_Mean_MoleFractions.csv">NOAA_Annual_Mean_MoleFractions.csv</a> (HFC-23 after 2007 from AGAGE, <a href="https://doi.org/10.5194/essd-10-985-2018">Prinn et al. 2018</a>). Nitrous oxide: globally averaged monthly means <a href="https://gml.noaa.gov/webdata/ccgg/trends/n2o/n2o_mm_gl.txt">n2o_mm_gl.txt</a> and yearly increases <a href="https://gml.noaa.gov/webdata/ccgg/trends/n2o/n2o_gr_gl.txt">n2o_gr_gl.txt</a> (<a href="https://gml.noaa.gov/ccgg/trends_n2o/">gml.noaa.gov/ccgg/trends_n2o</a>). SF₆ monthly means (<a href="https://gml.noaa.gov/webdata/ccgg/trends/sf6/sf6_mm_gl.txt">sf6_mm_gl.txt</a>) are downloaded for later use.</dd>
+<dt>What this site does</dt><dd>Plots NOAA's values unchanged. Calculates each gas's share of the total, the share of the increase since 1990, peaks and percentage changes. "Ozone-layer gases" is NOAA's CFC* group (CFC-11, CFC-12, CFC-113, CCl₄, CH₃CCl₃ and halons); "HFCs and SF₆" is NOAA's HFC* group. Pre-industrial nitrous oxide (1750): about 270 ppb (IPCC AR6).</dd>
+<dt>Updates</dt><dd>Checked weekly. Nitrous oxide updates monthly; the index and the yearly gas means once a year, in the fall, for the previous year.</dd>
+<dt>Code</dt><dd>Download: <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/.github/workflows/update-ghg.yml">update-ghg.yml</a>. Display: <a href="https://github.com/Yoyojolanda/earthindicators/blob/main/ghg.html">ghg.html</a>.</dd>
+<dt>Data as used</dt><dd><a href="data/aggi_AGGI_Table.csv">aggi_AGGI_Table.csv</a>, <a href="data/aggi_NOAA_Annual_Mean_MoleFractions.csv">aggi_NOAA_Annual_Mean_MoleFractions.csv</a>, <a href="data/n2o_mm_gl.txt">n2o_mm_gl.txt</a>, <a href="data/n2o_gr_gl.txt">n2o_gr_gl.txt</a>, unchanged.</dd>
 </dl></section>
 
 <section class="m" id="water"><h2>Water vapor (water cycle)</h2><p class="pg">Used on: <a href="water.html">Water cycle</a>.</p><dl>

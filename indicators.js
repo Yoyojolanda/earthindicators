@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, wv (water vapor), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, ghg (all long-lived greenhouse gases: NOAA's yearly index, plus monthly N₂O), eei, wv (water vapor), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -157,6 +157,17 @@ const LOAD={
   return{src:'NOAA',vd:g[1]>0?`${x}× pre-industrial, and still rising`:`${x}× pre-industrial`,now:L[3].toFixed(0)+' ppb',x:x+'×',rise:g[1].toFixed(1)+' ppb',riseYear:g[0],date:dt,through:dt,
    tile:{v:L[3].toFixed(0)+' ppb',l:`global monthly mean, ${dt}`,s:`Rose ${g[1].toFixed(1)} ppb in ${g[0]}. Pre-industrial: about 729 ppb.`,spark:M.map(r=>({x:r[2],y:r[5]})),sparkLabel:`trend, ${M[0][0]}–${L[0]}`}}}),
 
+ // ghg: NOAA Annual Greenhouse Gas Index (warming effect of each gas, W/m² relative to 1750, yearly) and monthly N₂O
+ ghg:()=>Promise.all([get('aggi_AGGI_Table.csv'),get('n2o_mm_gl.txt'),get('n2o_gr_gl.txt')]).then(([a,b,c])=>{
+  const T=a.split(/\r?\n/).map(l=>l.split(',').map(Number)).filter(r=>r[0]>1900&&r.length>=10&&r[7]>0);   // Year,CO2,CH4,N2O,CFC*,HCFCs,HFCs*,Total,CO2-eq,AGGI
+  const N=lines(b).map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=6&&r[3]>0),G=lines(c).map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=2&&r[0]>1900);
+  if(T.length<30||N.length<100)throw new Error('ghg data incomplete');
+  const L=T[T.length-1],B=T.find(r=>r[0]===1990),up=Math.round((L[9]-1)*100),co2=Math.round(L[1]/L[7]*100),n=N[N.length-1],g=G[G.length-1],dt=`${ML[n[1]-1]} ${n[0]}`;
+  return{src:'NOAA',vd:`Warming effect ${up}% stronger than in 1990${L[7]>T[T.length-2][7]?', and still rising':''}`,now:L[7].toFixed(2)+' W/m²',year:L[0],up:up+'%',co2share:co2+'%',
+   co2eq:L[8].toFixed(0)+' ppm',n2o:n[3].toFixed(1)+' ppb',n2oDate:dt,n2oRise:g?g[1].toFixed(2)+' ppb':'',n2oRiseYear:g?g[0]:'',through:String(L[0]),
+   tile:{v:L[7].toFixed(2)+' W/m²',l:`warming effect of all long-lived greenhouse gases, ${L[0]}`,s:`${up}% more than in 1990 (NOAA's index). CO₂ is ${co2}% of it.`,
+    spark:T.map(r=>({x:r[0],y:r[7]})),sparkLabel:`${T[0][0]}–${L[0]}`}}}),
+
  // sun: WDC-SILSO sunspot number, monthly and 13-month smoothed; cycles found from the smoothed minima (as on sun.html)
  sun:()=>Promise.all([get('SN_m_tot_V2.0.csv'),get('SN_ms_tot_V2.0.csv')]).then(([a,b])=>{
   const P=t=>t.split(/\r?\n/).map(l=>l.split(';').map(s=>s.trim())).filter(p=>p.length>=4&&+p[0]>1700&&+p[3]>=0).map(p=>({y:+p[0],m:+p[1],x:+p[2],v:+p[3],prov:p[6]==='0'}));
@@ -225,7 +236,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

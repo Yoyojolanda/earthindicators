@@ -168,6 +168,14 @@ window.IN_SHORT = {
     ],
     claims: ['trace-gas', 'too-late'],
   },
+  'ghg.html': {
+    units: 'W/m² means watts per square meter of Earth\'s surface. The 3.5 W/m² from all greenhouse gases together, spread over the whole planet, is about 1,800 trillion watts, roughly 90 times all the energy humanity uses. ppb and ppt are parts per billion and per trillion: a few hundred ppt of a CFC is tiny, but ton for ton these gases trap thousands of times more heat than CO₂.',
+    text: [
+      'CO₂ and methane are not the only heat-trapping gases. This page adds up all the long-lived ones: CO₂, methane, nitrous oxide (mostly from farming), and the CFCs, HCFCs, HFCs and SF₆ made in factories.',
+      'In {ghg.year} they added {ghg.now} of warming effect, {ghg.up} more than in 1990; CO₂ is {ghg.co2share} of it. Nitrous oxide is at {ghg.n2o} ({ghg.n2oDate}). The CFCs that damaged the ozone layer are falling since the Montreal Protocol, while their replacements are rising.',
+    ],
+    claims: ['trace-gas', 'cows', 'too-late'],
+  },
   'water.html': {
     units: '1 kg/m² of water vapor is a 1 mm layer of water if it all fell as rain at once. The whole atmosphere holds about 25 mm, some 13,000 km³: if it all rained out, it would fill Lake Erie about 26 times. The air recycles that water every 10 days or so.',
     text: [

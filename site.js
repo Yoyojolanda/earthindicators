@@ -35,6 +35,7 @@
     ['land-ice.html',  'Land ice'],
     ['co2.html',       'CO₂'],
     ['ch4.html',       'Methane'],
+    ['ghg.html',       'Other gases'],
     ['eei.html',       'Energy imbalance'],
     ['water.html',     'Water cycle'],
     ['slow.html',      'Slow signals'],
@@ -44,7 +45,7 @@
   // A page in PAGES that is missing here gets an "Other" column, so a new page never disappears from the menu.
   const MENU_GROUPS = [
     ['Getting Hotter',  ['air.html', 'sst.html', 'ohc.html']],
-    ['The Cause',       ['co2.html', 'ch4.html', 'eei.html']],
+    ['The Cause',       ['co2.html', 'ch4.html', 'ghg.html', 'eei.html']],
     ['What It Is Doing',['sea-level.html', 'sea-ice.html', 'land-ice.html', 'water.html']],
     ['Natural Swings',  ['nino.html', 'pdo.html', 'sun.html']],
     ['Yearly Data',     ['slow.html']],
@@ -302,6 +303,8 @@
       'NOAA\'s daily values are shown unchanged; monthly means, trend and growth are calculated by this page. The history records are shown as published.', ['co2.html', 'scripts/build_co2_history.py'], ['data/co2_daily_mlo.txt', 'data/co2_icecore_bereiter2015.csv', 'data/co2_cenozoic_cenco2pip2023.csv']],
     'ch4.html': ['NOAA Global Monitoring Laboratory, globally averaged marine surface methane.',
       'NOAA\'s monthly means, trend and annual increases are shown unchanged.', ['ch4.html'], 'data/ch4_mm_gl.txt'],
+    'ghg.html': ['NOAA Global Monitoring Laboratory: Annual Greenhouse Gas Index (warming effect of each gas) and the yearly global means behind it; globally averaged monthly nitrous oxide. HFC-23 after 2007: AGAGE (Prinn et al. 2018, <a href="https://doi.org/10.5194/essd-10-985-2018">doi:10.5194/essd-10-985-2018</a>).',
+      'NOAA\'s values are shown unchanged; the shares, changes since 1990 and peaks are calculated by this page.', ['ghg.html', '.github/workflows/update-ghg.yml'], ['data/aggi_AGGI_Table.csv', 'data/aggi_NOAA_Annual_Mean_MoleFractions.csv', 'data/n2o_mm_gl.txt', 'data/n2o_gr_gl.txt']],
     'land-ice.html': ['Ice sheets: NASA JPL GRACE/GRACE-FO mascon time series, release 06.3 v4: Greenland (<a href="https://doi.org/10.5067/TEMSC-GT634">doi:10.5067/TEMSC-GT634</a>) and Antarctica (<a href="https://doi.org/10.5067/TEMSC-AT634">doi:10.5067/TEMSC-AT634</a>). Glaciers: WGMS gridded glacier mass change, Copernicus Climate Data Store (<a href="https://doi.org/10.24381/cds.ba597449">doi:10.24381/cds.ba597449</a>). Greenland ice core: Kobashi et al. 2011 (<a href="https://doi.org/10.1029/2011GL049444">doi:10.1029/2011GL049444</a>) and Alley 2000 (<a href="https://doi.org/10.1016/S0277-3791(99)00062-1">doi:10.1016/S0277-3791(99)00062-1</a>), via NOAA paleoclimatology; measured summit temperature: Copernicus ERA5.',
       'NASA\'s monthly mass values are shown relative to the first 12 months; trends, yearly changes and the sea-level equivalent (362 Gt = 1 mm) are calculated by this page; the world glacier total per year is added up from the grid by this site. The ice-core reconstructions are shown as published; the ERA5 summit series is shifted so its 2001–2010 average matches the ice-core value for that decade, and the 10-year comparisons are calculated by this page.', ['land-ice.html', 'scripts/build_glaciers.py', 'scripts/build_greenland_icecore.py'], ['data/grace_greenland.txt', 'data/grace_antarctica.txt', 'data/glaciers_global.csv', 'data/gisp2_kobashi2011.csv', 'data/gisp2_alley2000.csv', 'data/greenland_summit_era5.csv']],
     'pdo.html': ['NOAA NCEI Pacific Decadal Oscillation index, based on ERSST.',

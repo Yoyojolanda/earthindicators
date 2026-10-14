@@ -19,6 +19,7 @@ const PAGES = {
   'sea-ice':   { id: 'ice',  title: 'Arctic sea ice extent' },
   co2:         { id: 'co2',  title: 'Carbon dioxide (CO₂)' },
   ch4:         { id: 'ch4',  title: 'Methane' },
+  ghg:         { id: 'ghg',  title: 'All greenhouse gases: warming effect' },
   eei:         { id: 'eei',  title: "Earth's energy imbalance" },
   water:       { id: 'wv',   title: 'Water vapor in the air' },
 };
