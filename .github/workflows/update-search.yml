@@ -1,0 +1,31 @@
+name: Update site search
+
+# Rebuilds search.json (the index behind the magnifying glass in the header) when page text changes.
+# Only runs on pushes that touch pages or the In short text, so the daily data updates never trigger it.
+on:
+  push:
+    branches: [main]
+    paths: ["*.html", "inshort.js", "site.js", "scripts/build_search.py"]
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: search
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the search index      # standard library only, nothing to install
+        run: python3 scripts/build_search.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add search.json
+          git diff --cached --quiet || (git commit -m "Update site search" && git pull --rebase && git push)

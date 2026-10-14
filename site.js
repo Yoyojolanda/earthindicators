@@ -78,7 +78,9 @@
         '<div class="dd-col"><span class="dd-h">' + h + '</span>' + hrefs.map(f => link(PAGES.find(p => p[0] === f))).join('') + '</div>').join('') +
       '</div></div>' +
       link([PAGES[1][0], claimIcon + PAGES[1][1]], 'm-claims') +
-      '</nav><button class="theme-btn" type="button" title="' + themeLabel[stored] + '" aria-label="' + themeLabel[stored] + '">' + themeIcon(stored) + '</button></header>';
+      '</nav><button class="search-btn" type="button" title="Search the site (/)" aria-label="Search the site">' +
+      '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m12.8 12.8 4.4 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>' +
+      '<button class="theme-btn" type="button" title="' + themeLabel[stored] + '" aria-label="' + themeLabel[stored] + '">' + themeIcon(stored) + '</button></header>';
     // dropdown and hamburger behaviour, for either header
     const wire = head => {
       const burger = head.querySelector('.burger'), dd = head.querySelector('.dd'), ddBtn = head.querySelector('.dd-btn');
@@ -100,6 +102,84 @@
     });
     const head = main.querySelector('.site-head');
     wire(head);
+
+    // ---- site search (magnifying glass, or the / key). The index, search.json, is built by scripts/build_search.py
+    //      from the pages: each page, each chart section and each answer on the claims page. It is only downloaded
+    //      the first time someone opens the search. Every word typed must appear; matches in titles rank first.
+    let sx = null, sData = null, sAct = 0;
+    const norm = t => (t || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();   // ₂ → 2, ñ → n
+    const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const openSearch = () => {
+      if (!sx) {
+        document.body.insertAdjacentHTML('beforeend', '<div class="srch" hidden><div class="srch-box" role="dialog" aria-modal="true" aria-label="Search the site">' +
+          '<div class="srch-in"><input type="search" placeholder="Search the site, e.g. glacier, El Niño, 1998" aria-label="Search the site" autocomplete="off" spellcheck="false">' +
+          '<button type="button" class="srch-x" aria-label="Close search">×</button></div><ol class="srch-res"></ol><p class="srch-msg"></p></div></div>');
+        sx = document.body.lastElementChild;
+        const inp = sx.querySelector('input'), res = sx.querySelector('.srch-res');
+        const close = () => { sx.hidden = true; document.documentElement.classList.remove('srch-on'); };
+        sx.addEventListener('click', e => { if (e.target === sx || e.target.closest('.srch-x') || e.target.closest('.srch-res a')) close(); });
+        inp.addEventListener('input', () => runSearch(inp.value));
+        inp.addEventListener('keydown', e => {
+          const items = res.querySelectorAll('a');
+          if (e.key === 'Escape') { close(); return; }
+          if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && items.length) {
+            e.preventDefault(); sAct = (sAct + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length; markAct(true);
+          }
+          if (e.key === 'Enter' && items[sAct]) { e.preventDefault(); close(); location.href = items[sAct].href; }
+        });
+        fetch('search.json').then(r => r.json()).then(d => {
+          sData = d.map(e => ({ ...e, nt: norm(e.t), na: norm(e.a), nx: norm(e.x), np: norm(e.p) }));
+          runSearch(inp.value);
+        }).catch(() => { sx.querySelector('.srch-msg').textContent = 'The search could not be loaded. Try again later.'; });
+      }
+      sx.hidden = false; document.documentElement.classList.add('srch-on');
+      const inp = sx.querySelector('input'); inp.focus(); inp.select();
+    };
+    const markAct = scroll => sx.querySelectorAll('.srch-res a').forEach((a, i) => {
+      a.classList.toggle('act', i === sAct); a.setAttribute('aria-selected', String(i === sAct));
+      if (i === sAct && scroll) a.scrollIntoView({ block: 'nearest' });
+    });
+    function runSearch(q) {
+      const res = sx.querySelector('.srch-res'), msg = sx.querySelector('.srch-msg');
+      const words = norm(q).split(/[^a-z0-9.%°-]+/).map(w => w.replace(/^[.-]+|[.-]+$/g, '')).filter(w => w.length > 1 || /\d/.test(w));
+      sAct = 0;
+      if (!words.length) { res.replaceChildren(); msg.textContent = sData ? 'Charts, sections and answers to common claims, on every page.' : 'Loading…'; return; }
+      if (!sData) { msg.textContent = 'Loading…'; return; }
+      const hits = [];
+      sData.forEach((e, i) => {
+        let sc = 0;
+        for (const w of words) {
+          const inT = e.nt.includes(w), inA = e.na.includes(w), inP = e.np.includes(w), inX = e.nx.includes(w);
+          if (!inT && !inA && !inP && !inX) return;
+          sc += (inT ? 6 : 0) + (inP ? 4 : 0) + (inA ? 3 : 0) + (inX ? 1 : 0) + (new RegExp('(^|[^a-z0-9])' + w.replace(/[.%°-]/g, '\\$&')).test(e.nt) ? 2 : 0);
+        }
+        hits.push([sc + (e.u.includes('#') ? 0 : 1), i, e]);
+      });
+      hits.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+      const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\%°-]/g, '\\$&')).join('|') + ')', 'gi');
+      const hl = t => esc(t).replace(re, '<mark>$1</mark>');
+      // snippet: a bit of the text around the first word found (the text is matched without accents, so search that)
+      const snip = e => {
+        let at = -1; for (const w of words) { const k = e.nx.indexOf(w); if (k >= 0 && (at < 0 || k < at)) at = k; }
+        if (at < 0) return e.x.slice(0, 150) + (e.x.length > 150 ? '…' : '');
+        const a = Math.max(0, at - 50), b = Math.min(e.x.length, at + 110);
+        return (a ? '…' : '') + e.x.slice(a, b) + (b < e.x.length ? '…' : '');
+      };
+      res.replaceChildren(...hits.slice(0, 20).map(([, , e]) => {
+        const li = document.createElement('li');
+        li.innerHTML = '<a href="' + esc(e.u) + '" role="option"><b>' + hl(e.t) + '</b><span class="srch-p">' + esc(e.p) +
+          (e.u.includes('#') ? '' : ' · page') + '</span>' + (e.x ? '<span class="srch-s">' + hl(snip(e)) + '</span>' : '') + '</a>';
+        return li;
+      }));
+      msg.textContent = hits.length ? (hits.length > 20 ? 'First 20 of ' + hits.length + ' results' : '') : 'Nothing found. Try another word, or fewer words.';
+      markAct(false);
+    }
+    document.addEventListener('click', e => { if (e.target.closest('.search-btn')) { e.preventDefault(); openSearch(); } });
+    document.addEventListener('keydown', e => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || (sx && !sx.hidden)) return;
+      const t = e.target; if (t.closest('input,textarea,select,[contenteditable="true"]')) return;
+      e.preventDefault(); openSearch();
+    });
 
     // slim header: shown when scrolling up (past the real header), hidden when scrolling down or back at the top
     document.body.insertAdjacentHTML('beforeend', '<div class="mini-wrap" aria-hidden="true">' + headHTML(' mini', 'menu-mini') + '</div>');

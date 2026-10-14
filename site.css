@@ -152,7 +152,28 @@ a{color:var(--link)}
 /* theme button (auto / light / dark) at the end of the header */
 .theme-btn{background:none;border:1px solid transparent;border-radius:8px;color:var(--mut2);padding:6px;cursor:pointer;line-height:0;margin-left:-12px}
 .theme-btn:hover{border-color:var(--rule);color:var(--ink)}
-@media print{.theme-btn{display:none}}
+@media print{.theme-btn,.search-btn{display:none}}
+/* site search: magnifying glass in the header opens a panel near the top of the screen */
+.search-btn{background:none;border:1px solid transparent;border-radius:8px;color:var(--mut2);padding:6px;cursor:pointer;line-height:0;margin-left:-12px}
+.search-btn:hover{border-color:var(--rule);color:var(--ink)}
+html.srch-on{overflow:hidden}
+.srch{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.35);display:flex;justify-content:center;align-items:flex-start;padding:max(16px,env(safe-area-inset-top,0px)) 16px 16px}
+.srch[hidden]{display:none}
+.srch-box{width:min(40rem,100%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.25);margin-top:6vh;overflow:hidden}
+.srch-in{display:flex;align-items:center;gap:6px;padding:8px 8px 8px 14px;border-bottom:1px solid var(--line)}
+.srch-in input{flex:1;min-width:0;font:inherit;font-size:17px;border:0;outline:0;background:none;color:var(--ink);padding:6px 0}
+.srch-x{background:none;border:0;font-size:24px;line-height:1;color:var(--mut2);cursor:pointer;padding:4px 8px;border-radius:6px}
+.srch-x:hover{background:var(--tint);color:var(--ink)}
+.srch-res{list-style:none;margin:0;padding:4px;overflow:auto}
+.srch-res:empty{display:none}
+.srch-res a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none}
+.srch-res a:hover,.srch-res a.act{background:var(--tint)}
+.srch-res b{display:block;font-weight:600;font-size:15px}
+.srch-p{display:block;font-size:12px;color:var(--acc);margin:1px 0 2px}
+.srch-s{display:block;font-size:13px;color:var(--mut);line-height:1.4}
+.srch mark{background:var(--hl);color:inherit;border-radius:2px}
+.srch-msg{margin:0;padding:8px 14px 10px;font-size:13px;color:var(--mut2)}
+.srch-msg:empty{display:none}
 
 /* menu: Overview, Indicators (dropdown), Common claims */
 .menu{display:flex;align-items:center;gap:4px;margin-left:auto}
@@ -202,7 +223,8 @@ a{color:var(--link)}
 /* narrow screens: hamburger button; the menu opens as a full-width list under the header */
 @media (max-width:860px){
  .burger{display:block;order:3}
- .theme-btn{order:2;margin-left:auto}
+ .search-btn{order:2;margin-left:auto}
+ .theme-btn{order:2;margin-left:-8px}
  .menu{order:4}
  .menu{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;gap:0;padding-top:4px}
  .site-head.open .menu{display:flex}
