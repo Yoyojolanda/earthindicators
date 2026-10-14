@@ -5,11 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          curl -fsSL "https://zenodo.org/api/records/15059443/versions/latest" -o latest.json || true
+          {
+          curl -fsSL "https://zenodo.org/api/records/15059443/versions/latest" -o latest.json || echo "zenodo failed"
           python3 - <<'P'
           import json
           d=json.load(open('latest.json'))
           print('TITLE', d['metadata']['title'], d['metadata'].get('publication_date'), d['id'], d['metadata'].get('version'))
           for f in d['files']: print('FILE', f['key'], f['size'], f['links']['self'])
           P
-          curl -fsSL "https://ourworldindata.org/grapher/so-emissions-by-world-region-in-million-tonnes.csv?v=1&csvType=full&useColumnShortNames=true" -o owid.csv && head -3 owid.csv && cut -d, -f1 owid.csv | sort -u | head -40
+          curl -fsSL "https://ourworldindata.org/grapher/so-emissions-by-world-region-in-million-tonnes.csv?v=1&csvType=full&useColumnShortNames=true" -o owid.csv && head -2 owid.csv && cut -d, -f1 owid.csv | sort -u | tr '\n' ';'
+          } > out.txt 2>&1
+          echo "::notice title=probe::$(sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' out.txt)"
