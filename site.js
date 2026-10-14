@@ -376,7 +376,7 @@
     if (!trayEl) {
       trayEl = document.createElement('div'); trayEl.className = 'ptray';
       trayEl.innerHTML = '<div class="plist" hidden></div><button type="button" class="nb pcount" aria-expanded="false"></button>' +
-        '<button type="button" class="nb playout"></button><button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
+        '<button type="button" class="nb playout"></button><div class="pbtns"><button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button></div>';
       trayEl.querySelector('.pcount').onclick = () => { listOpen = !listOpen; tray(); };
       trayEl.querySelector('.playout').onclick = () => { lay.set(lay.get() === 'tall' ? 'wide' : 'tall'); tray(); };
       trayEl.querySelector('.pmake').onclick = () => n2() ? picks.make() : made && saveMade();
