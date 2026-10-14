@@ -49,6 +49,12 @@
 <p class="sub" style="margin:0 0 10px">The satellites measure how much energy Earth gains in total. Most of it should turn up in the ocean, which floats measure from the surface down to 2000 m. Both over the same 10 years, <span id="bwin"></span>:</p>
 <table class="btab"><tbody id="btab"></tbody></table>
 <p class="sub" id="bnote" style="margin:10px 0 0"></p></div>
+<div class="box" id="aer" data-nav="Cleaner air" hidden><h2 id="t4"></h2>
+<div class="cards" id="acards" style="margin:4px 0 10px"></div>
+<div class="wrap"><canvas id="c4"></canvas></div>
+<p class="sub" id="an1" style="margin:8px 0 0"></p>
+<div style="font-size:14px;margin:10px 0 0" id="an2"></div>
+<p class="sub" style="margin:8px 0 0">Emissions: CEDS (Community Emissions Data System), <span id="aver"></span>, Hoesly et al. An emissions inventory: calculated from fuel use, the sulfur in it and pollution controls, and checked against national reports; not measured in the air. "EU and UK" is the 27 EU countries plus the United Kingdom. International shipping is ships on international voyages; ships within one country's waters count for that country. Sources for the estimates: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/" target="_blank" rel="noopener">IPCC AR6 WG1, Summary for Policymakers (A.1.3)</a>; <a href="https://doi.org/10.1038/s43247-024-01324-8" target="_blank" rel="noopener">Hodnebrog et al. (2024), Communications Earth &amp; Environment</a>; <a href="https://www.carbonbrief.org/analysis-how-low-sulphur-shipping-rules-are-affecting-global-warming/" target="_blank" rel="noopener">Carbon Brief (2023) on the shipping rule</a>; <a href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health" target="_blank" rel="noopener">WHO on outdoor air pollution</a>.</p></div>
 <p class="sub">Energy imbalance = absorbed solar radiation (incoming minus reflected sunlight) minus outgoing longwave (heat) radiation, at the top of the atmosphere, averaged over the whole Earth (510 million km²). Positive means Earth is gaining heat. Running means end at the month shown. CERES EBAF anchors the absolute level of the imbalance to ocean heat content measurements; changes over time come from the satellite observations themselves. Monthly values are published with a lag of a few months and may be revised. Data: NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://ceres.larc.nasa.gov/data/" target="_blank" rel="noopener">ceres.larc.nasa.gov</a>), NASA Langley Research Center, distributed by the NASA Atmospheric Science Data Center.</p>
 <p class="sub">Further reading: <a href="https://doi.org/10.1093/oxfclm/kgad008" target="_blank" rel="noopener">Hansen et al. (2023), “Global warming in the pipeline”, Oxford Open Climate Change</a>, with Leon Simons among the co-authors. They argue that the cut in aerosol pollution, especially the sulfur rules for shipping, is a large part of why the imbalance has grown so fast, and that warming is speeding up as a result. Other scientists think they overestimate the aerosol effect; the debate is about how large it is, not whether it exists.</p>
 </div>
@@ -174,11 +180,40 @@ function build(t){
    scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'W/m²'},grid}}}});
  $('exp').disabled=false}
 
+// ---- cleaner air: sulfur dioxide emissions (CEDS). Loaded separately; the section stays hidden if the data is missing.
+function aerosols(t,ver){
+ const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',').map(Number)).filter(r=>r[0]>1900);   // year,world,china,india,usa,eu_uk,shipping (kt)
+ if(R.length<50)throw new Error('so2 data incomplete');
+ const Mt=v=>v/1000,L=R[R.length-1],col=k=>R.map(r=>({x:r[0],y:Mt(r[k])}));
+ const pk=k=>R.reduce((b,r)=>r[k]>b[k]?r:b,R[0]),pct=(a,b)=>Math.round((1-a/b)*100);
+ const W=pk(1),C=pk(2),U=pk(4),E=pk(5),s19=R.find(r=>r[0]===2019),s20=R.find(r=>r[0]===2020),i10=R.find(r=>r[0]===L[0]-10);
+ $('t4').textContent=`Cleaner air: sulfur dioxide emissions, ${R[0][0]}–${L[0]} (million metric tons a year)`;
+ $('acards').innerHTML=[
+  [`−${pct(L[1],W[1])}%`,`World sulfur dioxide, ${L[0]} vs its peak in ${W[0]}`],
+  [`−${pct(L[2],C[2])}%`,`China, ${L[0]} vs its peak in ${C[0]}`],
+  s19&&s20?[`−${pct(s20[6],s19[6])}%`,`International shipping, 2020 vs 2019: the year the sulfur limit for ship fuel fell from 3.5% to 0.5%`]:null
+ ].filter(Boolean).map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('an1').textContent=`World emissions peaked at ${Mt(W[1]).toFixed(0)} million metric tons in ${W[0]} and were ${Mt(L[1]).toFixed(0)} million in ${L[0]}. Europe and the US cleaned up first (peaks in ${E[0]} and ${U[0]}), China from ${C[0]}. India's emissions ${L[3]>i10[3]?`are still rising (${sg(Mt(L[3]-i10[3]),1)} million metric tons over the last 10 years)`:'have also started to fall'}.`;
+ $('an2').innerHTML=[
+  `<p style="margin:0 0 8px"><b>Why cleaner air means more warming.</b> Sulfur dioxide turns into tiny droplets in the air (sulfate aerosols) that reflect sunlight and make clouds brighter. That haze has been hiding part of the warming from greenhouse gases. Cutting it is good news for health (outdoor air pollution causes about 4 million early deaths a year, according to the WHO), but it removes part of the mask.</p>`,
+  `<p style="margin:0 0 8px"><b>Measured:</b> Earth now absorbs more sunlight than at the start of the satellite record: see the first chart on this page and the interpretation below the charts.</p>`,
+  `<p style="margin:0"><b>Estimated, not measured:</b> how much of that comes from cleaner air. A model study that reproduced the satellite record could only match the growing imbalance with the aerosol cuts included (Hodnebrog et al. 2024). The IPCC estimates that aerosols and other human factors besides greenhouse gases have so far offset between 0.0 and 0.8 °C of warming (around 0.4 °C in the middle of that range). For the 2020 shipping rule, central estimates are around 0.05 °C of extra warming over the following decades; high-end estimates are several times larger, and Hansen and colleagues argue it is larger still (see further reading below).</p>`
+ ].join('');
+ $('aver').textContent=ver?ver.split(/\r?\n/)[0]:'latest version';
+ $('aer').hidden=false;
+ const S=[['World',1,'#d00000',3],['China',2,'#e6a23c',2],['India',3,'#7b5ea7',2],['United States',4,'#4f81b0',2],['EU and UK',5,'#5a9e6f',2],['International shipping',6,THEME.ink,2]];
+ charts[3]=new Chart($('c4'),{type:'line',data:{datasets:S.map(([l,k,c,w],i)=>({label:l,data:col(k),borderColor:c,backgroundColor:c,borderWidth:w,pointRadius:0,order:i}))},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' million metric tons'}}},
+   scales:{x:{type:'linear',min:R[0][0],max:L[0]+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'million metric tons SO₂ a year'},grid}}}});
+}
+
 document.querySelectorAll('.seg .nb').forEach(b=>b.onclick=()=>{win=+b.dataset.w;chart1()});
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3].map(k=>[charts[k-1],'t'+k,0]),expName)};
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([1,2,3,4].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),expName)};
 fetch('data/ceres_ebaf_global.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(build)
  .then(()=>(window.EI?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='indicators.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})))
+ .then(()=>Promise.all(['so2_ceds.csv','so2_ceds_source.txt'].map(f=>fetch('data/'+f).then(r=>r.ok?r.text():'')))).then(([a,b])=>{if(a)aerosols(a,b)}).catch(e=>console.warn('aerosol section not shown',e))
  .then(()=>window.EI.get('ohc')).then(budget).catch(e=>console.warn('budget not shown',e))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the CERES data. Please try again later.'});
 </script></main></body></html>
