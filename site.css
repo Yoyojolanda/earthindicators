@@ -282,11 +282,11 @@ main section,main .box,main h2,.inshort,.how{scroll-margin-top:72px}
 .cbar .nb{padding:3px 10px;font-size:12px}
 @media print{.cbar,.ptray{display:none}}
 .cbar .nb.pick.on{border-color:var(--acc);color:var(--acc)}
-.ptray{position:fixed;left:16px;bottom:16px;z-index:50;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:calc(100% - 96px);padding:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:13px}
+.ptray{position:fixed;left:16px;bottom:16px;z-index:50;display:grid;grid-template-columns:auto auto;justify-content:start;gap:8px;align-items:center;max-width:calc(100% - 96px);padding:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:13px}
 .ptray[hidden],.ptray .playout[hidden]{display:none}
-.ptray .pbtns{flex-basis:100%;display:flex;gap:8px}
+.ptray .pbtns{grid-column:1/-1;display:flex;gap:8px}
 .ptray .pmake{border-color:var(--acc);color:var(--acc);font-weight:600}
-.ptray .plist{flex-basis:100%;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.ptray .plist{grid-column:1/-1;width:min(24rem,calc(100vw - 120px));display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .ptray .plist[hidden]{display:none}
 .ptray .prow{display:flex;align-items:center;gap:6px}
 .ptray .prow img{width:64px;height:40px;object-fit:contain;flex:none;border:1px solid var(--line);border-radius:4px;background:var(--card)}
