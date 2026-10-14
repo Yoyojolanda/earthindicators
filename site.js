@@ -294,11 +294,13 @@
       const s = Math.min(1, 1400 / c.width), o = document.createElement('canvas');
       o.width = Math.round(c.width * s); o.height = Math.round(c.height * s);
       o.getContext('2d').drawImage(c, 0, 0, o.width, o.height);
-      l.push({ k: key, p: page, t: h2.textContent, d: o.toDataURL('image/jpeg', .85) });
+      l.push({ k: key, p: page, t: h2.textContent, d: o.toDataURL('image/jpeg', .85), h: c.chartTop / c.height, e: c.chartEnd / c.height });
       if (!this.save(l)) { alert('This browser has no room to store more charts. Remove one, or make the image now.'); return; }
       gcEvent('chart-pick/' + key, h2.textContent);
       this.refresh();
     },
+    move(i, d) { const l = this.list(), j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; this.save(l); this.refresh(); },
+    remove(i) { const l = this.list(); l.splice(i, 1); this.save(l); this.refresh(); },
     async make() {
       const l = this.list(); if (!l.length) return;
       const imgs = await Promise.all(l.map(i => new Promise(ok => { const m = new Image(); m.onload = () => ok(m); m.onerror = () => ok(null); m.src = i.d; })));
@@ -314,7 +316,14 @@
       rows.forEach((r, ri) => {
         r.forEach(([m, it], j) => {
           const cx = pad + j * (cw + gap);
-          if (m) x.drawImage(m, cx, y, cw, m.height * cw / m.width);
+          if (m) {
+            // title and legend stay at the top, the page line at the bottom; the plot is centred between them
+            // (charts in one row differ in height). Picks stored before this change have no h/e: whole image centred.
+            const s = cw / m.width, t = Math.round(m.height * (it.h || 0)), b = Math.round(m.height * (it.e || 1));
+            const top = t * s, ph = (b - t) * s, off = (rh[ri] - capH - top - ph) / 2;
+            if (t) x.drawImage(m, 0, 0, m.width, t, cx, y, cw, top);
+            x.drawImage(m, 0, t, m.width, b - t, cx, y + top + off, cw, ph);
+          }
           x.font = '22px ' + F; x.fillStyle = THEME.mut;
           x.fillText('earthindicators.org/' + it.p + '.html', cx + 16, y + rh[ri] - capH + 6);
         });
@@ -331,7 +340,25 @@
       this.save([]); this.refresh();
     }
   };
-  let trayEl = null, made = null;
+  let trayEl = null, made = null, listOpen = false;
+  // the picked charts, in image order (left to right, row by row), each with move up/down and remove
+  function drawList(l) {
+    const box = trayEl.querySelector('.plist'); box.hidden = !listOpen || !l.length;
+    trayEl.querySelector('.pcount').setAttribute('aria-expanded', String(!box.hidden));
+    if (box.hidden) return;
+    const btn = (txt, label, off, fn) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'nb';
+      e.textContent = txt; e.title = label; e.setAttribute('aria-label', label); e.disabled = off; e.onclick = fn; return e; };
+    box.replaceChildren(...l.map((it, i) => {
+      const row = document.createElement('div'); row.className = 'prow';
+      const im = new Image(); im.src = it.d; im.alt = '';
+      const tx = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small');
+      b.textContent = (i + 1) + '. ' + it.t; sm.textContent = [it.p, ...it.k.split(' · ').slice(1)].join(' · ');
+      tx.append(b, sm);
+      row.append(im, tx, btn('↑', 'Move up', i === 0, () => picks.move(i, -1)),
+        btn('↓', 'Move down', i === l.length - 1, () => picks.move(i, 1)), btn('✕', 'Remove from image', false, () => picks.remove(i)));
+      return row;
+    }));
+  }
   const saveMade = () => { const a = document.createElement('a'); a.download = 'earth-indicators-charts.jpg'; a.href = made;
     document.body.appendChild(a); a.click(); a.remove(); };
   function tray() {
@@ -339,7 +366,9 @@
     if (!n && !made) { if (trayEl) trayEl.hidden = true; return; }
     if (!trayEl) {
       trayEl = document.createElement('div'); trayEl.className = 'ptray';
-      trayEl.innerHTML = '<span></span><button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
+      trayEl.innerHTML = '<div class="plist" hidden></div><button type="button" class="nb pcount" aria-expanded="false"></button>' +
+        '<button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
+      trayEl.querySelector('.pcount').onclick = () => { listOpen = !listOpen; tray(); };
       trayEl.querySelector('.pmake').onclick = () => n2() ? picks.make() : made && saveMade();
       trayEl.querySelector('.pclear').onclick = () => {
         if (n2()) { if (confirm('Remove all charts from your image?')) { picks.save([]); picks.refresh(); } }
@@ -348,7 +377,10 @@
     }
     trayEl.hidden = false;
     const ready = !n && made;   // just made, queue empty: offer the same image again
-    trayEl.querySelector('span').textContent = ready ? 'Image made. Not saved?' : n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ')';
+    const pc = trayEl.querySelector('.pcount');
+    pc.textContent = ready ? 'Image made. Not saved?' : n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ') ' + (listOpen ? '▴' : '▾');
+    pc.disabled = !!ready; pc.title = ready ? '' : (listOpen ? 'Hide' : 'Show') + ' the charts in your image';
+    drawList(ready ? [] : picks.list());
     trayEl.querySelector('.pmake').textContent = ready ? 'Download again' : 'Make image';
     trayEl.querySelector('.pclear').textContent = ready ? 'Close' : 'Clear';
     if (n) made = null;           // a new pick starts a new image
@@ -683,7 +715,7 @@
         x.fillStyle = THEME.mut; x.fillText(it.text, lx + 29 * r, ly);
       });
       if (rows[n]) y += rows[n] * rowH + 6 * r;
-      x.drawImage(ch.canvas, pad, y); y += ch.canvas.height;
+      o.chartTop = y; x.drawImage(ch.canvas, pad, y); y += ch.canvas.height; o.chartEnd = y;
     });
     return o;
   };
