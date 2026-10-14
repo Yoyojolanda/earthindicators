@@ -51,7 +51,7 @@ const BASINS={w:{f:'w0',col:1,name:'World ocean',short:'world ocean'},
  pn:{f:'p0',col:3,name:'North Pacific',short:'North Pacific'},
  i:{f:'i0',col:1,name:'Indian Ocean',short:'Indian Ocean'}};
 let basin='w';
-// quadratic least-squares fit y = a + b·t + c·t² (t centred on the mean year); returns value and slope at any x
+// quadratic least-squares fit y = a + b·t + c·t² (t centered on the mean year); returns value and slope at any x
 function quad(P){const n=P.length,m=P.reduce((s,p)=>s+p.x,0)/n;let S=[0,0,0,0,0],T=[0,0,0];
  P.forEach(p=>{const t=p.x-m;let tk=1;for(let k=0;k<5;k++){S[k]+=tk;if(k<3)T[k]+=tk*p.v;tk*=t}});
  const A=[[S[0],S[1],S[2],T[0]],[S[1],S[2],S[3],T[1]],[S[2],S[3],S[4],T[2]]];

@@ -7,7 +7,7 @@
   const stored = (() => { try { return localStorage.getItem('ei-theme') || 'auto'; } catch (e) { return 'auto'; } })();
   const dark = stored === 'dark' || (stored === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   if (stored !== 'auto') document.documentElement.dataset.theme = stored; else delete document.documentElement.dataset.theme;
-  // colours for charts; pages read window.THEME, so grids, bands and dark lines stay visible in both themes
+  // colors for charts; pages read window.THEME, so grids, bands and dark lines stay visible in both themes
   window.THEME = dark
     ? { dark, ink: '#e9e4d8', mut: '#a8a090', grid: 'rgba(255,255,255,.14)', band1: '#26313e', band2: '#3b4f66', clim: '#cfc8b8', fill0: 'rgba(40,30,25,.6)',
         deep1: '#ff8a80', deep2: '#7fb3e8', bar: '#6f8fb3', trend: '#9cc2ec', card: '#1d1a15', zero: 'rgba(255,255,255,.55)', thin: '#4f6580' }
@@ -81,7 +81,7 @@
       '</nav><button class="search-btn" type="button" title="Search the site (/)" aria-label="Search the site">' +
       '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m12.8 12.8 4.4 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>' +
       '<button class="theme-btn" type="button" title="' + themeLabel[stored] + '" aria-label="' + themeLabel[stored] + '">' + themeIcon(stored) + '</button></header>';
-    // dropdown and hamburger behaviour, for either header
+    // dropdown and hamburger behavior, for either header
     const wire = head => {
       const burger = head.querySelector('.burger'), dd = head.querySelector('.dd'), ddBtn = head.querySelector('.dd-btn');
       const setDd = open => { dd.classList.toggle('open', open); ddBtn.setAttribute('aria-expanded', open); };
@@ -93,7 +93,7 @@
       return { close: () => { setDd(false); setMenu(false); } };
     };
     main.insertAdjacentHTML('afterbegin', headHTML('', 'menu'));
-    // theme button: auto -> light -> dark -> auto. Reloads the page so the charts are redrawn in the new colours.
+    // theme button: auto -> light -> dark -> auto. Reloads the page so the charts are redrawn in the new colors.
     document.addEventListener('click', e => {
       const b = e.target.closest('.theme-btn'); if (!b) return;
       const next = THEMES[(THEMES.indexOf(stored) + 1) % THEMES.length];
@@ -141,7 +141,10 @@
     });
     function runSearch(q) {
       const res = sx.querySelector('.srch-res'), msg = sx.querySelector('.srch-msg');
-      const words = norm(q).split(/[^a-z0-9.%°-]+/).map(w => w.replace(/^[.-]+|[.-]+$/g, '')).filter(w => w.length > 1 || /\d/.test(w));
+      const words = norm(q).split(/[^a-z0-9.%°-]+/).map(w => w.replace(/^[.-]+|[.-]+$/g, ''))
+        .map(w => w.replace(/vapour/, 'vapor').replace(/colour/, 'color').replace(/(metre|litre|centre)/, m => m.slice(0, -2) + 'er')
+          .replace(/tonne/, 'ton').replace(/^grey/, 'gray').replace(/sulph/, 'sulf').replace(/(model|label)led/, '$1ed'))   // British spellings
+        .filter(w => w.length > 1 || /\d/.test(w));
       sAct = 0;
       if (!words.length) { res.replaceChildren(); msg.textContent = sData ? 'Charts, sections and answers to common claims, on every page.' : 'Loading…'; return; }
       if (!sData) { msg.textContent = 'Loading…'; return; }
@@ -156,8 +159,19 @@
         hits.push([sc + (e.u.includes('#') ? 0 : 1), i, e]);
       });
       hits.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
-      const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\%°-]/g, '\\$&')).join('|') + ')', 'gi');
-      const hl = t => esc(t).replace(re, '<mark>$1</mark>');
+      // highlight: find the words in an accent-free copy of the text, then mark the same stretch of the original,
+      // so "nino" marks "Niño" and "co2" marks "CO₂"
+      const hl = t => {
+        let n = ''; const at = [];
+        for (let i = 0; i < t.length; i++) for (const c of norm(t[i])) { n += c; at.push(i); }
+        const rs = [];
+        for (const w of words) for (let k = n.indexOf(w); k >= 0; k = n.indexOf(w, k + w.length)) rs.push([at[k], at[k + w.length - 1] + 1]);
+        rs.sort((a, b) => a[0] - b[0]);
+        let out = '', pos = 0;
+        for (const [a, b] of rs) { if (b <= pos) continue; const s0 = Math.max(a, pos);
+          out += esc(t.slice(pos, s0)) + '<mark>' + esc(t.slice(s0, b)) + '</mark>'; pos = b; }
+        return out + esc(t.slice(pos));
+      };
       // snippet: a bit of the text around the first word found (the text is matched without accents, so search that)
       const snip = e => {
         let at = -1; for (const w of words) { const k = e.nx.indexOf(w); if (k >= 0 && (at < 0 || k < at)) at = k; }
@@ -296,8 +310,8 @@
       'SILSO\'s monthly and 13-month smoothed values are shown unchanged; cycle minima and maxima and the yearly averages are calculated by this page.', ['sun.html'], ['data/SN_m_tot_V2.0.csv', 'data/SN_ms_tot_V2.0.csv']],
     'eei.html': ['NASA CERES EBAF-TOA Edition 4.2.1 (<a href="https://doi.org/10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1">doi:10.5067/TERRA-AQUA-NOAA20/CERES/EBAF-TOA_L3B004.2.1</a>).',
       'NASA\'s own global monthly means; the imbalance is absorbed solar minus outgoing longwave radiation. Running means are calculated by this page.', ['scripts/build_ceres.py'], 'data/ceres_ebaf_global.csv'],
-    'water.html': ['Copernicus Climate Change Service, ERA5 monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7">doi:10.24381/cds.f17050d7</a>): total column water vapour and 2 m air temperature.',
-      'Global means (weighted by area) are calculated here from the ERA5 grids; normals, records, trends and the water-vapour-per-°C slope are calculated by this page.', ['water.html', 'scripts/build_era5_tcwv.py'], ['data/era5_tcwv_monthly.csv', 'data/era5_t2_regions_monthly.csv']],
+    'water.html': ['Copernicus Climate Change Service, ERA5 monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7">doi:10.24381/cds.f17050d7</a>): total column water vapor and 2 m air temperature.',
+      'Global means (weighted by area) are calculated here from the ERA5 grids; normals, records, trends and the water-vapor-per-°C slope are calculated by this page.', ['water.html', 'scripts/build_era5_tcwv.py'], ['data/era5_tcwv_monthly.csv', 'data/era5_t2_regions_monthly.csv']],
     'slow.html': ['Fossil CO₂: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters, Zenodo). Ocean pH: Hawaii Ocean Time-series, Station ALOHA. AMOC: RAPID-MOCHA-WBTS array at 26.5°N (<a href="https://rapid.ac.uk/">rapid.ac.uk</a>). Red List Index: IUCN and BirdLife International, via the UN SDG database (indicator 15.5.1). Tree cover loss: University of Maryland and Global Forest Watch, via Our World in Data. Crop yields: FAO, FAOSTAT. Cherry blossom: Y. Aono, via the GMU cherry blossom prediction competition.',
       'Emissions, pH and the Red List Index are shown unchanged; RAPID\'s twice-daily transports are averaged here to months. Trends, 12-month averages and changes are calculated by this page.', ['scripts/build_slow.py'], ['data/fossil_co2_global.csv', 'data/hot_surface_ph.csv', 'data/amoc_rapid_monthly.csv', 'data/redlist_index_world.csv', 'data/tree_cover_loss_world.csv', 'data/fao_crop_yields_world.csv', 'data/kyoto_cherry_blossom.csv']],
   };
@@ -404,10 +418,10 @@
       let y = pad;
       rows.forEach((r, ri) => {
         r.forEach(([m, it], j) => {
-          const cx = pad + (j + (cols - r.length) / 2) * (cw + gap);   // a short last row is centred
+          const cx = pad + (j + (cols - r.length) / 2) * (cw + gap);   // a short last row is centered
           if (m) {
-            // title and legend stay at the top, the page line at the bottom; the plot is centred between them
-            // (charts in one row differ in height). Picks stored before this change have no h/e: whole image centred.
+            // title and legend stay at the top, the page line at the bottom; the plot is centered between them
+            // (charts in one row differ in height). Picks stored before this change have no h/e: whole image centered.
             const s = cw / m.width, t = Math.round(m.height * (it.h || 0)), b = Math.round(m.height * (it.e || 1));
             const top = t * s, ph = (b - t) * s, off = (rh[ri] - capH - top - ph) / 2;
             if (t) x.drawImage(m, 0, 0, m.width, t, cx, y, cw, top);
@@ -424,7 +438,7 @@
       x.fillText('Free to share with credit (CC BY 4.0)', W - pad, y + 4);
       made = o.toDataURL('image/jpeg', .9); saveMade();
       gcEvent('chart-pick-make/' + n, n + ' charts');
-      // the page cannot tell whether the download was saved or cancelled, so: empty the queue, and keep the
+      // the page cannot tell whether the download was saved or canceled, so: empty the queue, and keep the
       // finished image on offer ("Download again") until the tray is closed or the page is left
       this.save([]); this.refresh();
     }
@@ -639,8 +653,8 @@
   const LG = new WeakMap();
   function items(ch) {
     const st = LG.get(ch);
-    // bars get a filled box in their own colour; bars coloured per value (e.g. positive/negative) get a box split
-    // in two showing both colours; lines get a line sample
+    // bars get a filled box in their own color; bars colored per value (e.g. positive/negative) get a box split
+    // in two showing both colors; lines get a line sample
     return ch.data.datasets.map((ds, i) => {
       const bar = (ds.type || ch.config.type) === 'bar', bg = ds.backgroundColor;
       const cols = Array.isArray(bg) ? [...new Set(bg)] : null;

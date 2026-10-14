@@ -86,7 +86,7 @@ window.IN_SHORT = {
     claims: ['natural-cycles', 'stopped-1998', 'hurricanes'],
   },
   'land-ice.html': {
-    units: "A gigatonne (Gt) is a billion tonnes: a block of ice about one kilometre long, wide and high. It takes 362 Gt of melted ice to raise the world's sea level by 1 mm.",
+    units: "A gigaton (Gt) is a billion metric tons: a block of ice about one kilometer long, wide and high. It takes 362 Gt of melted ice to raise the world's sea level by 1 mm.",
     text: [
       'Greenland and Antarctica hold most of the world\'s fresh water as ice; mountain glaciers hold far less, but react quickly to warming. Since 2002 the GRACE satellites have weighed the two ice sheets every month; glaciers are measured on the ground and from space once a year. Unlike sea ice, ice that melts or slides off land adds water to the ocean and raises sea level.',
       'Latest ({land.date}): {land.vd}. Since 2002–03 Greenland has lost about {land.gl} and Antarctica about {land.an}, together adding {land.mm} to global sea level. The world\'s glaciers lost {land.glac} in the hydrological year {land.gh}.',
@@ -94,7 +94,7 @@ window.IN_SHORT = {
     claims: ['glacier-growing', 'sea-level', 'antarctic-ice'],
   },
   'slow.html': {
-    units: "CO₂ emissions of about 38 billion tonnes a year are close to 5 tonnes for every person on Earth, about 13 kg a day. The Atlantic overturning moves about 16–17 sverdrups (Sv; 1 Sv = 1 million cubic metres per second): some 6,500 to 6,800 Olympic swimming pools every second, or about 14 times the flow of all the world's rivers together. A drop of 0.1 in pH means about 26% more acidity. A hectare is 100 × 100 m, about one and a half soccer pitches.",
+    units: "CO₂ emissions of about 38 billion metric tons a year are close to 5 metric tons for every person on Earth, about 13 kg a day. The Atlantic overturning moves about 16–17 sverdrups (Sv; 1 Sv = 1 million cubic meters per second): some 6,500 to 6,800 Olympic swimming pools every second, or about 14 times the flow of all the world's rivers together. A drop of 0.1 in pH means about 26% more acidity. A hectare is 100 × 100 m, about one and a half soccer pitches.",
     text: [
       'In {fossil.through} the world emitted {fossil.now} of CO₂ from fossil fuels and cement ({fossil.ch} on the year before). About a quarter of it ends up in the ocean, which is slowly becoming more acidic: near Hawaiʻi, surface water has {ph.hplus} more acidity than in {ph.since}.',
       'The Atlantic overturning circulation, which carries warmth north towards Europe, averaged {amoc.a12} over the 12 months to {amoc.through}. It varies a lot, and two decades of direct measurements are not yet enough to confirm a long-term weakening, though climate models expect one.',
@@ -129,14 +129,14 @@ window.IN_SHORT = {
   'ohc.html': {
     units: "A zettajoule (ZJ) is a billion trillion joules. One ZJ is about the energy of 16 million Hiroshima bombs (63 terajoules each), or almost twice humanity's total energy use in a year.",
     text: [
-      'How much heat is stored in the upper 2000 metres of the ocean. About 90% of the extra heat trapped by greenhouse gases ends up here (IPCC), so this is the steadiest measure of global warming, with little year-to-year noise.',
+      'How much heat is stored in the upper 2000 meters of the ocean. About 90% of the extra heat trapped by greenhouse gases ends up here (IPCC), so this is the steadiest measure of global warming, with little year-to-year noise.',
       'Latest ({ohc.date}): {ohc.vd}. The ocean gained {ohc.d12} of heat in 12 months. One ZJ is 10²¹ joules; that gain is about {ohc.energyX} all the energy humanity uses in a year.',
       'Measured to 700 m since {ohc.first7}, and to 2000 m since {ohc.first2}, when thousands of Argo floats reached every ocean.',
     ],
     claims: ['natural-cycles', 'stopped-1998', 'records-short'],
   },
   'sea-level.html': {
-    units: 'Each millimetre of sea level over the whole ocean is about 360 cubic kilometres of water, roughly three-quarters of Lake Erie. On the coast, what matters is that every high tide and storm surge starts from a higher level, so floods reach further inland and happen more often.',
+    units: 'Each millimeter of sea level over the whole ocean is about 360 cubic kilometers of water, roughly three-quarters of Lake Erie. On the coast, what matters is that every high tide and storm surge starts from a higher level, so floods reach further inland and happen more often.',
     text: [
       'The average height of the world\'s oceans, measured by satellites since 1993. The sea rises because warming water expands and because ice on land melts into it.',
       'Latest ({sl.through}): {sl.vd}. The sea is {sl.rise} higher than in 1993, rising {sl.r10} per year over the last 10 years, compared with {sl.r0} per year in 1993–2002.',
@@ -144,7 +144,7 @@ window.IN_SHORT = {
     claims: ['sea-level', 'data-manipulated'],
   },
   'sea-ice.html': {
-    units: 'Extent is in millions of square kilometres: 1 million km² is about the size of Texas and California together. Volume is in thousands of cubic kilometres: 1,000 km³ is about a twelfth of Lake Superior.',
+    units: 'Extent is in millions of square kilometers: 1 million km² is about the size of Texas and California together. Volume is in thousands of cubic kilometers: 1,000 km³ is about a twelfth of Lake Superior.',
     text: [
       'How much of the ocean is covered by sea ice, in the Arctic and around Antarctica, measured by satellites since 1978. Bright ice reflects sunlight; open water absorbs it, so losing ice adds to warming.',
       'Arctic ({ice.date}): {ice.vd}, {ice.an} compared with 1981–2010. Antarctic ({ant.date}): {ant.vd}, {ant.an} compared with 1981–2010.',
@@ -169,18 +169,18 @@ window.IN_SHORT = {
     claims: ['trace-gas', 'too-late'],
   },
   'water.html': {
-    units: '1 kg/m² of water vapour is a 1 mm layer of water if it all fell as rain at once. The whole atmosphere holds about 25 mm, some 13,000 km³: if it all rained out, it would fill Lake Erie about 26 times. The air recycles that water every 10 days or so.',
+    units: '1 kg/m² of water vapor is a 1 mm layer of water if it all fell as rain at once. The whole atmosphere holds about 25 mm, some 13,000 km³: if it all rained out, it would fill Lake Erie about 26 times. The air recycles that water every 10 days or so.',
     text: [
-      'How much water vapour the air holds, averaged over the whole globe. Warmer air holds more: about 7% more for every 1 °C (basic physics). More water in the air means heavier downpours, and, with rain coming in bigger bursts, longer dry spells in between (IPCC). A downpour does not make up for a dry spell: rain that falls faster than the soil can soak it up runs off, causing floods, instead of reaching the roots and groundwater.',
+      'How much water vapor the air holds, averaged over the whole globe. Warmer air holds more: about 7% more for every 1 °C (basic physics). More water in the air means heavier downpours, and, with rain coming in bigger bursts, longer dry spells in between (IPCC). A downpour does not make up for a dry spell: rain that falls faster than the soil can soak it up runs off, causing floods, instead of reaching the roots and groundwater.',
       'Latest ({wv.date}): {wv.now}, {wv.an} vs the 1991–2020 average for that month; {wv.rank}. Last 12 months: {wv.l12}.',
     ],
     claims: ['weather-blame', 'trace-gas'],
   },
   'eei.html': {
-    units: '1 W/m² sounds tiny, about the power of a small night light for every square metre. But Earth has 510 million km² of surface, so 1 W/m² over the whole planet is about 510 terawatts: more than 25 times all the energy humanity uses.',
+    units: '1 W/m² sounds tiny, about the power of a small night light for every square meter. But Earth has 510 million km² of surface, so 1 W/m² over the whole planet is about 510 terawatts: more than 25 times all the energy humanity uses.',
     text: [
       'The difference between the energy Earth receives from the sun and the energy it sends back to space, measured by NASA satellites since 2000. When more comes in than goes out, the planet has to heat up. This is the warming at its source.',
-      'Latest: over the 12 months to {eei.date}, Earth gained {eei.l12} (watts per square metre, averaged over the whole planet). {eei.vd}.',
+      'Latest: over the 12 months to {eei.date}, Earth gained {eei.l12} (watts per square meter, averaged over the whole planet). {eei.vd}.',
     ],
     claims: ['natural-cycles', 'saturated', 'trace-gas', 'too-late'],
   },

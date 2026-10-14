@@ -21,7 +21,7 @@ Each page shows one of Earth's vital signs, updated automatically from the agenc
 | CO₂ (Mauna Loa) | NOAA Global Monitoring Laboratory |
 | Methane | NOAA Global Monitoring Laboratory |
 | Earth's energy imbalance | NASA CERES |
-| Water cycle (water vapour in the air) | Copernicus ERA5 |
+| Water cycle (water vapor in the air) | Copernicus ERA5 |
 
 **[Common claims, answered](https://earthindicators.org/claims.html)**: short answers to the claims people run into most, using live numbers from the data pages. Every answer has its own link.
 
@@ -44,7 +44,7 @@ The files in `data/` are of two kinds:
   - `scripts/build_glaciers.py`: world glacier mass change per year (`glaciers_global.csv`), added up from the WGMS/Copernicus grid.
   - `scripts/build_seaice_volume.py`: sea ice volume for both poles from Copernicus Marine thickness and concentration grids, model (`seaice_volume_glorys.csv`) and satellite (`seaice_volume_cs2smos.csv`).
   - `scripts/build_ace.py`: hurricane season energy (ACE) for the North Atlantic and Northeast Pacific, added up from every 6-hourly storm position in NOAA IBTrACS (`ace_daily.csv`, one row per storm per day).
-  - `scripts/build_era5_tcwv.py`: global water vapour in the air (total column water vapour), monthly since 1940, from Copernicus ERA5 monthly averages (`era5_tcwv_monthly.csv`).
+  - `scripts/build_era5_tcwv.py`: global water vapor in the air (total column water vapor), monthly since 1940, from Copernicus ERA5 monthly averages (`era5_tcwv_monthly.csv`).
   - `scripts/build_ceres.py`: NASA CERES EBAF-TOA Ed4.2.1 global monthly means (`ceres_ebaf_global.csv`), taken from the file's own global-mean variables.
 
 Calculated series are checked against independently published ones; the results are saved as `data/nino34_check.txt`, `data/era5_seam_check.txt` and `data/era5_overlap_check.txt` and shown on the methods page.

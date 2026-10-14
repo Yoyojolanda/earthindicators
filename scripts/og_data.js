@@ -20,7 +20,7 @@ const PAGES = {
   co2:         { id: 'co2',  title: 'Carbon dioxide (CO₂)' },
   ch4:         { id: 'ch4',  title: 'Methane' },
   eei:         { id: 'eei',  title: "Earth's energy imbalance" },
-  water:       { id: 'wv',   title: 'Water vapour in the air' },
+  water:       { id: 'wv',   title: 'Water vapor in the air' },
 };
 
 (async () => {
@@ -41,7 +41,7 @@ const PAGES = {
   }
   // slow signals card: six short numbers, each with its own date (build_og.py draws it separately)
   const SLOW = [
-    ['fossil',  r => [r.now.replace(' billion tonnes', ''), `billion tonnes of fossil CO₂ emitted in ${r.through}`]],
+    ['fossil',  r => [r.now.replace(' billion metric tons', ''), `billion metric tons of fossil CO₂ emitted in ${r.through}`]],
     ['ph',      r => [r.hplus, `more acidity in sea water near Hawaiʻi, ${r.since}–${r.through.slice(-4)}`]],
     ['amoc',    r => [r.a12, `Atlantic overturning (sverdrups), 12 months to ${r.through}`]],
     ['rli',     r => [r.pct, `Red List Index ${r.y0}–${r.through}: ${r.pct.startsWith('−') ? 'species closer to extinction' : 'no rise in extinction risk'}`]],

@@ -77,7 +77,7 @@ function run(t){
  expName=`pdo-${cy}-${String(L.m).padStart(2,'0')}.jpg`;
  $('out').classList.remove('hide');
  charts.splice(0).forEach(c=>c.destroy());
- // 1. full record: monthly bars coloured by sign, 12-month average line
+ // 1. full record: monthly bars colored by sign, 12-month average line
  charts.push(freeze(new Chart($('c1'),{data:{datasets:[
    {type:'line',label:'12-month average',data:run12,borderColor:THEME.clim,borderWidth:1.8,pointRadius:0,order:1},
    {type:'bar',label:'Monthly',data:M.map(r=>({x:r.x,y:r.v})),backgroundColor:M.map(r=>r.v>=0?POS:NEG),barThickness:1,order:2}]},

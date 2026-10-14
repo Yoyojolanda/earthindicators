@@ -173,7 +173,7 @@ function run(raw){
   options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C above 1850–1900'}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false},grid:{display:false}},y:{min:1,max:1.7,title:{display:true,text:'°C above 1850–1900',color:tc},ticks:{color:tc},grid:{color:gc}}}}});
  document.getElementById('t4').textContent=`Averaged over different periods ending ${fmtDate(last)}, ${cur}: °C above pre-industrial (1850–1900)`;
- document.getElementById('avgnote').innerHTML=`Whether we are "above 1.5 °C" depends on the period you average over. The Paris Agreement's limit refers to the long-term level: the IPCC uses a 20-year average centred on the year in question, which needs the next ten years of data. An average of the last 20 years shows where we were about ten years ago (${f(avg(7305))} °C). Each average describes the middle of its period, so longer periods reach further back and come out lower. The dark bar is different: it fits a straight line through the last 30 years and reads off where that line is today (${f(trendNow)} °C). That is the best simple estimate of the long-term level right now; the last 3 years sit above it because of the 2023–24 El Niño. Periods shorter than a year are left out here: converting them to pre-industrial needs a correction that changes with the season, while this page uses Copernicus's single yearly offset of 0.88 °C. Idea from a <a href="https://x.com/EliotJacobson/status/2090050141587980674" target="_blank" rel="noopener">running-mean chart by Prof. Eliot Jacobson</a>, who posts updated versions regularly.`;
+ document.getElementById('avgnote').innerHTML=`Whether we are "above 1.5 °C" depends on the period you average over. The Paris Agreement's limit refers to the long-term level: the IPCC uses a 20-year average centered on the year in question, which needs the next ten years of data. An average of the last 20 years shows where we were about ten years ago (${f(avg(7305))} °C). Each average describes the middle of its period, so longer periods reach further back and come out lower. The dark bar is different: it fits a straight line through the last 30 years and reads off where that line is today (${f(trendNow)} °C). That is the best simple estimate of the long-term level right now; the last 3 years sit above it because of the 2023–24 El Niño. Periods shorter than a year are left out here: converting them to pre-industrial needs a correction that changes with the season, while this page uses Copernicus's single yearly offset of 0.88 °C. Idea from a <a href="https://x.com/EliotJacobson/status/2090050141587980674" target="_blank" rel="noopener">running-mean chart by Prof. Eliot Jacobson</a>, who posts updated versions regularly.`;
  freeze(c1);freeze(c3);
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize();c4&&c4.resize()}));
@@ -216,7 +216,7 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
 </script>
 <script>
 // ---- how warm is the world "now"? Three measures each year, from yearly ERA5 global means (complete years only):
-//      the IPCC/Betts 20-year average centred on the year (needs 10 later years), the 30-year average up to the year
+//      the IPCC/Betts 20-year average centered on the year (needs 10 later years), the 30-year average up to the year
 //      (the usual "climate normal", ~15 years behind), and where a straight line through the last 30 years ends.
 (function(){
  fetch('data/era5_t2_global_daily.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
@@ -229,7 +229,7 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   const fit=y=>{const mx=y-14.5,my=mean(y-29,y);let a=0,q=0;for(let x=y-29;x<=y;x++){a+=(x-mx)*(A[x]-my);q+=(x-mx)**2}return{v:my+a/q*(y-mx),s:a/q}},trend=y=>fit(y).v;
   const C=[],T=[],N=[],P=[];
   for(let y=X0;y<=L;y++){P.push({x:y,y:A[y]});
-   if(has(y-10,y+9))C.push({x:y,y:mean(y-10,y+9)});                 // 20 years centred on y: y-10 … y+9
+   if(has(y-10,y+9))C.push({x:y,y:mean(y-10,y+9)});                 // 20 years centered on y: y-10 … y+9
    if(has(y-29,y)){N.push({x:y,y:mean(y-29,y)});T.push({x:y,y:trend(y)})}}
   const k1=Y.find(y=>y>=X0&&A[y]>1.5);
   const cE=C[C.length-1],tE=T.find(p=>p.x===cE.x),tL=T[T.length-1],nL=N[N.length-1],f=v=>v.toFixed(2);
@@ -239,12 +239,12 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   window.c7=new Chart(document.getElementById('c7'),{type:'line',plugins:[pl],data:{datasets:[
     {label:'Single years',data:P,borderColor:THEME.mut,backgroundColor:THEME.mut,pointRadius:2.5,showLine:false,order:5},
     {label:'Average of the last 30 years (the usual way)',data:N,borderColor:'#7b5ea7',borderWidth:2,pointRadius:0,order:3},
-    {label:'20-year average centred on the year (IPCC; needs 10 more years)',data:C,borderColor:'#4f81b0',borderWidth:3,pointRadius:0,order:2},
+    {label:'20-year average centered on the year (IPCC; needs 10 more years)',data:C,borderColor:'#4f81b0',borderWidth:3,pointRadius:0,order:2},
     {label:'End of the straight-line trend through the last 30 years',data:T,borderColor:'#d00000',borderWidth:2.5,pointRadius:0,order:1}]},
    options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'x',intersect:false},
     plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label.replace(/ \(.*/,'')+': '+f(c.parsed.y)+' °C'}}},
     scales:{x:{type:'linear',min:X0,max:L+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}});
-  document.getElementById('n7').innerHTML=`Each line answers "how warm is the world now?" in a different way. <b>Blue</b> is the definition scientists use for the Paris limits: the 20-year average centred on the year, ten years before and ten after. It smooths out El Niño and La Niña without falling behind, but it can only be drawn up to ${cE.x}, because it needs the ten years that follow. <b>Purple</b> is the average of the 30 years up to each year, the usual "climate normal". An average describes the middle of its period, so this line runs about 15 years behind: in ${L} it says ${f(nL.y)} °C, ${f(tL.y-nL.y)} °C below the red line. With warming that is speeding up, the lag only grows. <b>Red</b> fits a straight line through the 30 years up to each year and reads off where it ends. Wherever the blue line exists, the red one stays close to it (in ${cE.x}: ${f(tE.y)} vs ${f(cE.y)} °C)${tE.y<cE.y?', slightly lower because warming has sped up and a straight line cannot quite keep up':''}. That makes it the best estimate from measurements alone of where we are now: <b>${f(tL.y)} °C in ${L}</b>. Single years (dots) swing up and down by a tenth of a degree or two, mostly with El Niño and La Niña, which is why one warm year above 1.5 °C does not yet mean the Paris limit is passed. Complete calendar years of ERA5 global 2 m temperature, converted to 1850–1900 with Copernicus's offset of 0.88 °C. The centred 20-year average follows <a href="https://www.metoffice.gov.uk/about-us/press-office/news/weather-and-climate/2023/consensus-needed-on-when-global-warming-levels-reach-paris-agreements-1.5-c-guard-rail" target="_blank" rel="noopener">Betts et al. (2023)</a> and the IPCC.`;
+  document.getElementById('n7').innerHTML=`Each line answers "how warm is the world now?" in a different way. <b>Blue</b> is the definition scientists use for the Paris limits: the 20-year average centered on the year, ten years before and ten after. It smooths out El Niño and La Niña without falling behind, but it can only be drawn up to ${cE.x}, because it needs the ten years that follow. <b>Purple</b> is the average of the 30 years up to each year, the usual "climate normal". An average describes the middle of its period, so this line runs about 15 years behind: in ${L} it says ${f(nL.y)} °C, ${f(tL.y-nL.y)} °C below the red line. With warming that is speeding up, the lag only grows. <b>Red</b> fits a straight line through the 30 years up to each year and reads off where it ends. Wherever the blue line exists, the red one stays close to it (in ${cE.x}: ${f(tE.y)} vs ${f(cE.y)} °C)${tE.y<cE.y?', slightly lower because warming has sped up and a straight line cannot quite keep up':''}. That makes it the best estimate from measurements alone of where we are now: <b>${f(tL.y)} °C in ${L}</b>. Single years (dots) swing up and down by a tenth of a degree or two, mostly with El Niño and La Niña, which is why one warm year above 1.5 °C does not yet mean the Paris limit is passed. Complete calendar years of ERA5 global 2 m temperature, converted to 1850–1900 with Copernicus's offset of 0.88 °C. The centered 20-year average follows <a href="https://www.metoffice.gov.uk/about-us/press-office/news/weather-and-climate/2023/consensus-needed-on-when-global-warming-levels-reach-paris-agreements-1.5-c-guard-rail" target="_blank" rel="noopener">Betts et al. (2023)</a> and the IPCC.`;
   // slope of the latest 30-year trend line (°C per year), for a rough date when the long-term level reaches 1.5 °C
   const rate=fit(L).s,yr=rate>0&&tL.y<1.5?Math.round(L+(1.5-tL.y)/rate):null;
   const ms=[`<b>First year above 1.5 °C</b> in ERA5: ${k1?`${k1} (${f(A[k1])} °C). Passed.`:'not yet.'}`,
@@ -334,7 +334,7 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   const cv=document.getElementById('c6'),lg=document.getElementById('leg6'),tip=document.getElementById('tip6'),ys=document.getElementById('ys');
   ys.min=Y[0];ys.max=END;ys.value=END;
   let mode='trend',field,max,unit;
-  // diverging scale: blue - near white - red; values beyond the scale get the end colour
+  // diverging scale: blue - near white - red; values beyond the scale get the end color
   const STOPS=[[-1,[33,102,172]],[-.5,[103,169,207]],[0,[247,247,247]],[.5,[239,138,98]],[1,[178,24,43]]];
   const col=v=>{v=Math.max(-1,Math.min(1,v));for(let k=1;k<STOPS.length;k++)if(v<=STOPS[k][0]){const[a,ca]=STOPS[k-1],[b,cb]=STOPS[k],f=(v-a)/(b-a);return ca.map((x,i)=>Math.round(x+(cb[i]-x)*f))}return STOPS[4][1]};
   const off=document.createElement('canvas');off.width=NO;off.height=NL;
@@ -357,7 +357,7 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
    document.getElementById('t6').textContent=mode==='trend'?`Where it has warmed: trend ${T[0][0]}–${END}, °C per decade`:`${ys.value} compared with the 1951–1980 average, °C`;
    document.getElementById('yl').textContent=ys.value;
    document.getElementById('n6').textContent=(mode==='trend'?`Straight-line trend through each cell's yearly averages, ${T[0][0]}–${END}. `:`Yearly average minus the 1951–1980 average for the same cell; slide to compare years. `)+
-    `Values beyond the ends of the scale are shown in the darkest colour. Each cell is 2° × 2° (about 220 km wide at the equator). ERA5 2 m temperature from Copernicus's monthly averages; coastlines from Natural Earth. Hover over the map to see the value for a place.`;
+    `Values beyond the ends of the scale are shown in the darkest color. Each cell is 2° × 2° (about 220 km wide at the equator). ERA5 2 m temperature from Copernicus's monthly averages; coastlines from Natural Earth. Hover over the map to see the value for a place.`;
   }
   cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect(),lon=(e.clientX-r.left)/r.width*360-180,lat=90-(e.clientY-r.top)/r.height*180;
    const row=Math.min(NL-1,Math.max(0,Math.floor((90-lat)/D))),c=Math.floor(((lon+360)%360)/D)%NO,v=field[row*NO+c];

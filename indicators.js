@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, wv (water vapour), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
+// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, eei, wv (water vapor), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -184,7 +184,7 @@ const LOAD={
   const G=P(g),A=P(a),T=G.map(p=>{const q=A.find(r=>Math.abs(r.x-p.x)<.02);return q?{x:p.x,y:p.y+q.y}:null}).filter(Boolean);
   const L=T[T.length-1],y=Math.floor(L.x),dt=`${ML[Math.min(11,Math.floor((L.x-y)*12))]} ${y}`,rate=-slope(T),mm=-L.y/362,fmt=n=>Math.round(n).toLocaleString('en-US');
   const WL=w.trim().split(/\r?\n/).pop().split(','),glac=`${fmt(-+WL[2])} Gt`,gh=WL[1].replace('-','–');
-  return{src:'NASA GRACE, WGMS',glac,gh,vd:`Greenland and Antarctica losing about ${fmt(rate)} billion tonnes of ice a year`,rate:fmt(rate)+' Gt',mm:mm.toFixed(1)+' mm',gl:fmt(-G[G.length-1].y)+' Gt',an:fmt(-A[A.length-1].y)+' Gt',date:dt,through:dt,
+  return{src:'NASA GRACE, WGMS',glac,gh,vd:`Greenland and Antarctica losing about ${fmt(rate)} billion metric tons of ice a year`,rate:fmt(rate)+' Gt',mm:mm.toFixed(1)+' mm',gl:fmt(-G[G.length-1].y)+' Gt',an:fmt(-A[A.length-1].y)+' Gt',date:dt,through:dt,
    tile:{v:'+'+mm.toFixed(1)+' mm',l:`sea-level rise from Greenland and Antarctica since 2002–03, to ${dt}`,s:`The two ice sheets: about ${fmt(rate)} Gt a year (362 Gt raises the sea by 1 mm). World glaciers lost ${fmt(-+WL[2])} Gt in ${WL[1].replace('-','–')}.`,spark:T.filter((p,i)=>i%2==0),sparkLabel:`ice mass, ${Math.floor(T[0].x)}–${y}`}}}),
 
  // slow signals: RAPID AMOC at 26.5N (monthly, released every 1-2 years) and the world Red List Index (yearly)
@@ -193,7 +193,7 @@ const LOAD={
   return{src:'RAPID 26°N array',vd:`Atlantic overturning averaged ${a12.toFixed(1)} Sv over the 12 months to ${dt}`,a12:a12.toFixed(1)+' Sv',mean:all.toFixed(1)+' Sv',y0:M[0].m.slice(0,4),date:dt,through:dt,spark:yearly(M.map(r=>({y:+r.m.slice(0,4),v:r.v})),10)}}),
  fossil:()=>get('fossil_co2_global.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:+p[1]/1000}));
   const L=Y[Y.length-1],P=Y[Y.length-2],ch=(L.t-P.t)/P.t*100;
-  return{src:'Global Carbon Project',vd:`Fossil CO₂ emissions ${ch>=0?'rose':'fell'} ${Math.abs(ch).toFixed(1)}% in ${L.y}`,now:L.t.toFixed(1)+' billion tonnes',ch:(ch>=0?'+':'−')+Math.abs(ch).toFixed(1)+'%',date:L.y,through:L.y,
+  return{src:'Global Carbon Project',vd:`Fossil CO₂ emissions ${ch>=0?'rose':'fell'} ${Math.abs(ch).toFixed(1)}% in ${L.y}`,now:L.t.toFixed(1)+' billion metric tons',ch:(ch>=0?'+':'−')+Math.abs(ch).toFixed(1)+'%',date:L.y,through:L.y,
    spark:Y.filter(r=>+r.y>=1950).map(r=>({x:+r.y,y:r.t}))}}),
  ph:()=>get('hot_surface_ph.csv').then(t=>{const D=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[1]!=='').map(p=>{const [y,m]=p[0].split('-').map(Number);return{x:y+(m-.5)/12,y:+p[1],d:p[0]}});
   const b=slope(D),L=D[D.length-1],dpH=b*(L.x-D[0].x),dt=`${ML[+L.d.slice(5,7)-1]} ${L.d.slice(0,4)}`;
@@ -213,9 +213,9 @@ const LOAD={
   const clim=[...Array(12)].map((_,k)=>mean(R.filter(r=>r.k==k&&r.y>=1991&&r.y<=2020).map(r=>r.v)));R.forEach(r=>r.p=(r.v/clim[r.k]-1)*100);
   const N=R[R.length-1],dt=`${ML[N.k]} ${N.y}`,same=R.filter(r=>r.k==N.k).sort((a,b)=>b.v-a.v),rank=same.findIndex(r=>r==N)+1,mon=['January','February','March','April','May','June','July','August','September','October','November','December'][N.k];
   const l12=mean(R.slice(-12).map(r=>r.p)),run=R.map((_,i)=>i<11?null:{x:i,y:mean(R.slice(i-11,i+1).map(r=>r.p))}).filter(Boolean);
-  const vd=rank==1?`Highest ${mon} on record (since ${R[0].y})`:l12>0?`The air holds more water vapour than normal (${rankTxt(rank,'highest '+mon,'highest '+mon)})`:'Water vapour is below the 1991–2020 average right now';
+  const vd=rank==1?`Highest ${mon} on record (since ${R[0].y})`:l12>0?`The air holds more water vapor than normal (${rankTxt(rank,'highest '+mon,'highest '+mon)})`:'Water vapor is below the 1991–2020 average right now';
   return{src:'Copernicus ERA5',vd,now:N.v.toFixed(1)+' kg/m²',an:sg(N.p,1)+'%',l12:sg(l12,1)+'%',rank:rankTxt(rank,'the highest '+mon,'highest '+mon),date:dt,through:dt,
-   tile:{v:sg(l12,1)+'%',l:'water vapour, last 12 months vs 1991–2020',s:`${dt}: ${N.v.toFixed(1)} kg/m², ${sg(N.p,1)}% vs normal`,spark:run,sparkLabel:`12-month mean, ${R[11].y}–${N.y}`}}}),
+   tile:{v:sg(l12,1)+'%',l:'water vapor, last 12 months vs 1991–2020',s:`${dt}: ${N.v.toFixed(1)} kg/m², ${sg(N.p,1)}% vs normal`,spark:run,sparkLabel:`12-month mean, ${R[11].y}–${N.y}`}}}),
 
  eei:()=>get('ceres_ebaf_global.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({m:p[0],n:+p[4]}));
   const n=R.map(r=>r.n),l12=mean(n.slice(-12)),l48=mean(n.slice(-48)),f48=mean(n.slice(0,48)),[y,m]=R[R.length-1].m.split('-'),dt=`${ML[m-1]} ${y}`,y0=+R[0].m.slice(0,4);
@@ -225,7 +225,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',wv:'water vapour',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
+const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

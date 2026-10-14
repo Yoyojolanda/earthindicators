@@ -40,7 +40,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="cards" id="fossil-cards"></div>
 <div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
 <ul id="fossil-read"></ul>
-<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of tonnes of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. News reports of the Global Carbon Budget usually quote a slightly lower figure: that headline number subtracts the CO₂ that cement and concrete slowly reabsorb from the air over their lifetime, roughly 0.8 billion tonnes a year. This page shows emissions before that subtraction, so both numbers are correct; they measure slightly different things. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, published on <a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a> and Zenodo (the version used is named in the line above the chart).</p>
+<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of metric tons of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. News reports of the Global Carbon Budget usually quote a slightly lower figure: that headline number subtracts the CO₂ that cement and concrete slowly reabsorb from the air over their lifetime, roughly 0.8 billion metric tons a year. This page shows emissions before that subtraction, so both numbers are correct; they measure slightly different things. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, published on <a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a> and Zenodo (the version used is named in the line above the chart).</p>
 </section>
 
 <section id="ph-s" class="hide">
@@ -58,7 +58,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="cards" id="amoc-cards"></div>
 <div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
 <ul id="amoc-read"></ul>
-<p class="sub">The AMOC carries warm surface water north in the Atlantic and cold deep water back south; it keeps northwestern Europe milder than other places at the same latitude and affects rainfall patterns on both sides of the Atlantic. The RAPID array measures it at 26.5°N with moorings across the whole Atlantic, from Florida to Africa, combined with a cable measuring the Florida Current and satellite winds. Strength is in sverdrups (1 Sv = 1 million cubic metres of water per second). Shown: monthly means and the 12-month average. Data: RAPID-MOCHA-WBTS AMOC monitoring project (NOC, University of Miami, NOAA), <a href="https://rapid.ac.uk/" target="_blank" rel="noopener">rapid.ac.uk</a>.</p>
+<p class="sub">The AMOC carries warm surface water north in the Atlantic and cold deep water back south; it keeps northwestern Europe milder than other places at the same latitude and affects rainfall patterns on both sides of the Atlantic. The RAPID array measures it at 26.5°N with moorings across the whole Atlantic, from Florida to Africa, combined with a cable measuring the Florida Current and satellite winds. Strength is in sverdrups (1 Sv = 1 million cubic meters of water per second). Shown: monthly means and the 12-month average. Data: RAPID-MOCHA-WBTS AMOC monitoring project (NOC, University of Miami, NOAA), <a href="https://rapid.ac.uk/" target="_blank" rel="noopener">rapid.ac.uk</a>.</p>
 </section>
 
 <section id="rli-s" class="hide">
@@ -86,7 +86,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="box"><h2 id="t6"></h2><div class="wrap s"><canvas id="c6"></canvas></div></div>
 <div class="box"><h2 id="t7"></h2><div class="wrap s"><canvas id="c7"></canvas></div></div>
 <ul id="crops-read"></ul>
-<p class="sub">Average harvest per hectare worldwide for the four crops that provide most of the world's calories and protein, in tonnes per hectare (1 hectare is 100 × 100 m, about one and a half soccer pitches). The second chart shows each year compared with its own trend (the average of the three years before and after it), so the long upward climb is taken out and good and bad harvest years stand out. Data: FAO, FAOSTAT, crops and livestock products (<a href="https://www.fao.org/faostat/en/#data/QCL" target="_blank" rel="noopener">fao.org/faostat</a>).</p>
+<p class="sub">Average harvest per hectare worldwide for the four crops that provide most of the world's calories and protein, in metric tons per hectare (1 hectare is 100 × 100 m, about one and a half soccer pitches). The second chart shows each year compared with its own trend (the average of the three years before and after it), so the long upward climb is taken out and good and bad harvest years stand out. Data: FAO, FAOSTAT, crops and livestock products (<a href="https://www.fao.org/faostat/en/#data/QCL" target="_blank" rel="noopener">fao.org/faostat</a>).</p>
 </section>
 
 <section id="blossom-s" class="hide">
@@ -115,11 +115,11 @@ function fossil(t,S){
  const L=Y[Y.length-1],P=Y[Y.length-2],y90=Y.find(r=>r.y===1990),cum=Y.reduce((s,r)=>s+r.t,0),Z=Y.filter(r=>r.y>=1850);
  const peak=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),r10=(Math.pow(L.t/Y.find(r=>r.y===L.y-10).t,1/10)-1)*100;
  $('fossil-st').innerHTML=`<b>Data through ${L.y}</b> (version ${S.version||'?'}, <a href="${S.source}" target="_blank" rel="noopener">dataset</a>). The Global Carbon Project publishes once a year, in October or November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
- cards('fossil-cards',[[L.t.toFixed(1)+' Gt',`CO₂ from fossil fuels and cement in ${L.y} (billion tonnes)`],[pc((L.t-P.t)/P.t*100),`change from ${P.y}`],
+ cards('fossil-cards',[[L.t.toFixed(1)+' Gt',`CO₂ from fossil fuels and cement in ${L.y} (billion metric tons)`],[pc((L.t-P.t)/P.t*100),`change from ${P.y}`],
   [pc((L.t-y90.t)/y90.t*100),`change since 1990`],[Math.round(cum).toLocaleString('en-US')+' Gt',`emitted in total since ${Y[0].y}`]]);
- $('t3').textContent=`Fossil CO₂ emissions by source, 1850–${L.y} (billion tonnes of CO₂ a year)`;
+ $('t3').textContent=`Fossil CO₂ emissions by source, 1850–${L.y} (billion metric tons of CO₂ a year)`;
  $('fossil-read').innerHTML=[
-  `In ${L.y} the world emitted ${L.t.toFixed(1)} billion tonnes of CO₂ from fossil fuels and cement, ${L.t>=P.t?'more than':'less than'} in ${P.y}${peak===L?', a new record':`; the record is ${peak.t.toFixed(1)} billion tonnes in ${peak.y}`}. Over the last ten years emissions ${r10>=0?'grew':'fell'} by about ${Math.abs(r10).toFixed(1)}% a year on average: ${r10>=1?'still rising':r10>=0?'growing slowly, but not yet falling':'falling'}.`,
+  `In ${L.y} the world emitted ${L.t.toFixed(1)} billion metric tons of CO₂ from fossil fuels and cement, ${L.t>=P.t?'more than':'less than'} in ${P.y}${peak===L?', a new record':`; the record is ${peak.t.toFixed(1)} billion metric tons in ${peak.y}`}. Over the last ten years emissions ${r10>=0?'grew':'fell'} by about ${Math.abs(r10).toFixed(1)}% a year on average: ${r10>=1?'still rising':r10>=0?'growing slowly, but not yet falling':'falling'}.`,
   `About half of each year's emissions stays in the air; the rest is taken up by the ocean and by plants on land. CO₂ in the air keeps rising as long as emissions continue, and global warming stops only when net CO₂ emissions reach zero.`,
   (()=>{const F=[['coal',L.c],['oil',L.o],['gas',L.g]].sort((a,b)=>b[1]-a[1]),q=v=>(v/L.t*100).toFixed(0)+'%';return `By source in ${L.y}: ${F[0][0]} ${q(F[0][1])}, ${F[1][0]} ${q(F[1][1])}, ${F[2][0]} ${q(F[2][1])}; cement, flaring and other sources make up the rest.`})()
  ].map(x=>`<li>${x}</li>`).join('');
@@ -129,7 +129,7 @@ function fossil(t,S){
  ready('f',new Chart($('c3'),{type:'line',data:{labels:Z.map(r=>String(r.y)),datasets:ds},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' Gt',footer:t=>'Total: '+Z[t[0].dataIndex].t.toFixed(1)+' Gt'}}},
-   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Billion tonnes CO₂'},grid:{color:THEME.grid}}}}}))}
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Billion metric tons CO₂'},grid:{color:THEME.grid}}}}}))}
 
 function ph(t,S){
  const D=csv(t).map(p=>{const [y,m,d]=p[0].split('-').map(Number);return{d:p[0],x:y+(m-1+(d-.5)/31)/12,c:p[1]===''?null:+p[1],m:p[2]===''?null:+p[2]}});if(D.length<200)throw 0;
@@ -233,7 +233,7 @@ function crops(t,S){
  const worst=K.map(([k,n])=>{let b=0;D[k].forEach((v,i)=>{if(v!=null&&v<D[k][b])b=i});return[n,Y[b].y,D[k][b]]});
  $('crops-st').innerHTML=`<b>Data through ${L.y}.</b> FAO publishes once a year, around December, after national statistics offices have reported their harvests. New data last arrived here on ${day(S.new_data)}.`;
  cards('crops-cards',K.map(([k,n])=>[L[k].toFixed(1)+' t/ha',`${n} in ${L.y}, ${(L[k]/F[k]).toFixed(1)}× ${F.y}`]));
- $('t6').textContent=`World average yields, ${F.y}–${L.y} (tonnes per hectare)`;
+ $('t6').textContent=`World average yields, ${F.y}–${L.y} (metric tons per hectare)`;
  $('t7').textContent=`Good and bad harvest years: each year compared with its own trend (%)`;
  $('crops-read').innerHTML=[
   `Yields have risen steadily: maize ${(L.maize/F.maize).toFixed(1)}×, wheat ${(L.wheat/F.wheat).toFixed(1)}×, rice ${(L.rice/F.rice).toFixed(1)}× and soybeans ${(L.soybeans/F.soybeans).toFixed(1)}× since ${F.y}, thanks to better varieties, fertiliser, irrigation and machinery. A changing climate does not show as a falling line here; it shows in two other ways.`,
@@ -244,7 +244,7 @@ function crops(t,S){
  $('crops-s').classList.remove('hide');
  ready('c',new Chart($('c6'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:K.map(([k,n,c])=>({label:n,data:Y.map(r=>r[k]),borderColor:c,backgroundColor:c,borderWidth:2,pointRadius:0}))},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' t/ha'}}},
-   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:0,title:{display:true,text:'Tonnes per hectare'},grid:{color:THEME.grid}}}}}));
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:0,title:{display:true,text:'Metric tons per hectare'},grid:{color:THEME.grid}}}}}));
  ready('d',new Chart($('c7'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:K.map(([k,n,c])=>({label:n,data:D[k],borderColor:c,backgroundColor:c,borderWidth:1.5,pointRadius:1.5}))},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(1)+'%'}}},
    scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'% above or below trend'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}))}
