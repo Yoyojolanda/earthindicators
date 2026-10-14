@@ -1,0 +1,72 @@
+# --------------------------------------------------------------------
+# USE OF NOAA GML DATA
+# 
+# These data are made freely available to the public and the scientific
+# community in the belief that their wide dissemination will lead to
+# greater understanding and new scientific insights. To ensure that GML
+# receives fair credit for their work please include relevant citation
+# text in publications. We encourage users to contact the data providers,
+# who can provide detailed information about the measurements and
+# scientific insight.  In cases where the data are central to a
+# publication, coauthorship for data providers may be appropriate.
+# 
+# 
+# 
+# Contact:  Xin Lan (xin.lan@noaa.gov)
+# 
+# File Creation: Fri Oct  9 13:12:36 2026
+# 
+# 
+# --------------------------------------------------------------------
+# 
+# 
+# See gml.noaa.gov/ccgg/trends/ for additional details.
+# 
+#
+# Annual N2O mole fraction increase (ppb) from Jan 1 through Dec 31.
+#
+# Uncertainty in the global annual increase is estimated using two
+# terms: The first is a bootstrap (resampling) method that varies the
+# sites in our network. Each pseudo-network contains the same number of
+# sites as our actual NOAA ESRL cooperative global air sampling network,
+# but some are repeated and some are excluded. The second term is a
+# Monte Carlo method that randomly modifies the data to account for
+# measurement uncertainty. In both cases, 100 globally-averaged time
+# series are created. Standard deviations of the annual increases are
+# calculated, and the two terms (network and analytical) are taken in
+# quadrature to give the  reported uncertainties. Please see Dlugokencky
+# et al., 1994, JGR, vol. 99, 17021-17043, for a complete discussion.
+#
+# N2O expressed as a mole fraction in dry air, nanomol/mol, abbreviated as ppb
+#
+# NOTE: In general, the data presented for the last year are subject to change,
+# depending on recalibration of the reference gas mixtures used, and other quality
+# control procedures. Occasionally, earlier years may also change for the same
+# reasons.  Usually these changes are minor.
+# 
+# year     ann inc         unc
+  2001        0.71        0.10
+  2002        0.50        0.17
+  2003        0.80        0.16
+  2004        0.53        0.15
+  2005        0.87        0.12
+  2006        0.69        0.14
+  2007        0.91        0.15
+  2008        0.92        0.15
+  2009        0.76        0.13
+  2010        1.08        0.13
+  2011        0.91        0.15
+  2012        0.81        0.14
+  2013        1.01        0.13
+  2014        1.24        0.13
+  2015        0.90        0.12
+  2016        0.66        0.15
+  2017        1.02        0.13
+  2018        1.17        0.12
+  2019        0.90        0.12
+  2020        1.32        0.11
+  2021        1.29        0.02
+  2022        1.23        0.01
+  2023        1.01        0.02
+  2024        1.02        0.01
+  2025        1.23        0.01
