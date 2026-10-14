@@ -278,7 +278,16 @@
 
   // ---- several charts, from any pages, combined into one JPG. "Add to image" stores a snapshot of the chart as it
   //      looks then (zoom, region, switches, hidden lines) in this browser; the tray at the bottom combines them.
-  const MAXP = 6, PK = 'ei-picks';
+  const MAXP = 6, PK = 'ei-picks', LK = 'ei-picks-layout';
+  // layout: 'wide' (more columns, e.g. 3×2) or 'tall' (fewer columns, e.g. 2×3), remembered in this browser.
+  // For 1 or 4 charts both give the same grid (1, 2×2), so no choice is offered there.
+  const lay = {
+    get() { try { return localStorage.getItem(LK) === 'tall' ? 'tall' : 'wide'; } catch (e) { return 'wide'; } },
+    set(v) { try { localStorage.setItem(LK, v); } catch (e) {} },
+    cols(n, v) { return v === 'tall' ? (n <= 3 ? 1 : 2) : (n <= 3 ? n : n === 4 ? 2 : 3); },
+    name(n, v) { const c = this.cols(n, v); return c + '×' + Math.ceil(n / c); },
+    choice(n) { return this.cols(n, 'wide') !== this.cols(n, 'tall'); }
+  };
   const picks = {
     labels: [],
     list() { try { return JSON.parse(localStorage.getItem(PK) || '[]'); } catch (e) { return []; } },
@@ -304,7 +313,7 @@
     async make() {
       const l = this.list(); if (!l.length) return;
       const imgs = await Promise.all(l.map(i => new Promise(ok => { const m = new Image(); m.onload = () => ok(m); m.onerror = () => ok(null); m.src = i.d; })));
-      const W = 2400, pad = 40, gap = 32, capH = 40, footH = 64, n = l.length, cols = n === 1 ? 1 : n <= 4 ? 2 : 3;
+      const W = 2400, pad = 40, gap = 32, capH = 40, footH = 64, n = l.length, cols = lay.cols(n, lay.get());
       const cw = (W - 2 * pad - (cols - 1) * gap) / cols, rows = [];
       for (let k = 0; k < n; k += cols) rows.push(imgs.slice(k, k + cols).map((m, j) => [m, l[k + j]]));
       const rh = rows.map(r => Math.max(...r.map(([m]) => m ? m.height * cw / m.width : 0)) + capH);
@@ -315,7 +324,7 @@
       let y = pad;
       rows.forEach((r, ri) => {
         r.forEach(([m, it], j) => {
-          const cx = pad + j * (cw + gap);
+          const cx = pad + (j + (cols - r.length) / 2) * (cw + gap);   // a short last row is centred
           if (m) {
             // title and legend stay at the top, the page line at the bottom; the plot is centred between them
             // (charts in one row differ in height). Picks stored before this change have no h/e: whole image centred.
@@ -367,8 +376,9 @@
     if (!trayEl) {
       trayEl = document.createElement('div'); trayEl.className = 'ptray';
       trayEl.innerHTML = '<div class="plist" hidden></div><button type="button" class="nb pcount" aria-expanded="false"></button>' +
-        '<button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
+        '<button type="button" class="nb playout"></button><button type="button" class="nb pmake"></button><button type="button" class="nb pclear"></button>';
       trayEl.querySelector('.pcount').onclick = () => { listOpen = !listOpen; tray(); };
+      trayEl.querySelector('.playout').onclick = () => { lay.set(lay.get() === 'tall' ? 'wide' : 'tall'); tray(); };
       trayEl.querySelector('.pmake').onclick = () => n2() ? picks.make() : made && saveMade();
       trayEl.querySelector('.pclear').onclick = () => {
         if (n2()) { if (confirm('Remove all charts from your image?')) { picks.save([]); picks.refresh(); } }
@@ -381,6 +391,10 @@
     pc.textContent = ready ? 'Image made. Not saved?' : n + (n === 1 ? ' chart' : ' charts') + ' picked (max ' + MAXP + ') ' + (listOpen ? '▴' : '▾');
     pc.disabled = !!ready; pc.title = ready ? '' : (listOpen ? 'Hide' : 'Show') + ' the charts in your image';
     drawList(ready ? [] : picks.list());
+    const lb = trayEl.querySelector('.playout'), v = lay.get(), o = v === 'tall' ? 'wide' : 'tall';
+    lb.hidden = !!ready || !lay.choice(n);
+    if (!lb.hidden) { lb.textContent = 'Layout ' + lay.name(n, v) + ' ⇄';
+      lb.title = 'Switch to ' + lay.name(n, o) + ' (' + o + ')'; lb.setAttribute('aria-label', 'Image layout ' + lay.name(n, v) + ', ' + v + '. ' + lb.title); }
     trayEl.querySelector('.pmake').textContent = ready ? 'Download again' : 'Make image';
     trayEl.querySelector('.pclear').textContent = ready ? 'Close' : 'Clear';
     if (n) made = null;           // a new pick starts a new image
