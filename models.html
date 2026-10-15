@@ -67,6 +67,14 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <p class="sub">Scenarios from Hansen et al. (1988), <i>Global climate changes as forecast by Goddard Institute for Space Studies three-dimensional model</i>, Journal of Geophysical Research 93, 9341: temperatures 1958–2019, where the model runs end, as published by <a href="https://www.realclimate.org/index.php/archives/2018/06/30-years-after-hansens-testimony/" target="_blank" rel="noopener">RealClimate</a>; forcing 1958–2017 as digitized by Hausfather et al. (2020). The model runs start in 1958 with the measured rise in greenhouse gases; the scenarios differ from 1988 on. To compare like with like, the measured ERA5 temperatures are shifted so that their 1958–1987 average matches scenario B's. Forcing is the extra energy that the added greenhouse gases trap, in watts per square meter, counted from 1958. Hansen's scenario forcings cover greenhouse gases only, so the measured line does too: well-mixed greenhouse gases from the Indicators of Global Climate Change 2025 (Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>), which use newer estimates of each gas's effect than were available in 1988.</p>
 </section>
 
+<section id="h25-s" class="hide">
+<h2 class="sec">Hansen et al. 2025: a test running now</h2>
+<div class="cards" id="h25-cards"></div>
+<div class="box"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div></div>
+<ul id="h25-read"></ul>
+<p class="sub">Hansen, Kharecha, Sato and 15 co-authors, many of them at NASA's Goddard Institute for Space Studies (GISS), 2025: <i>Global warming has accelerated: are the United Nations and the public well-informed?</i> Environment: Science and Policy for Sustainable Development 67(1), 6–44 (<a href="https://doi.org/10.1080/00139157.2025.2434494" target="_blank" rel="noopener">doi:10.1080/00139157.2025.2434494</a>), published February 2025. Measured: ERA5 monthly global air temperature, each month compared with its own 1991–2020 average and converted to 1850–1900 with Copernicus's offset of 0.88 °C, then averaged over 12 months. The paper measures from 1880–1920 with NASA's record instead; the two baselines are close but not identical.</p>
+</section>
+
 <section id="cm-s" class="hide">
 <h2 class="sec">Today's climate models vs measurements</h2>
 <div class="cards" id="cm-cards"></div>
@@ -132,10 +140,13 @@ const hlines=L=>({id:'hl',afterDatasetsDraw(ch){const {ctx,chartArea:a,scales:{y
 
 // ERA5 yearly means (complete years) from the monthly world series, in °C above 1850-1900
 function era5(t){
- const S={},R=t.trim().split('\n'),w=R[0].split(',').indexOf('world');R.slice(1).forEach(l=>{const p=l.split(','),y=+p[0].slice(0,4),v=+p[w];if(!isNaN(v))(S[y]??=[]).push(v)});
+ const S={},R=t.trim().split('\n'),w=R[0].split(',').indexOf('world'),Mo=[];R.slice(1).forEach(l=>{const p=l.split(','),y=+p[0].slice(0,4),v=+p[w];if(!isNaN(v)){(S[y]??=[]).push(v);Mo.push({m:p[0],y,k:+p[0].slice(5,7),v})}});
  const Y=Object.keys(S).map(Number).filter(y=>S[y].length===12).sort((a,b)=>a-b),A={};Y.forEach(y=>A[y]=mean(S[y]));
  const base=mean(Y.filter(y=>y>=1991&&y<=2020).map(y=>A[y]));Y.forEach(y=>A[y]=A[y]-base+0.88);
- return {Y,A,last:Y[Y.length-1],rate:(a,b)=>{const X=Y.filter(y=>y>=a&&y<=b);return slope(X,X.map(y=>A[y]))*10}};
+ // months: anomaly from that calendar month's 1991-2020 average, plus 0.88 °C (to 1850-1900); 12-month running mean
+ const cl={};for(let k=1;k<=12;k++)cl[k]=mean(Mo.filter(r=>r.k===k&&r.y>=1991&&r.y<=2020).map(r=>r.v));
+ Mo.forEach(r=>{r.a=r.v-cl[r.k]+0.88;r.x=r.y+(r.k-.5)/12});Mo.forEach((r,i)=>{if(i>=11)r.r12=mean(Mo.slice(i-11,i+1).map(q=>q.a))});
+ return {Y,A,Mo,last:Y[Y.length-1],rate:(a,b)=>{const X=Y.filter(y=>y>=a&&y<=b);return slope(X,X.map(y=>A[y]))*10}};
 }
 
 // ---- 1. the 17 old projections
@@ -199,6 +210,34 @@ function hansen(O,E){
    scales:{x:{type:'linear',min:1958,max:last+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:sets.t.y},grid:{color:THEME.grid}}}}});
  const set=m=>{const s=sets[m];ch.data.datasets=s.ds;ch.options.scales.y.title.text=s.y;ch.$u=s.u;$('t2').textContent=s.title;ch.update()};
  set('t');sel('hsw',d=>set(d.m));ready('h',ch)}
+
+// ---- 2b. Hansen et al. 2025: "temperature will not fall much below +1.5 °C" over the next few years, tested monthly
+function hansen25(E){
+ const M=E.Mo.filter(r=>r.r12!=null),pub=2025+1.5/12,L=M[M.length-1],after=M.filter(r=>r.x>=pub);
+ const lo=after.reduce((b,r)=>r.r12<b.r12?r:b,after[0]),below=after.filter(r=>r.r12<1.5).length;
+ const ml=r=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][r.k-1]+' '+r.y;
+ // how far the 12-month average fell after the previous big El Niño (peak in 2016, lowest in the 2.5 years after), for comparison
+ const pk=(a,b)=>M.filter(r=>r.x>=a&&r.x<b).reduce((m,r)=>r.r12>m.r12?r:m),tr=(r,yrs)=>M.filter(q=>q.x>r.x&&q.x<=r.x+yrs).reduce((m,q)=>q.r12<m.r12?q:m);
+ const p16=pk(2015.5,2017),t16=tr(p16,2.5),p24=pk(2023.5,2025.2),t24=tr(p24,2.5);
+ cards('h25-cards',[[f2(L.r12)+' °C',`12-month average to ${ml(L)}, above 1850–1900`],[f2(lo.r12)+' °C',`lowest 12-month average since the paper (to ${ml(lo)})`],
+  [String(below),`of the ${after.length} months since the paper with the 12-month average below 1.5 °C`]]);
+ $('t7').textContent=`Global air temperature, 12-month average since 2015, against Hansen et al.'s 2025 prediction (°C above 1850–1900)`;
+ list('h25-read',[
+  `In early 2025, Hansen and colleagues argued that the 2023–24 jump in global temperature was only half El Niño. Most of the rest, they found, came from cleaner ship fuel since 2020: fewer sulfur particles, so fewer bright clouds over the oceans and more sunlight absorbed. If so, the extra warmth would not go away when El Niño ended. They predicted that global temperature would not fall much below +1.5 °C, but would hover near or above it for the next few years.`,
+  `Since then the 12-month average has been between ${f2(lo.r12)} and ${f2(Math.max(...after.map(r=>r.r12)))} °C; it is ${f2(L.r12)} °C now. For comparison: after the 2015–16 El Niño it fell ${f2(p16.r12-t16.r12)} °C within two and a half years, from ${f2(p16.r12)} to ${f2(t16.r12)} °C; after the 2023–24 El Niño it has fallen ${f2(p24.r12-t24.r12)} °C so far, from ${f2(p24.r12)} to ${f2(t24.r12)} °C. The drop is similar; the level it fell to is much higher. The paper does not say how much is "much"; this chart shows how the test is going.`,
+  `The paper also concludes that the climate is more sensitive than the IPCC's best estimate: about 4.5 °C of eventual warming for a doubling of CO₂, against the IPCC's 3 °C. That would mean more warming for the same emissions than the IPCC projections in part 2. Other scientists call it the high end of current estimates, but not one that can be ruled out.`,
+  `Its other main warning, a possible shutdown of the Atlantic overturning circulation within 20 to 30 years, cannot be tested yet; the measurements are on the <a href="slow.html">slow signals page</a>.`]);
+ show('h25-s');
+ const mark={id:'pub',afterDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,px=x.getPixelForValue(pub);ctx.save();ctx.strokeStyle=THEME.mut;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(px,a.top);ctx.lineTo(px,a.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';
+  ctx.textAlign='right';ctx.fillText('Feb 2025: paper published',px-5,a.top+12);ctx.restore()}};
+ const S=E.Mo.filter(r=>r.x>=2015);
+ ready('n',new Chart($('c7'),{type:'line',plugins:[mark,hlines([[1.5,'1.5 °C: predicted to stay near or above',PARIS,true,true]])],data:{datasets:[
+   {label:'12-month average (ERA5)',data:M.filter(r=>r.x>=2015).map(r=>({x:r.x,y:r.r12})),borderColor:OBS,backgroundColor:OBS,borderWidth:2.6,pointRadius:0,order:0},
+   {label:'Single months',data:S.map(r=>({x:r.x,y:r.a})),showLine:false,borderColor:rgba(OBS,.45),backgroundColor:rgba(OBS,.45),pointRadius:1.8,order:1}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const r=E.Mo.find(q=>Math.abs(q.x-t[0].parsed.x)<1e-6);return r?ml(r):''},label:c=>c.dataset.label+': '+f2(c.parsed.y)+' °C'}}},
+   scales:{x:{type:'linear',min:2015,max:Math.ceil(L.x+.1),ticks:{stepSize:1,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}))}
 
 // ---- 3. CMIP6 against ERA5
 function cmip(t,E){
@@ -314,8 +353,8 @@ function wmo(D){
 
 Promise.allSettled([
  Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse)])
-  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
+  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
-$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
+$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.n,'t7',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
 </script></main></body></html>
