@@ -118,6 +118,39 @@ def budgets():
     return [{"t": t, **B[t]} for t in sorted(B)]
 
 
+AR6C4 = RAW + "chrisroadmap/ar6/main/data_input/chapter4_assessed_ranges/assessed_ssp{}_{}.nc"
+
+
+def ar6_series():
+    # IPCC AR6 WG1 Chapter 4 assessed global surface temperature change (central estimate and 5-95% range) per scenario,
+    # as files in Chris Smith's AR6 repository (MIT). Each value is a 20-year average relative to 1995-2014; the value for
+    # year Y covers Y-10 to Y+9 (2091 = 2081-2100, matching Table SPM.1). Plus 0.85 °C, the AR6 assessed warming from
+    # 1850-1900 to 1995-2014, gives °C above 1850-1900. Needs the netCDF4 package.
+    import netCDF4, tempfile, os
+    out, years = {}, None
+    for s, name in (("119", "SSP1-1.9"), ("126", "SSP1-2.6"), ("245", "SSP2-4.5"), ("370", "SSP3-7.0"), ("585", "SSP5-8.5")):
+        out[name] = {}
+        for q, key in (("central", "mid"), ("05", "lo"), ("95", "hi")):
+            with tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as f:
+                f.write(get(AR6C4.format(s, q)))
+            D = netCDF4.Dataset(f.name)
+            var = [v for v in D.variables if v != "time"][0]
+            ys = [t.year for t in netCDF4.num2date(D["time"][:], D["time"].units, D["time"].calendar)]
+            vals = [round(float(x) + 0.85, 3) for x in D[var][:]]
+            D.close(); os.unlink(f.name)
+            assert years in (None, ys); years = ys
+            out[name][key] = vals
+    # check against Table SPM.1 (2021-2040, 2041-2060, 2081-2100): central estimates agree to the table's rounding;
+    # the 5-95% edges in these files can be up to 0.1 °C narrower than the table's (assessed and rounded separately)
+    for p, lab in enumerate((2031, 2051, 2091)):
+        i = years.index(lab)
+        for k, v in AR6.items():
+            for key, j, tol in (("mid", 0, 0.051), ("lo", 1, 0.1), ("hi", 2, 0.1)):
+                assert abs(out[k][key][i] - v[p][j]) <= tol, (k, lab, key, out[k][key][i], v[p][j])
+    return {"mid_year": [y - 0.5 for y in years], "scenarios": out,   # middle of each 20-year window
+            "source": "IPCC AR6 WG1 Chapter 4, assessed global surface temperature change (Lee et al. 2021); files: github.com/chrisroadmap/ar6"}
+
+
 AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, °C above 1850-1900
     "SSP1-1.9": [[1.5, 1.2, 1.7], [1.6, 1.2, 2.0], [1.4, 1.0, 1.8]],
     "SSP1-2.6": [[1.5, 1.2, 1.8], [1.7, 1.3, 2.2], [1.8, 1.3, 2.4]],
@@ -148,6 +181,7 @@ def main():
         "ar6": {"periods": ["2021–2040", "2041–2060", "2081–2100"], "scenarios": AR6,
                 "source": "IPCC AR6 Working Group I, Summary for Policymakers, Table SPM.1 (2021)",
                 "url": "https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/"},
+        "ar6_series": ar6_series(),
         "budget": {"from": "2026-01-01", "levels": budgets(),
                    "emissions": {"year": 2024, "fossil": 38.6, "land": 4.6},   # GtCO2, same paper, section 2
                    "source": "Forster et al. (2026), Indicators of Global Climate Change 2025, Earth System Science Data 18, 3889",

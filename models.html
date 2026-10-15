@@ -82,11 +82,12 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <h2 class="sec">Warming by scenario (IPCC)</h2>
 <p class="st"><span class="tag p">Projection</span></p>
 <div class="cards" id="ar6-cards"></div>
+<div class="box"><h2 id="t6"></h2><div class="wrap"><canvas id="c6"></canvas></div></div>
 <div class="box"><h2 id="t4"></h2>
  <div class="seg" id="psw">Period: <button class="nb" type="button" data-p="0">2021–2040</button><button class="nb" type="button" data-p="1">2041–2060</button><button class="nb on" type="button" data-p="2">2081–2100</button></div>
  <div class="wrap"><canvas id="c4"></canvas></div></div>
 <ul id="ar6-read"></ul>
-<p class="sub">IPCC Sixth Assessment Report, Working Group I, Summary for Policymakers, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): best estimate and very likely range (90% chance the outcome falls inside) of the 20-year average global surface temperature, relative to 1850–1900. The IPCC combined the CMIP6 models with observed warming and other evidence, so these ranges are narrower and less hot than the raw model spread. Current-policies and pledges estimates: UNEP Emissions Gap Report 2025 (<a href="https://www.unep.org/resources/emissions-gap-report-2025" target="_blank" rel="noopener">unep.org</a>). "Long-term level now": the straight-line trend through the last 30 complete years of ERA5, read off at its last year (the same method as the air temperature page).</p>
+<p class="sub">IPCC Sixth Assessment Report, Working Group I, Summary for Policymakers, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): best estimate and very likely range (90% chance the outcome falls inside) of the 20-year average global surface temperature, relative to 1850–1900. The lines to 2100 are the same assessment year by year, from IPCC AR6 Chapter 4 (Lee et al. 2021; files in <a href="https://github.com/chrisroadmap/ar6" target="_blank" rel="noopener">Chris Smith's AR6 repository</a>), each point a 20-year average plotted at the middle of its 20 years, shifted from 1995–2014 to 1850–1900 with the IPCC's 0.85 °C; the shaded ranges (shown for the low and high scenarios, as in the IPCC's own figure) can differ from the table by up to 0.1 °C. The measured line is the 20-year average of ERA5, plotted the same way. The IPCC combined the CMIP6 models with observed warming and other evidence, so these ranges are narrower and less hot than the raw model spread. Current-policies and pledges estimates: UNEP Emissions Gap Report 2025 (<a href="https://www.unep.org/resources/emissions-gap-report-2025" target="_blank" rel="noopener">unep.org</a>). "Long-term level now": the straight-line trend through the last 30 complete years of ERA5, read off at its last year (the same method as the air temperature page).</p>
 </section>
 
 <section id="cb-s" class="hide">
@@ -238,6 +239,8 @@ function ar6(D,E){
   [f2(now)+' °C',`long-term warming level now (measured trend, end of ${E.last})`]]);
  list('ar6-read',[
   `The IPCC's scenarios run from very low emissions (SSP1-1.9: CO₂ reaches net zero around 2050) to very high (SSP5-8.5: emissions roughly double by 2050). They are "what if" pathways, not predictions of which one the world will follow.`,
+  (()=>{const S=D.ar6_series,i=S.mid_year.indexOf(E.Lm.x),c=i<0?null:S.scenarios['SSP2-4.5'].mid[i];
+   return `The lines are 20-year averages, the measure the Paris limits refer to. Measured, the 20-year average for ${E.Y[E.Y.length-20]}–${E.last} is ${f2(E.Lm.y)} °C`+(c==null?'.':`; the IPCC's central estimate for the same 20 years was ${f2(c)} °C, so ${Math.abs(E.Lm.y-c)<0.05?'warming so far is right on the assessed path':E.Lm.y>c?'warming so far is running ahead of it':'warming so far is running behind it'}. The IPCC used measurements up to about 2020 in its estimate, so only the years since then are a true test.`)})(),
   `In 2021–2040 all five reach about 1.5 °C: that much warming is already locked in by what has been emitted. After that the scenarios split, and by 2081–2100 they range from ${f1(A.scenarios['SSP1-1.9'][2][0])} to ${f1(A.scenarios['SSP5-8.5'][2][0])} °C (best estimates). The difference is made by emissions in the coming decades.`,
   `With the policies in place today, UNEP estimates about ${f1(U.current_policies)} °C by 2100, close to the intermediate scenario SSP2-4.5. Under the very-low scenario, warming peaks around mid-century and then slowly declines; under the low one it levels off; in the other three it is still rising in 2100. Warming stops only when net CO₂ emissions reach zero.`]);
  show('ar6-s');
@@ -254,6 +257,25 @@ function ar6(D,E){
  const set=p=>{per=p;ch.data.datasets[0].data=K.map(k=>A.scenarios[k][p][0]);ch.data.datasets[1].data=K.map(k=>[A.scenarios[k][p][1],A.scenarios[k][p][2]]);
   $('t4').textContent=`IPCC projections: global warming in ${A.periods[p]} by emissions scenario (°C above 1850–1900; best estimate and very likely range)`;ch.update()};
  set(2);sel('psw',d=>set(+d.p));ready('a',ch)}
+
+// ---- 4b. the same assessment year by year, to 2100: 20-year averages, with the measured 20-year average
+function ar6Lines(D,E){
+ const A=D.ar6_series,X=A.mid_year,K=Object.keys(A.scenarios),col=k=>SSPC[k][THEME.dark?1:0];
+ const M=E.Y.filter(y=>y-19>=E.Y[0]).map(y=>({x:y-9.5,y:mean(E.Y.filter(z=>z>y-20&&z<=y).map(z=>E.A[z]))})),Lm=M[M.length-1];
+ const P=E.Y.filter(y=>y>=1980).map(y=>({x:y,y:E.A[y]}));
+ const band=k=>[{label:k+' range',data:X.map((x,i)=>({x,y:A.scenarios[k].hi[i]})),borderWidth:0,pointRadius:0,fill:'+1',backgroundColor:rgba(col(k),.16),order:4},
+  {label:k+' range ',data:X.map((x,i)=>({x,y:A.scenarios[k].lo[i]})),borderWidth:0,pointRadius:0,fill:false,order:4}];
+ const ds=[{label:'Measured, 20-year average (ERA5)',data:M.filter(p=>p.x>=1980),borderColor:OBS,backgroundColor:OBS,borderWidth:3,pointRadius:0,order:0},
+  {label:'Measured, single years',data:P,showLine:false,borderColor:rgba(OBS,.55),backgroundColor:rgba(OBS,.55),pointRadius:2,order:0},
+  ...K.map(k=>({label:k+' ('+SSPN[k]+')',data:X.map((x,i)=>({x,y:A.scenarios[k].mid[i]})),borderColor:col(k),backgroundColor:col(k),borderWidth:2.2,borderDash:[6,4],pointRadius:0,order:1})),
+  ...band('SSP1-2.6'),...band('SSP3-7.0')];
+ $('t6').textContent=`IPCC projections to 2100 by emissions scenario: 20-year averages (°C above 1850–1900)`;
+ ready('l',new Chart($('c6'),{type:'line',plugins:[hlines([[1.5,'1.5 °C',PARIS,true],[2,'2 °C',PARIS,true]])],data:{datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>!/range/.test(i.text)}},tooltip:{filter:i=>!/range/.test(i.dataset.label),
+    callbacks:{title:t=>{const x=t[0].parsed.x;return x%1?`20 years ${x-9.5}–${x+9.5}`:String(x)},label:c=>c.dataset.label+': '+f2(c.parsed.y)+' °C'}}},
+   scales:{x:{type:'linear',min:1980,max:2100,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{min:0,max:5,title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}));
+ return Lm}
 
 // ---- 5. remaining carbon budget
 function budget(D){
@@ -292,8 +314,8 @@ function wmo(D){
 
 Promise.allSettled([
  Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse)])
-  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>cmip(M,E),()=>ar6(D,E),()=>budget(D),()=>wmo(D)],bad=[];
+  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
-$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
+$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
 </script></main></body></html>
