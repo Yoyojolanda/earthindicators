@@ -149,6 +149,9 @@ function oldModels(O,E){
  list('old-read',[
   `The study counts 17 projections, and 10 of them warmed at a rate that matched the measurements within the uncertainty. Its data include all three of Hansen's 1988 scenarios, so the chart shows ${P.length} bars, with the study's verdict for each (${nOK} matched).`,
   `The misses go both ways. ${lo.label} expected almost no warming (${f2(lo.rate)} °C per decade; they assumed air pollution would keep cooling the planet), while ${hi.label} projected ${f2(hi.rate)} °C per decade. Projections were not consistently "alarmist".`,
+  (()=>{const R=['far_ebm_best','sar_ebm_best','tar_ebm_best','ar4_mmm_best'].map(id=>{const i=P.findIndex(p=>p.id===id);return {p:P[i],o:obs[i]}}).filter(r=>r.p);
+    const d=r=>`${r.p.pub}: ${f2(r.p.rate)} projected vs ${f2(r.o)} measured, ${Math.round(Math.abs(r.p.rate-r.o)/r.o*100)}% ${r.p.rate>r.o?'too high':'too low'}`;
+    return `The IPCC's own reports: ${R.map(d).join('; ')} (°C per decade). Only the first ran too warm; the later ones projected less warming than was measured. The study still counts them as matches because their test periods are short (the 2007 report's covers just ${R[3]?R[3].p.to-R[3].p.from+1:'a few'} years, ending on the 2015–16 El Niño), so the uncertainty is large. ERA5 also shows somewhat faster warming than the surface records the study used, mainly because it covers the fast-warming Arctic in full.`})(),
   `Most misses come from the emissions, not the physics: a projection has to guess how much greenhouse gas the world will add. When the study compared each model's warming with the rise in greenhouse gases that actually happened, 14 of 17 matched. Models from the 1970s, run on computers far weaker than a phone, already got the warming broadly right.`,
   `The oldest projections here end in 2000; the latest test periods end in 2017, the last year the study could use.`]);
  show('old-s');
