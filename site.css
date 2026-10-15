@@ -197,10 +197,10 @@ html.srch-on{overflow:hidden}
 @media (min-width:861px){.dd{position:static}.dd-list{top:100%;right:0}.site-head.mini .dd-list{top:calc(100% + 8px)}}
 /* on computers with a mouse, the dropdown also opens on hover (touch screens keep tap-to-open) */
 @media (hover:hover) and (min-width:861px){
- /* the panel stays rendered but hidden, so closing can wait: after the mouse leaves it stays for 0.5 s (fading out in the
+ /* the panel stays rendered but hidden, so closing can wait: after the mouse leaves it stays for 0.6 s (fading out in the
     last 0.15 s), long enough to cut the corner diagonally to the panel; it opens at once. A hidden panel can't be hovered,
     so passing over the empty spot where it would be doesn't open it. */
- .dd-list{display:grid;visibility:hidden;opacity:0;transition:opacity .15s .45s,visibility 0s .5s}
+ .dd-list{display:grid;visibility:hidden;opacity:0;transition:opacity .15s .45s,visibility 0s .6s}
  .dd:hover .dd-list,.dd:focus-within .dd-list,.dd.open .dd-list{visibility:visible;opacity:1;transition-delay:0s}
  .dd:hover .dd-btn svg{transform:rotate(180deg)}
  .dd-btn{position:relative}
