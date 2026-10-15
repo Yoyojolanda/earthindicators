@@ -13,7 +13,7 @@ publishes a new edition, e.g. the yearly carbon-budget update each June). It wri
 
 Run from the repo root: python scripts/build_models.py
 """
-import csv, io, json, statistics, urllib.request
+import csv, io, json, os, statistics, urllib.request
 
 RAW = "https://raw.githubusercontent.com/"
 OLD = RAW + "hausfath/OldModels/master/"
@@ -176,25 +176,40 @@ AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, �
 }
 
 
+# a few values from Hansen's table (landocean_1880_full.txt, °C vs 1880-1920), to check the conversion from NASA's file
+H_CHECK = {"1880-01": 0.14, "1880-02": 0.04, "1880-03": 0.19, "1881-04": 0.32, "1882-01": 0.49,
+           "2023-09": 1.73, "2024-02": 1.72, "2024-07": 1.44, "2025-01": 1.70, "2025-07": 1.26}
+
+
 def hansen_temp():
-    # Hansen's own temperature table: NASA GISTEMP v4 land-ocean index relative to 1880-1920, monthly, as maintained by
-    # J. Hansen's group at Columbia. Used to test Hansen et al. 2025 in its own baseline. Written as month,anomaly.
-    req = urllib.request.Request("https://www.columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt",
+    # Hansen's temperature measure: NASA GISTEMP v4 land-ocean index relative to 1880-1920 (his group's table at
+    # columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt). That server refuses scripted downloads,
+    # so the same numbers are made from NASA's own file (relative to 1951-1980) by subtracting the 1880-1920 average,
+    # and checked against values from Hansen's table. Written as month,anomaly.
+    req = urllib.request.Request("https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv",
                                  headers={"User-Agent": "Mozilla/5.0 (earthindicators.org data update)"})
     text = urllib.request.urlopen(req, timeout=60).read().decode("utf-8", "replace")
-    assert "1880-1920" in text.splitlines()[0], text[:200]
-    out = []
+    M = {}
     for line in text.splitlines():
-        p = line.split()
-        if len(p) >= 13 and p[0].isdigit() and len(p[0]) == 4:
+        p = line.split(",")
+        if p[0].isdigit() and len(p[0]) == 4:
             for k, v in enumerate(p[1:13]):
-                if "*" not in v and "(" not in v:
-                    out.append((f"{p[0]}-{k + 1:02d}", float(v)))
-    assert len(out) > 1700 and out[0][0] == "1880-01", (len(out), out[:1])
+                if v.strip() not in ("***", ""):
+                    M[f"{p[0]}-{k + 1:02d}"] = float(v)
+    base = [M[m] for m in M if 1880 <= int(m[:4]) <= 1920]
+    one = sum(base) / len(base)                                         # one shift for all months
+    per = {k: sum(M[m] for m in M if 1880 <= int(m[:4]) <= 1920 and m[5:] == f"{k:02d}") / 41 for k in range(1, 13)}
+    errs = {"one shift": max(abs(M[m] - one - v) for m, v in H_CHECK.items()),
+            "per month": max(abs(M[m] - per[int(m[5:])] - v) for m, v in H_CHECK.items())}
+    os.makedirs("reference", exist_ok=True)
+    open("reference/hansen_temp_check.txt", "w").write(f"largest difference from Hansen's table: {errs}\nlast month {max(M)}\n")
+    way = min(errs, key=errs.get)
+    assert errs[way] <= 0.015, errs                                     # tables are rounded to 0.01
+    out = [(m, M[m] - (one if way == "one shift" else per[int(m[5:])])) for m in sorted(M)]
     with open("data/models_hansen_temp.csv", "w") as f:
-        f.write("# NASA GISTEMP v4 land-ocean index, °C relative to 1880-1920, from https://www.columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt\n")
-        f.write("month,anom\n" + "".join(f"{m},{v:.2f}\n" for m, v in out))
-    print("wrote data/models_hansen_temp.csv through", out[-1][0])
+        f.write(f"# NASA GISTEMP v4 land-ocean index, °C relative to 1880-1920 ({way}), from https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv; matches Hansen's table landocean_1880_full.txt within {errs[way]:.3f} °C\n")
+        f.write("month,anom\n" + "".join(f"{m},{v:.3f}\n" for m, v in out))
+    print("wrote data/models_hansen_temp.csv through", out[-1][0], errs)
 
 
 def main():
