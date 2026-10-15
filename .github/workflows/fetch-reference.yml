@@ -1,0 +1,39 @@
+name: Fetch a reference file (for research)
+
+# Hand-started: downloads one web page or file into reference/fetched/ so it can be read from the repository.
+# Used when a source cannot be reached directly while preparing a page. Nothing on the site uses these files.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Address of the page or file"
+        required: true
+      name:
+        description: "File name to save it as (letters, digits, dots, dashes)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download
+        env:
+          URL: ${{ github.event.inputs.url }}
+          NAME: ${{ github.event.inputs.name }}
+        run: |
+          case "$NAME" in *[!A-Za-z0-9._-]*|"") echo "bad file name"; exit 1;; esac
+          mkdir -p reference/fetched
+          curl -sSL --max-time 120 --max-filesize 50000000 -A "Mozilla/5.0 (earthindicators.org research)" -o "reference/fetched/$NAME" "$URL"
+          ls -la reference/fetched/
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add reference/fetched
+          git diff --cached --quiet || (git commit -m "Fetch reference file $NAME" && git pull --rebase && git push)
+        env:
+          NAME: ${{ github.event.inputs.name }}
