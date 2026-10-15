@@ -418,8 +418,8 @@ function ghgPaths(D,W){
  // earlier required paths (grey): each report's own percentage change, applied to this series' value in its base year
  const OP=(D.ghg_old_paths||[]).map((o,n)=>{const e0=at(o.base);let pts=[{x:o.base,y:e0}];
   if(o.points)o.points.forEach(([y,pc])=>pts.push({x:y,y:e0*(1+pc/100)}));else for(let y=o.base+1;y<=o.to;y++)pts.push({x:y,y:e0*Math.pow(1+o.rate/100,y-o.base)});
-  // each earlier path its own dash pattern and end marker; colour by target (fainter versions of the current IPCC paths)
-  const c=rgba(o.target==='1.5 °C'?PARIS:'#e08a1e',THEME.dark?.75:.6),ST=[[[2,3],'circle'],[[9,3,2,3],'triangle'],[[12,5],'rect']][n%3];
+  // earlier paths all grey (the chart is busy enough); each has its own dash pattern and end marker
+  const c=THEME.mut,ST=[[[2,3],'circle'],[[9,3,2,3],'triangle'],[[12,5],'rect']][n%3];
   return {label:`${o.src.replace(/ Emissions Gap Report/,'')}, required for ${o.target}`,old:o,data:pts,borderColor:c,backgroundColor:c,borderWidth:2,borderDash:ST[0],
    pointStyle:ST[1],pointRadius:pts.map((q,i)=>i===pts.length-1?4.5:0),pointHoverRadius:5,fill:false,order:2}});
  // where it is heading: the last ten years' straight-line trend, extended to 2035 (a calculation, not a forecast); and UNEP's pledge estimate
