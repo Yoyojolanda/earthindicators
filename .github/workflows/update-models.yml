@@ -1,9 +1,12 @@
 name: Update models data (climate models page)
 
-# The models page uses published archives that change once a year at most (carbon budget each June, WMO outlook each
-# May, UNEP each November), so this runs by hand from the Actions tab. scripts/build_models.py downloads the sources,
+# The models page uses published archives that change once a year at most (IGCC each June, WMO outlook each May, UNEP
+# each November). Runs monthly and by hand from the Actions tab. If a source changes its format, the checks in the
+# script fail and the saved data stays as it is. EDGAR, UNEP and WMO numbers are entered in the script by hand. scripts/build_models.py downloads the sources,
 # checks them (e.g. the IPCC series against Table SPM.1) and writes data/models_*.json/csv.
 on:
+  schedule:
+    - cron: "40 5 3 * *"      # monthly (3rd, 05:40 UTC): picks up new IGCC releases (usually June) on its own
   workflow_dispatch:
 
 permissions:

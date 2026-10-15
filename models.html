@@ -125,7 +125,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="box" data-nav="The cut, year by year"><h2 id="t-wt">The cut needed for 2 °C, year by year</h2><table class="score"><tbody id="wt-tab"></tbody></table><p class="sub" id="wt-tn" style="margin:8px 0 0"></p></div>
 <div class="box"><h2 id="t9"></h2><div class="wrap" style="--h:520px;--ph:420px"><canvas id="c9"></canvas></div></div>
 <ul id="wt-read"></ul>
-<p class="sub">Year by year: the cut from the latest measured year to the IPCC's 2030 level for 2 °C (see the chart above), spread evenly over 2026–2030. Comparisons: greenhouse gas emissions of countries in 2024 from EDGAR (EU Joint Research Centre, <a href="https://edgar.jrc.ec.europa.eu/report_2025" target="_blank" rel="noopener">2025 report</a>, excluding land use); CO₂ from burning coal, oil and natural gas in 2024 from the Global Carbon Project (as on the <a href="slow.html">slow signals page</a>); CO₂ from deforestation and other land use from the Indicators of Global Climate Change 2025; methane from oil, gas and coal: at least 120 million tonnes a year (IEA Global Methane Tracker 2025), counted as CO₂-equivalent with the IPCC's factor of 29.8. Options: IPCC AR6 Working Group III, Summary for Policymakers, Figure SPM.7 (<a href="https://www.ipcc.ch/report/ar6/wg3/figures/summary-for-policymakers/figure-spm-7/" target="_blank" rel="noopener">ipcc.ch</a>), the estimated potential of each option in 2030 and its net lifetime cost per tonne of CO₂-equivalent avoided. The IPCC publishes these only as a chart, so the values were read from the figure in its PDF (checked against the report's own totals; see the methods page).</p>
+<p class="sub">Year by year: the cut from the latest measured year to the IPCC's 2030 level for 2 °C (see the chart above), spread evenly over the years to 2030, starting from EDGAR's first estimate for 2025. Comparisons: greenhouse gas emissions of countries in 2025 from EDGAR (EU Joint Research Centre, <a href="https://edgar.jrc.ec.europa.eu/report_2026" target="_blank" rel="noopener">2026 report</a>, excluding land use); CO₂ from burning coal, oil and natural gas in 2024 from the Global Carbon Project (as on the <a href="slow.html">slow signals page</a>); CO₂ from deforestation and other land use from the Indicators of Global Climate Change 2025; methane from oil, gas and coal: at least 120 million tonnes a year (IEA Global Methane Tracker 2025), counted as CO₂-equivalent with the IPCC's factor of 29.8. Options: IPCC AR6 Working Group III, Summary for Policymakers, Figure SPM.7 (<a href="https://www.ipcc.ch/report/ar6/wg3/figures/summary-for-policymakers/figure-spm-7/" target="_blank" rel="noopener">ipcc.ch</a>), the estimated potential of each option in 2030 and its net lifetime cost per tonne of CO₂-equivalent avoided. The IPCC publishes these only as a chart, so the values were read from the figure in its PDF (checked against the report's own totals; see the methods page).</p>
 </section>
 
 <section id="cb-s" class="hide">
@@ -390,16 +390,18 @@ function ar6Lines(D,E){
  return Lm}
 
 // ---- 4c. greenhouse gas emissions against the IPCC's required paths
-function ghgPaths(D){
+function ghgPaths(D,W){
  const G=D.ghg,P=D.ipcc_ghg_paths,Y=G.years,K=[['co2_fossil','CO₂ from fossil fuels and industry','#6b6862'],['co2_land','CO₂ from land use (deforestation)','#9a7650'],['ch4','Methane','#4f81b0'],['n2o','Nitrous oxide','#b9ad9c'],['fgas','Fluorinated gases','#d0a43a']];
  const tot=Y.map((y,i)=>K.reduce((s,[k])=>s+(G[k][i]||0),0)),at=y=>tot[Y.indexOf(y)],L=Y[Y.length-1],b=at(P.base);
  const path=(key,y)=>{const X=[P.base,...P.years],V=[0,...P[key].mid];if(y<=P.base)return b;for(let j=1;j<X.length;j++)if(y<=X[j])return b*(1-(V[j-1]+(V[j]-V[j-1])*(y-X[j-1])/(X[j]-X[j-1]))/100);return b*(1-V[V.length-1]/100)};
+ // first estimate for the year after the IGCC series ends: its last total plus EDGAR's change (shown until IGCC publishes that year)
+ const WC=W&&W.world_change,EST=WC&&WC.year===L+1?{x:WC.year,y:at(L)*(1+WC.pct/100)}:null;
  const p15=path('1.5',L),p2=path('2',L),ch=(at(L)/b-1)*100,ch15=(p15/b-1)*100,i30=P.years.indexOf(2030);
  cards('gp-cards',[[f1(at(L))+' Gt',`greenhouse gases emitted in ${L} (CO₂-equivalent)`],[f1(p15)+' Gt',`where ${L} should have been on the IPCC's 1.5 °C path`],
   [f1(p2)+' Gt',`where ${L} should have been on the 2 °C path`],[(ch>=0?'+':'−')+Math.abs(ch).toFixed(0)+'%',`change since ${P.base}, instead of ${Math.abs(ch15).toFixed(0)}% down for 1.5 °C`]]);
  $('t8').textContent=`Greenhouse gas emissions ${Y[0]}–${L}, and the IPCC's required paths from ${P.base} (billion metric tons of CO₂-equivalent a year)`;
  list('gp-read',[
-  `In ${L} the world emitted ${f1(at(L))} billion metric tons of greenhouse gases (CO₂-equivalent), ${ch>=0?'more':'less'} than in ${P.base} (${f1(b)}). On the IPCC's 1.5 °C path it would have been about ${f1(p15)} by now; on the 2 °C path about ${f1(p2)}. So yearly emissions are now ${f1(at(L)-p15)} billion metric tons above the 1.5 °C path and ${f1(at(L)-p2)} above the 2 °C path.`,
+  `In ${L} the world emitted ${f1(at(L))} billion metric tons of greenhouse gases (CO₂-equivalent), ${ch>=0?'more':'less'} than in ${P.base} (${f1(b)}). On the IPCC's 1.5 °C path it would have been about ${f1(p15)} by now; on the 2 °C path about ${f1(p2)}. So yearly emissions are now ${f1(at(L)-p15)} billion metric tons above the 1.5 °C path and ${f1(at(L)-p2)} above the 2 °C path.`+(EST?` The first figures for ${EST.x} (EDGAR, September 2026) show another rise, of about ${Math.abs(WC.pct).toFixed(1)}% (open circle: about ${f1(EST.y)}).`:''),
   `To get back onto the 1.5 °C path, yearly emissions would have to fall to about ${f1(b*(1-P['1.5'].mid[i30]/100))} by 2030 (−${P['1.5'].mid[i30]}% from ${P.base}); for 2 °C, to about ${f1(b*(1-P['2'].mid[i30]/100))} (−${P['2'].mid[i30]}%): ${f1(at(L)-b*(1-P['2'].mid[i30]/100))} billion metric tons a year less than in ${L}, which means about ${f1((at(L)-b*(1-P['2'].mid[i30]/100))/(2030-L))} less each year, ${2030-L} years in a row. Since 1970, emissions have never fallen by more than about 2.3 billion metric tons in a year; that was in 2020, during COVID, and they rose again the year after.`,
   (()=>{const O=D.ghg_old_paths||[],o10=O.find(o=>o.made===2010),o19=O.find(o=>o.made===2019&&o.target==='2 °C');if(!o10||!o19)return '';
    const pa=(a,b,n)=>(Math.pow(b/a,1/n)-1)*100,r10=pa(at(o10.base),at(o10.base)*(1+o10.points[0][1]/100),o10.points[0][0]-o10.base),t30=path('2',2030),rNow=pa(at(L),t30,2030-L);
@@ -421,14 +423,16 @@ function ghgPaths(D){
  const TR={label:`Trend of ${TY[0]}–${L}, extended (a calculation, not a forecast)`,trend:true,data:[{x:L,y:ext(L)},{x:2035,y:ext(2035)}],borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,borderDash:[2,4],pointRadius:0,fill:false,order:1};
  const PL=D.ghg_pledges,PLv=PL?at(PL.base)*(1+PL.change/100):null;
  const PD=PL?{label:`If all pledges are delivered (${PL.src.replace('Emissions Gap Report','UNEP')})`,pledge:true,data:[{x:PL.year,y:PLv}],showLine:false,pointStyle:'triangle',pointRadius:7,borderColor:'#2e7d32',backgroundColor:hatch('#2e7d32',.3),borderWidth:2,order:0}:null;
+ const ES=EST?{label:`${EST.x}, first estimate (${L} total + EDGAR's ${WC.pct>=0?'+':'−'}${Math.abs(WC.pct).toFixed(1)}%)`,est:true,data:[EST],showLine:false,pointStyle:'circle',pointRadius:5,pointHoverRadius:6,borderColor:THEME.ink,backgroundColor:THEME.card,borderWidth:2,order:0}:null;
  const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0};
- ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,pd('1.5',PARIS),pd('2','#e08a1e'),...OP,TR,...(PD?[PD]:[]),...ds]},
+ ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,...(ES?[ES]:[]),pd('1.5',PARIS),pd('2','#e08a1e'),...OP,TR,...(PD?[PD]:[]),...ds]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
    plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
     label:c=>{const d=c.dataset,y=c.parsed.y;
      if(d.kind){const j=P.years.indexOf(c.parsed.x);return `${d.kind} °C path (IPCC 2023): ${f1(y)} Gt`+(j>=0?` (−${P[d.kind].mid[j]}%, range −${P[d.kind].lo[j]} to −${P[d.kind].hi[j]}%)`:'')}
      if(d.old)return `${d.old.src}, ${d.old.target}: ${f1(y)} Gt (${d.old.note})`;
      if(d.trend)return `Trend extended: ${f1(y)} Gt`;
+     if(d.est)return `${c.parsed.x}, first estimate: ${f1(y)} Gt (${L} total + EDGAR's change; the full figure follows in June ${c.parsed.x+2})`;
      if(d.pledge)return `All pledges delivered, ${PL.year}: ${f1(y)} Gt (−${Math.abs(PL.change)}% from ${PL.base}; ${PL.note})`;
      const v=c.raw&&c.raw.v!==undefined?c.raw.v:y;return d.label+': '+(v==null?'–':f1(v)+' Gt')}}}},
    scales:{x:{type:'linear',min:Y[0],max:2050,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'Billion metric tons CO₂-eq a year'},grid:{color:THEME.grid}}}}}))}
@@ -436,7 +440,8 @@ function ghgPaths(D){
 // ---- 4d. what it would take: the cut year by year in familiar terms, and the IPCC's options
 function whatItTakes(D,W,fc){
  const G=D.ghg,P=D.ipcc_ghg_paths,Y=G.years,L=Y[Y.length-1],K=['co2_fossil','co2_land','ch4','n2o','fgas'],tot=y=>K.reduce((s,k)=>s+(G[k][Y.indexOf(y)]||0),0);
- const b=tot(P.base),t30=b*(1-P['2'].mid[P.years.indexOf(2030)]/100),cut=tot(L)-t30,steps=2030-2025,per=cut/steps;
+ const WC=W.world_change,S0=WC&&WC.year===L+1?WC.year:L,start=S0>L?tot(L)*(1+WC.pct/100):tot(L);
+ const b=tot(P.base),t30=b*(1-P['2'].mid[P.years.indexOf(2030)]/100),cut=start-t30,steps=2030-S0,per=cut/steps;
  // reference amounts, each with its source year
  const F=fc.trim().split('\n').slice(1).map(l=>l.split(',')),fr=F[F.length-1],fy=fr[0],E=Object.fromEntries(W.emitters.list),M=W.methane_fossil;
  const poss=n=>n.endsWith('s')?n+"'":n+"'s",R=[...W.emitters.list.map(([n,v])=>[`all of ${poss(n)} greenhouse gas emissions`,v]),
@@ -447,14 +452,14 @@ function whatItTakes(D,W,fc){
   [`all CO₂ from burning coal worldwide`,+fr[2]/1000],[`all CO₂ from burning oil worldwide`,+fr[3]/1000],[`all CO₂ from burning natural gas worldwide`,+fr[4]/1000],
   [`all CO₂ from deforestation and other land use worldwide`,G.co2_land[Y.length-1]],[`all methane escaping from oil, gas and coal (as CO₂-equivalent)`,M.mt*M.gwp100/1000]];
  const used=new Set(),pick=v=>{let best=null;R.forEach((r,i)=>{if(used.has(i))return;const d=Math.abs(Math.log(r[1]/v));if(!best||d<best.d)best={i,d,r}});used.add(best.i);return best.r};
- const rows=[];for(let k=1;k<=steps;k++){const v=per*k,[n,rv]=pick(v),q=rv/v;rows.push([2025+k,v,`${Math.abs(q-1)<=0.08?'About as much as':q<1?'More than':'Almost as much as'} ${n} (${f1(rv)})`])}
- cards('wt-cards',[[f1(cut)+' Gt',`less every year by 2030 than in ${L}, to get onto the IPCC's 2 °C path`],[f1(per)+' Gt',`less each year, ${2025+1} to 2030, five years in a row`]]);
- $('wt-tab').innerHTML=`<tr><td><b>Year</b></td><td class="st"><b>Lower than ${L}</b></td></tr>`+rows.map(([y,v,t])=>`<tr><td><b>${y}</b><span class="r">${t}</span></td><td class="st">${f1(v)} Gt</td></tr>`).join('');
- $('wt-tn').textContent=`Yearly emissions in billions of metric tons of CO₂-equivalent. ${L} is the latest year measured in full; 2025 is over, and fossil CO₂ is estimated to have risen again (about +0.8%, IGCC), so the table is generous: it assumes 2025 stayed at the ${L} level. Each row is the total cut by then compared with ${L}, so ${2025+steps} means the whole cut.`;
+ const rows=[];for(let k=1;k<=steps;k++){const v=per*k,[n,rv]=pick(v),q=rv/v;rows.push([S0+k,v,`${Math.abs(q-1)<=0.08?'About as much as':q<1?'More than':'Almost as much as'} ${n} (${f1(rv)})`])}
+ cards('wt-cards',[[f1(cut)+' Gt',`less every year by 2030 than in ${S0}, to get onto the IPCC's 2 °C path`],[f1(per)+' Gt',`less each year, ${S0+1} to 2030, ${steps} years in a row`]]);
+ $('wt-tab').innerHTML=`<tr><td><b>Year</b></td><td class="st"><b>Lower than ${S0}</b></td></tr>`+rows.map(([y,v,t])=>`<tr><td><b>${y}</b><span class="r">${t}</span></td><td class="st">${f1(v)} Gt</td></tr>`).join('');
+ $('wt-tn').textContent=`Yearly emissions in billions of metric tons of CO₂-equivalent. `+(S0>L?`Starting point: ${S0}, about ${f1(start)} (the ${L} total plus EDGAR's first estimate of the change, ${WC.pct>=0?'+':'−'}${Math.abs(WC.pct).toFixed(1)}%). `:'')+`Each row is the total cut by then compared with ${S0}, so ${S0+steps} means the whole cut. Country comparisons: ${W.emitters.year} emissions.`;
  // the IPCC's options
  const O=W.options.list,B=[['below0','Cheaper than the current way','#5390c8'],['0-20','0–20 $/t','#f7aa00'],['20-50','20–50 $/t','#e5733b'],['50-100','50–100 $/t','#de4b16'],['100-200','100–200 $/t','#9e2b1c'],['na','Cost not given','#adada9']];
  const S=k=>O.reduce((s,o)=>s+(o.bands[k]||0),0),cheap=S('below0'),u20=cheap+S('0-20'),u100=u20+S('20-50')+S('50-100');
- cards('wt-cards',[[f1(cut)+' Gt',`less every year by 2030 than in ${L}, to get onto the IPCC's 2 °C path`],[f1(per)+' Gt',`less each year, ${2025+1} to 2030, five years in a row`],
+ cards('wt-cards',[[f1(cut)+' Gt',`less every year by 2030 than in ${S0}, to get onto the IPCC's 2 °C path`],[f1(per)+' Gt',`less each year, ${S0+1} to 2030, ${steps} years in a row`],
   [f1(u100)+' Gt',`a year by 2030 from options costing up to $100 a tonne (IPCC)`],[f1(cheap)+' Gt',`of that from options cheaper than the current way`]]);
  const top=[...O].sort((a,b)=>b.total-a.total).slice(0,14),short=n=>n.replace(' and other ecosystems','').replace('Carbon sequestration in agriculture','Storing carbon in farm soils').replace('Reduced conversion of forests','Stopping deforestation').replace('Ecosystem restoration, afforestation, reforestation','Restoring forests and ecosystems').replace('Fuel switching (electr, nat. gas, bio-energy, H2)','Industry: switching fuels').replace('Shift to balanced, sustainable healthy diets','Healthier diets, less meat').replace('Reduce emission of fluorinated gas','Cutting fluorinated gases').replace('Reduce CH4 emission from oil and gas','Fixing methane leaks, oil and gas').replace('Improved sustainable forest management','Better forest management').replace('New buildings with high energy performance','Energy-efficient new buildings').replace('Energy efficiency','Industry: energy efficiency').replace('Material efficiency','Industry: material efficiency');
  $('t9').textContent=`The IPCC's largest options for cutting emissions by 2030, by cost per tonne avoided (billion metric tons CO₂-eq a year)`;
@@ -505,7 +510,7 @@ function wmo(D){
 
 Promise.allSettled([
  Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse),get('models_hansen_temp.csv'),get('models_whatittakes.json').then(JSON.parse),get('fossil_co2_global.csv')])
-  .then(([O,E,M,D,HT,W,FC])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E,HT,D),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>ghgPaths(D),()=>whatItTakes(D,W,FC),()=>budget(D),()=>wmo(D)],bad=[];
+  .then(([O,E,M,D,HT,W,FC])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E,HT,D),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>ghgPaths(D,W),()=>whatItTakes(D,W,FC),()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
 $('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.n,'t7',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.g,'t8',0],[C.w,'t9',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
