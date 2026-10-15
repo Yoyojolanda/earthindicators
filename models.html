@@ -64,7 +64,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
  <div class="seg" id="hsw">Show: <button class="nb on" type="button" data-m="t">Temperature</button><button class="nb" type="button" data-m="f">Greenhouse-gas forcing</button></div>
  <div class="wrap"><canvas id="c2"></canvas></div></div>
 <ul id="h88-read"></ul>
-<p class="sub">Scenarios from Hansen et al. (1988), <i>Global climate changes as forecast by Goddard Institute for Space Studies three-dimensional model</i>, Journal of Geophysical Research 93, 9341, as digitized by Hausfather et al. (2020). The model runs start in 1958 with the measured rise in greenhouse gases; the scenarios differ from 1988 on. To compare like with like, the measured ERA5 temperatures are shifted so that their 1958–1987 average matches scenario B's. Forcing is the extra energy that the added greenhouse gases trap, in watts per square meter, counted from 1958. Hansen's scenario forcings cover greenhouse gases only, so the measured line does too: well-mixed greenhouse gases from the Indicators of Global Climate Change 2025 (Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>), which use newer estimates of each gas's effect than were available in 1988.</p>
+<p class="sub">Scenarios from Hansen et al. (1988), <i>Global climate changes as forecast by Goddard Institute for Space Studies three-dimensional model</i>, Journal of Geophysical Research 93, 9341: temperatures 1958–2019, where the model runs end, as published by <a href="https://www.realclimate.org/index.php/archives/2018/06/30-years-after-hansens-testimony/" target="_blank" rel="noopener">RealClimate</a>; forcing 1958–2017 as digitized by Hausfather et al. (2020). The model runs start in 1958 with the measured rise in greenhouse gases; the scenarios differ from 1988 on. To compare like with like, the measured ERA5 temperatures are shifted so that their 1958–1987 average matches scenario B's. Forcing is the extra energy that the added greenhouse gases trap, in watts per square meter, counted from 1958. Hansen's scenario forcings cover greenhouse gases only, so the measured line does too: well-mixed greenhouse gases from the Indicators of Global Climate Change 2025 (Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>), which use newer estimates of each gas's effect than were available in 1988.</p>
 </section>
 
 <section id="cm-s" class="hide">
@@ -168,21 +168,21 @@ function oldModels(O,E){
 
 // ---- 2. Hansen 1988: scenarios A, B, C against measured temperature and greenhouse-gas forcing
 function hansen(O,E){
- const H=O.hansen1988,G=O.ghg_forcing,yrs=H.years,iy=y=>yrs.indexOf(y),last=E.last;
+ const H=O.hansen1988,G=O.ghg_forcing,yrs=H.years,fy=H.F_years,iy=y=>yrs.indexOf(y),fi=y=>fy.indexOf(y),last=E.last,yE=yrs[yrs.length-1],fE=fy[fy.length-1];
  const bBase=mean(yrs.filter(y=>y<=1987).map(y=>H.B_T[iy(y)])),eBase=mean(yrs.filter(y=>y<=1987).map(y=>E.A[y]));
  const ET=E.Y.filter(y=>y>=1958).map(y=>({x:y,y:E.A[y]-eBase+bBase}));
  const rate=(s,a,b)=>{const X=yrs.filter(y=>y>=a&&y<=b);return slope(X,X.map(y=>s[iy(y)]))*10};
- const gF=y=>G.F[G.years.indexOf(y)],dG=gF(2017)-gF(1988),dB=H.B_F[iy(2017)]-H.B_F[iy(1988)],dC=H.C_F[iy(2017)]-H.C_F[iy(1988)];
- const rA=rate(H.A_T,1988,2017),rB=rate(H.B_T,1988,2017),rC=rate(H.C_T,1988,2017),rE=E.rate(1988,2017),rE2=E.rate(1988,last);
- cards('h88-cards',[[f2(rB)+' °C','per decade projected in scenario B, 1988–2017'],[f2(rE)+' °C',`per decade measured (ERA5), 1988–2017; ${f2(rE2)} °C to ${last}`],
-  [Math.round(dG/dB*100)+'%','of scenario B\'s rise in greenhouse-gas forcing actually happened, 1988–2017']]);
+ const gF=y=>G.F[G.years.indexOf(y)],dG=gF(fE)-gF(1988),dB=H.B_F[fi(fE)]-H.B_F[fi(1988)],dC=H.C_F[fi(fE)]-H.C_F[fi(1988)];
+ const rA=rate(H.A_T,1988,yE),rB=rate(H.B_T,1988,yE),rC=rate(H.C_T,1988,yE),rE=E.rate(1988,yE),rE2=E.rate(1988,last);
+ cards('h88-cards',[[f2(rB)+' °C',`per decade projected in scenario B, 1988–${yE}`],[f2(rE)+' °C',`per decade measured (ERA5), 1988–${yE}; ${f2(rE2)} °C to ${last}`],
+  [Math.round(dG/dB*100)+'%',`of scenario B's rise in greenhouse-gas forcing actually happened, 1988–${fE}`]]);
  list('h88-read',[
   `In June 1988, NASA scientist James Hansen told the US Senate that global warming had begun. His model ran three scenarios: A, with greenhouse gas emissions growing ever faster; B, with steady growth, which he called the most plausible; and C, with drastic cuts after 2000.`,
-  `From 1988 to 2017 the scenarios warmed by ${f2(rA)}, ${f2(rB)} and ${f2(rC)} °C per decade (A, B, C). Measured warming was ${f2(rE)} °C per decade: between B and C.`,
-  `The main reason: greenhouse gases rose more slowly than in scenario B. Their forcing went up ${f2(dG)} W/m² from 1988 to 2017, against ${f2(dB)} in scenario B and ${f2(dC)} in C. Methane leveled off for years in the 1990s and 2000s, and the 1987 Montreal Protocol phased out the CFCs that destroy the ozone layer, which are also strong greenhouse gases. Switch the chart to "Greenhouse-gas forcing" to see it.`,
+  `From 1988 to ${yE}, where Hansen's model runs end, the scenarios warmed by ${f2(rA)}, ${f2(rB)} and ${f2(rC)} °C per decade (A, B, C). Measured warming was ${f2(rE)} °C per decade: between B and C.`,
+  `The main reason: greenhouse gases rose more slowly than in scenario B. Their forcing went up ${f2(dG)} W/m² from 1988 to ${fE}, against ${f2(dB)} in scenario B and ${f2(dC)} in C. Methane leveled off for years in the 1990s and 2000s, and the 1987 Montreal Protocol phased out the CFCs that destroy the ozone layer, which are also strong greenhouse gases. Switch the chart to "Greenhouse-gas forcing" to see it.`,
   `Taking the real rise in greenhouse gases into account, the study found that Hansen's model warmed at a rate consistent with what happened. The emissions guess was too high, partly because the world acted on CFCs; the physics held up.`]);
  show('h88-s');
- const dsH=(k,l,c,w)=>({label:l,data:yrs.map((y,i)=>({x:y,y:H[k][i]})),borderColor:c,backgroundColor:c,borderWidth:w,borderDash:[6,4],pointRadius:0,order:1});
+ const dsH=(k,l,c,w)=>{const X=/_F$/.test(k)?fy:yrs;return {label:l,data:X.map((y,i)=>({x:y,y:H[k][i]})),borderColor:c,backgroundColor:c,borderWidth:w,borderDash:[6,4],pointRadius:0,order:1}};
  const sets={
   t:{title:`Hansen 1988 scenarios vs measured temperature, 1958–${last} (°C, aligned over 1958–1987)`,y:'°C (aligned over 1958–1987)',u:' °C',
    ds:[{label:'Measured (ERA5)',data:ET,borderColor:OBS,backgroundColor:OBS,borderWidth:2.5,pointRadius:2,order:0},

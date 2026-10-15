@@ -61,21 +61,37 @@ def old_models():
 
 
 def hansen():
+    # forcing (1958-2017): the Hausfather et al. digitization; temperature (1958-2019): RealClimate's file (Gavin
+    # Schmidt), which matches it to 2017 and adds 2018-2019, where Hansen's 1988 model runs end
     import openpyxl
     wb = openpyxl.load_workbook(io.BytesIO(get(OLD + "data/raw/model_temp_data/Model%20timeseries.xlsx")), data_only=True)
     ws = wb["Individual papers"]
-    head = [c.value for c in ws[1]]
-    col = {h: i for i, h in enumerate(head)}
-    S = {k: {} for k in ("A_T", "B_T", "C_T", "A_F", "B_F", "C_F")}
+    col = {h: i for i, h in enumerate(c.value for c in ws[1])}
+    F, T0 = {k: {} for k in "ABC"}, {k: {} for k in "ABC"}
     for row in ws.iter_rows(min_row=2, values_only=True):
         y = row[col["Year"]]
-        for k in S:
-            v = row[col["Hansen_1988_" + k]]
-            if isinstance(v, (int, float)) and 1958 <= y <= 2017:
-                S[k][y] = round(v, 4)
-    years = sorted(S["A_T"])
-    assert years[0] == 1958 and years[-1] == 2017 and len(years) == 60
-    return {"years": years, **{k: [S[k][y] for y in years] for k in S}}
+        for k in "ABC":
+            f, t = row[col[f"Hansen_1988_{k}_F"]], row[col[f"Hansen_1988_{k}_T"]]
+            if isinstance(f, (int, float)) and 1958 <= y <= 2017:
+                F[k][y], T0[k][y] = round(f, 4), t
+    try:
+        raw = get("https://www.realclimate.org/data/scen_ABC_temp.data").decode()
+        open("reference/h88/scen_ABC_temp.data", "w").write(raw)          # keep the copy up to date
+    except Exception as e:
+        print("RealClimate not reachable, using the saved copy:", e)
+        raw = open("reference/h88/scen_ABC_temp.data").read()
+    T = {k: {} for k in "ABC"}
+    for line in raw.splitlines():
+        p = line.split()
+        if len(p) == 4 and p[0].isdigit():
+            for k, v in zip("ABC", p[1:]):
+                T[k][int(p[0])] = float(v)
+    ty, fy = sorted(T["A"]), sorted(F["A"])
+    assert ty[0] == 1958 and ty[-1] == 2019 and fy[-1] == 2017
+    for k in "ABC":                                                     # the two copies agree where they overlap
+        assert all(abs(T[k][y] - T0[k][y]) < 0.002 for y in fy), k
+    return {"years": ty, **{k + "_T": [T[k][y] for y in ty] for k in "ABC"},
+            "F_years": fy, **{k + "_F": [F[k][y] for y in fy] for k in "ABC"}}
 
 
 def igcc_ghg_forcing():
@@ -160,24 +176,10 @@ AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, Â
 }
 
 
-def save_h88_raw():
-    # Hansen 1988 scenarios as digitized by RealClimate (Gavin Schmidt), beyond the 2017 end of the Hausfather copy.
-    # Saved as-is under reference/h88/ for inspection; a failed download is not fatal.
-    import os
-    os.makedirs("reference/h88", exist_ok=True)
-    for f in ("scen_ABC_temp.data", "H88_scenarios.dat"):
-        try:
-            open("reference/h88/" + f, "wb").write(get("https://www.realclimate.org/data/" + f))
-            print("saved reference/h88/" + f)
-        except Exception as e:
-            print("could not download", f, e)
-
-
 def main():
-    save_h88_raw()
     old = {"source": "Hausfather, Drake, Abbott & Schmidt (2020), Geophysical Research Letters 47, e2019GL085378",
            "doi": "https://doi.org/10.1029/2019GL085378", "data": "https://github.com/hausfath/OldModels",
-           "projections": old_models(), "hansen1988": hansen(), "ghg_forcing": igcc_ghg_forcing(),
+           "projections": old_models(), "hansen1988": hansen(), "hansen1988_source": "Temperature 1958-2019: https://www.realclimate.org/data/scen_ABC_temp.data; forcing: Hausfather et al. 2020", "ghg_forcing": igcc_ghg_forcing(),
            "forcing_source": "Forster et al. (2026), Indicators of Global Climate Change 2025, ESSD; https://github.com/ClimateIndicator/data"}
     json.dump(old, open("data/models_old.json", "w"), separators=(",", ":"))
 
