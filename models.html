@@ -5,18 +5,18 @@
 <script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
-<title>Predictions vs reality</title>
+<title>Climate models</title>
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Earth Indicators">
-<meta property="og:title" content="Climate models: predictions vs reality, and what comes next">
+<meta property="og:title" content="Climate models: past projections checked, and what comes next">
 <meta property="og:description" content="Seventeen warming projections from 1970 to 2007 checked against what happened, Hansen's 1988 scenarios, today's climate models against measurements, and what the models say comes next: IPCC scenarios, the remaining carbon budget and the WMO 5-year outlook.">
 <meta property="og:url" content="https://earthindicators.org/models.html">
 <meta property="og:image" content="https://earthindicators.org/og/models.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Climate models: predictions vs reality, and what comes next">
+<meta property="og:image:alt" content="Climate models: past projections checked, and what comes next">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Seventeen warming projections from 1970 to 2007 checked against what happened, Hansen's 1988 scenarios, today's climate models against measurements, and what the models say comes next: IPCC scenarios, the remaining carbon budget and the WMO 5-year outlook.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -40,7 +40,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 @media (max-width:600px){.wrap.tall{height:600px}}
 @media print{.wrap.tall{height:420px}}
 </style></head><body><main>
-<h1>Predictions vs reality</h1>
+<h1>Climate models</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
 <p class="sub">"The models are always wrong" is one of the most common claims about climate change. It can be checked: scientists have published warming projections since 1970, and the years they were predicting have now happened. The first half of this page compares those predictions, and today's climate models, with what was measured. The second half shows what the models say comes next. That part cannot be checked yet, so it is marked as projection throughout.</p>
 <p class="key"><b>How to read the charts:</b> solid lines and bars are measurements; dashed lines and hatched bars come from models, projections or estimates.</p>
@@ -292,5 +292,5 @@ Promise.allSettled([
   .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>cmip(M,E),()=>ar6(D,E),()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
-$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'predictions-vs-reality.jpg')};
+$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
 </script></main></body></html>

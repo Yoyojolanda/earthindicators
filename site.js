@@ -39,7 +39,7 @@
     ['eei.html',       'Energy imbalance'],
     ['water.html',     'Water cycle'],
     ['slow.html',      'Slow signals'],
-    ['models.html',    'Predictions'],
+    ['models.html',    'Climate models'],
   ];
 
   // Indicators dropdown: one column per group (same story as the overview page), side by side on computers.
