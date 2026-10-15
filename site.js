@@ -39,6 +39,7 @@
     ['eei.html',       'Energy imbalance'],
     ['water.html',     'Water cycle'],
     ['slow.html',      'Slow signals'],
+    ['models.html',    'Predictions'],
   ];
 
   // Indicators dropdown: one column per group (same story as the overview page), side by side on computers.
@@ -49,6 +50,7 @@
     ['What It Is Doing',['sea-level.html', 'sea-ice.html', 'land-ice.html', 'water.html']],
     ['Natural Swings',  ['nino.html', 'pdo.html', 'sun.html']],
     ['Yearly Data',     ['slow.html']],
+    ['Models',          ['models.html']],
   ];
   { const listed = MENU_GROUPS.flatMap(g => g[1]);
     const rest = PAGES.map(p => p[0]).filter(f => !['index.html', 'claims.html'].includes(f) && !listed.includes(f));
@@ -317,6 +319,8 @@
       'Global means (weighted by area) are calculated here from the ERA5 grids; normals, records, trends and the water-vapor-per-°C slope are calculated by this page.', ['water.html', 'scripts/build_era5_tcwv.py'], ['data/era5_tcwv_monthly.csv', 'data/era5_t2_regions_monthly.csv']],
     'slow.html': ['Fossil CO₂: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters, Zenodo). Ocean pH: Hawaii Ocean Time-series, Station ALOHA. AMOC: RAPID-MOCHA-WBTS array at 26.5°N (<a href="https://rapid.ac.uk/">rapid.ac.uk</a>). Red List Index: IUCN and BirdLife International, via the UN SDG database (indicator 15.5.1). Tree cover loss: University of Maryland and Global Forest Watch, via Our World in Data. Crop yields: FAO, FAOSTAT. Cherry blossom: Y. Aono, via the GMU cherry blossom prediction competition.',
       'Emissions, pH and the Red List Index are shown unchanged; RAPID\'s twice-daily transports are averaged here to months. Trends, 12-month averages and changes are calculated by this page.', ['scripts/build_slow.py'], ['data/fossil_co2_global.csv', 'data/hot_surface_ph.csv', 'data/amoc_rapid_monthly.csv', 'data/redlist_index_world.csv', 'data/tree_cover_loss_world.csv', 'data/fao_crop_yields_world.csv', 'data/kyoto_cherry_blossom.csv']],
+    'models.html': ['Past projections: Hausfather et al. 2020 (<a href="https://doi.org/10.1029/2019GL085378">doi:10.1029/2019GL085378</a>). Climate models: CMIP6, one run per model, as averaged by N. Swart (CCCma). Projections: IPCC AR6 WG1 Table SPM.1. Carbon budget and greenhouse-gas forcing: Indicators of Global Climate Change 2025 (<a href="https://doi.org/10.5194/essd-18-3889-2026">doi:10.5194/essd-18-3889-2026</a>). Outlooks: WMO decadal update 2026, UNEP Emissions Gap Report 2025. Measurements: Copernicus ERA5.',
+      'Published projections, verdicts and budgets are shown unchanged; measured warming rates, yearly ERA5 means and the CMIP6 percentiles across models are calculated here.', ['models.html', 'scripts/build_models.py'], ['data/models_old.json', 'data/models_cmip6.csv', 'data/models_outlook.json']],
   };
   const how = HOW[here];
   if (how && nav) {

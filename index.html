@@ -119,4 +119,14 @@ $('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Slow signal
  +`</div><p class="why">These change slowly and are counted carefully, so they arrive late. Together they show the causes and the slower, longer-lasting effects: what we emit, what the ocean absorbs, and what happens to living things.</p><span class="go">See the slow signals →</span></a></div></section>`);
 SLOW.forEach(([id,f])=>EI.get(id).then(r=>{const [v,l]=f(r),m=$('m-'+id);m.querySelector('b').textContent=v;m.querySelector('span').textContent=l;m.querySelector('small').textContent=`${r.src}, data for ${r.through}`;if(r.spark&&r.spark.length>2)spark(m.querySelector('canvas'),r.spark,r.bars)})
  .catch(e=>{console.error(e);$('m-'+id).querySelector('b').textContent='–'}));
+
+// ---- predictions vs reality: one wide tile; the published numbers come from the models page's data files
+$('groups').insertAdjacentHTML('beforeend',`<section class="grp"><h2>Predictions vs reality</h2><p>Warming projections have been published since 1970, so they can be checked.<br>The last two numbers are projections and estimates, not measurements.</p><div class="tiles"><a class="tile wide" href="models.html"><h3>Past projections, today's models, and what comes next</h3><div class="slowgrid" id="mdl"></div><p class="why">Most misses came from guessing future emissions, not from the physics. What comes next depends on how much more CO₂ is emitted.</p><span class="go">See predictions vs reality →</span></a></div></section>`);
+Promise.all(['models_old.json','models_outlook.json'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.json()}))).then(([O,D])=>{
+ const B=D.budget,em=B.emissions.fossil+B.emissions.land;
+ $('mdl').innerHTML=[['10 of 17','warming projections from 1970–2007 matched what followed','Hausfather et al. 2020'],
+  ['14 of 17','matched once the real rise in greenhouse gases is counted','Hausfather et al. 2020'],
+  [`about ${D.unep.current_policies.toFixed(1)} °C`,'by 2100 with the policies now in place (estimate)','UNEP, Emissions Gap Report 2025'],
+  [`about ${(B.levels[0].p50/em).toFixed(0)} years`,'of current CO₂ emissions left for an even chance of staying under 1.5 °C (estimate)','Indicators of Global Climate Change 2025']]
+  .map(([v,l,s])=>`<div><b>${v}</b><span>${l}</span><small>${s}</small></div>`).join('')}).catch(e=>{console.error(e);$('mdl').textContent='Data unavailable right now.'});
 </script></main></body></html>

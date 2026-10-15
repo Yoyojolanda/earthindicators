@@ -67,4 +67,5 @@ if __name__ == "__main__":
         live(page, d)
     fixed("index", "Is the climate changing?", "Every major indicator, updated automatically,\nin plain words.")
     fixed("claims", "Common climate claims,\nanswered with the latest data", "From \u201cit's cooling\u201d to \u201cit's too late\u201d:\nshort answers, live numbers, one link per answer.")
-    print("drew the images:", ", ".join(list(data) + ["index", "claims"] + (["slow"] if has_slow else [])))
+    fixed("models", "Predictions vs reality", "Warming projections since 1970, checked.\nToday's models vs measurements, and what comes next.")
+    print("drew the images:", ", ".join(list(data) + ["index", "claims", "models"] + (["slow"] if has_slow else [])))

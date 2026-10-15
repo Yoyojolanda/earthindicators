@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""Data for the models page (models.html): past projections checked against what happened, and what comes next.
+
+The sources are published archives that do not change from day to day, so this runs by hand (and again when a source
+publishes a new edition, e.g. the yearly carbon-budget update each June). It writes:
+  data/models_old.json     the 17 projections from 1970-2007 that Hausfather et al. (2020) checked: projected warming rate
+                           over each test period and the paper's verdict; Hansen's 1988 scenarios A, B and C (temperature
+                           and greenhouse-gas forcing); measured greenhouse-gas forcing since 1958 (IGCC)
+  data/models_cmip6.csv    CMIP6 climate models, historical runs continued with the middle scenario SSP2-4.5: yearly
+                           global air temperature above 1850-1900, smallest, 17th percentile, median, 83rd, largest
+  data/models_outlook.json IPCC AR6 projections by scenario (Table SPM.1), remaining carbon budgets (IGCC), WMO 5-year
+                           outlook and UNEP's estimate for current policies, each with its source
+
+Run from the repo root: python scripts/build_models.py
+"""
+import csv, io, json, statistics, urllib.request
+
+RAW = "https://raw.githubusercontent.com/"
+OLD = RAW + "hausfath/OldModels/master/"
+CMIP = RAW + "swartn/cmip6-gmst-anoms/master/cmip6_{}_gmst_swartn_gmst_anoms.csv"
+IGCC = RAW + "ClimateIndicator/data/main/data/base/"
+
+
+def get(url):
+    with urllib.request.urlopen(url, timeout=120) as r:
+        return r.read()
+
+
+def rows(url):
+    return list(csv.DictReader(io.StringIO(get(url).decode("utf-8"))))
+
+
+# ---- 1. old projections (Hausfather, Drake, Abbott & Schmidt 2020, GRL, doi:10.1029/2019GL085378; MIT license)
+NAMES = {  # paper's id -> label on the site, year published
+    "manabe_1970": ("Manabe 1970", 1970), "mitchell_1970": ("Mitchell 1970", 1970), "benson_1970": ("Benson 1970", 1970),
+    "rasool_schneider_1971": ("Rasool & Schneider 1971", 1971), "sawyer_1972": ("Sawyer 1972", 1972),
+    "broecker_1975": ("Broecker 1975", 1975), "nordhaus_1977": ("Nordhaus 1977", 1977),
+    "schneider_thompson_1981": ("Schneider & Thompson 1981", 1981), "hansen_1981_1": ("Hansen 1981, scenario 1", 1981),
+    "hansen_1981_2a": ("Hansen 1981, scenario 2a", 1981), "hansen_1988_a": ("Hansen 1988, scenario A", 1988),
+    "hansen_1988_b": ("Hansen 1988, scenario B", 1988), "hansen_1988_c": ("Hansen 1988, scenario C", 1988),
+    "far_ebm_best": ("IPCC 1990 (first report)", 1990), "manabe_stouffer_1993": ("Manabe & Stouffer 1993", 1993),
+    "sar_ebm_best": ("IPCC 1995 (second report)", 1995), "tar_ebm_best": ("IPCC 2001 (third report)", 2001),
+    "ar4_mmm_best": ("IPCC 2007 (fourth report)", 2007),
+}
+
+
+def old_models():
+    trend = {r["model"]: float(r["coef"]) for r in rows(OLD + "data/interim/single_model_trends.csv") if r["dtype"] == "model_time"}
+    out = []
+    for r in rows(OLD + "data/interim/model_obs_time_diffs.csv"):
+        m = r["model"]
+        if m not in NAMES:
+            continue
+        y0, y1 = json.loads(r["timeframe"])
+        out.append({"id": m, "label": NAMES[m][0], "pub": NAMES[m][1], "from": y0, "to": y1,
+                    "rate": round(trend[m] * 10, 3),                        # projected warming, °C per decade
+                    "match": float(r["coef_low"]) <= 0 <= float(r["coef_high"])})   # paper: difference not significant
+    out.sort(key=lambda x: (x["pub"], x["label"]))
+    assert len(out) == 18, len(out)
+    return out
+
+
+def hansen():
+    import openpyxl
+    wb = openpyxl.load_workbook(io.BytesIO(get(OLD + "data/raw/model_temp_data/Model%20timeseries.xlsx")), data_only=True)
+    ws = wb["Individual papers"]
+    head = [c.value for c in ws[1]]
+    col = {h: i for i, h in enumerate(head)}
+    S = {k: {} for k in ("A_T", "B_T", "C_T", "A_F", "B_F", "C_F")}
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        y = row[col["Year"]]
+        for k in S:
+            v = row[col["Hansen_1988_" + k]]
+            if isinstance(v, (int, float)) and 1958 <= y <= 2017:
+                S[k][y] = round(v, 4)
+    years = sorted(S["A_T"])
+    assert years[0] == 1958 and years[-1] == 2017 and len(years) == 60
+    return {"years": years, **{k: [S[k][y] for y in years] for k in S}}
+
+
+def igcc_ghg_forcing():
+    # well-mixed greenhouse gases, the forcing Hansen's scenarios describe; change since 1958 (W/m²)
+    R = {int(float(r["time"])): float(r["wmghg"]) for r in rows(IGCC + "effective_radiative_forcing/ERF_best_aggregates.csv")}
+    ys = [y for y in sorted(R) if y >= 1958]
+    return {"years": ys, "F": [round(R[y] - R[1958], 4) for y in ys]}
+
+
+# ---- 2. CMIP6 (Neil Swart, CCCma: one run, r1i1p1f1, per model; tas above 1850-1900; Open Government License - Canada)
+def cmip6():
+    def load(exp):
+        R = list(csv.reader(io.StringIO(get(CMIP.format(exp)).decode("utf-8"))))
+        names = R[0][2:]
+        return {int(r[1]): {n: float(v) for n, v in zip(names, r[2:]) if v.strip()} for r in R[1:]}
+    H, F = load("historical"), load("ssp245")
+    # only models with every year in both experiments, so the spread is drawn from the same models throughout
+    full = lambda D: set.intersection(*(set(v) for v in D.values()))
+    models = sorted(full(H) & full(F))
+    assert set(range(1850, 2015)) <= set(H) and set(range(2015, 2101)) <= set(F)
+    out = []
+    for y in range(1850, 2101):
+        src = H if y <= 2014 else F
+        v = sorted(src[y][m] for m in models)
+        q = statistics.quantiles(v, n=6, method="inclusive")         # sixths: 1/6 ≈ 17th, 5/6 ≈ 83rd percentile
+        out.append([y, len(v), v[0], q[0], statistics.median(v), q[4], v[-1]])
+    return models, out
+
+
+# ---- 3. what comes next
+def budgets():
+    # Lamboll et al., IGCC 2025 (Forster et al. 2026, ESSD 18, 3889): remaining CO2 budget from 1 January 2026, GtCO2,
+    # by warming level and likelihood (50% and 67%); MAGICC, the paper's central setup (human-induced warming 1.24 °C)
+    B = {}
+    for r in rows(IGCC + "carbon_budget/budget_normal_magicc_True_fair_False_esf_7.1pm26.7_likeli_0.6827_nonCO2pc50.0_GtCO2"
+                  "_permaf_False_zecsd_0.0_asym_False_hdT_1.24NonlinNonCO2_all_None_recEm213.csv"):
+        t = round(float(r["dT_targets"]), 1)
+        if 1.5 <= t <= 2.0:
+            B[t] = {"p50": round(float(r["0.5"])), "p67": round(float(r["0.67"]))}
+    return [{"t": t, **B[t]} for t in sorted(B)]
+
+
+AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, °C above 1850-1900
+    "SSP1-1.9": [[1.5, 1.2, 1.7], [1.6, 1.2, 2.0], [1.4, 1.0, 1.8]],
+    "SSP1-2.6": [[1.5, 1.2, 1.8], [1.7, 1.3, 2.2], [1.8, 1.3, 2.4]],
+    "SSP2-4.5": [[1.5, 1.2, 1.8], [2.0, 1.6, 2.5], [2.7, 2.1, 3.5]],
+    "SSP3-7.0": [[1.5, 1.2, 1.8], [2.1, 1.7, 2.6], [3.6, 2.8, 4.6]],
+    "SSP5-8.5": [[1.6, 1.3, 1.9], [2.4, 1.9, 3.0], [4.4, 3.3, 5.7]],
+}
+
+
+def main():
+    old = {"source": "Hausfather, Drake, Abbott & Schmidt (2020), Geophysical Research Letters 47, e2019GL085378",
+           "doi": "https://doi.org/10.1029/2019GL085378", "data": "https://github.com/hausfath/OldModels",
+           "projections": old_models(), "hansen1988": hansen(), "ghg_forcing": igcc_ghg_forcing(),
+           "forcing_source": "Forster et al. (2026), Indicators of Global Climate Change 2025, ESSD; https://github.com/ClimateIndicator/data"}
+    json.dump(old, open("data/models_old.json", "w"), separators=(",", ":"))
+
+    models, C = cmip6()
+    with open("data/models_cmip6.csv", "w", newline="") as f:
+        f.write("# CMIP6, one run per model (r1i1p1f1), historical to 2014 then SSP2-4.5; global air temperature (tas) above 1850-1900, °C\n")
+        f.write("# " + str(len(models)) + " models: " + " ".join(models) + "\n")
+        f.write("# source: Neil Swart, CCCma, https://github.com/swartn/cmip6-gmst-anoms (doi:10.5281/zenodo.3986584 badge in repo)\n")
+        w = csv.writer(f)
+        w.writerow(["year", "n", "min", "p17", "median", "p83", "max"])
+        for r in C:
+            w.writerow([r[0], r[1]] + [f"{x:.3f}" for x in r[2:]])
+
+    outlook = {
+        "ar6": {"periods": ["2021–2040", "2041–2060", "2081–2100"], "scenarios": AR6,
+                "source": "IPCC AR6 Working Group I, Summary for Policymakers, Table SPM.1 (2021)",
+                "url": "https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/"},
+        "budget": {"from": "2026-01-01", "levels": budgets(),
+                   "emissions": {"year": 2024, "fossil": 38.6, "land": 4.6},   # GtCO2, same paper, section 2
+                   "source": "Forster et al. (2026), Indicators of Global Climate Change 2025, Earth System Science Data 18, 3889",
+                   "url": "https://doi.org/10.5194/essd-18-3889-2026"},
+        "wmo": {"period": "2026–2030", "one_year_above_15": 91, "mean_above_15": 75, "new_record": 86, "year_above_2": 1,
+                "range": [1.3, 1.9], "published": "2026-05-28",
+                "source": "WMO Global Annual to Decadal Climate Update 2026–2035", "url": "https://wmo.int/node/38645"},
+        "unep": {"current_policies": 2.8, "ndcs": [2.3, 2.5], "published": "2025-11-04",
+                 "source": "UNEP Emissions Gap Report 2025", "url": "https://www.unep.org/resources/emissions-gap-report-2025"},
+    }
+    json.dump(outlook, open("data/models_outlook.json", "w"), ensure_ascii=False, indent=1)
+    print("wrote data/models_old.json, data/models_cmip6.csv (", len(models), "models ), data/models_outlook.json")
+
+
+if __name__ == "__main__":
+    main()

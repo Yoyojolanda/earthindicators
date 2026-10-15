@@ -102,6 +102,14 @@ window.IN_SHORT = {
     ],
     claims: ['adapt'],
   },
+  'models.html': {
+    units: 'A warming rate of 0.2 °C per decade is 2 °C per century. One gigaton (Gt) is a billion metric tons: 130 Gt of CO₂ is about three years of the world\'s current emissions, or some 16 metric tons for every person on Earth. A W/m² (watt per square meter) of forcing is the extra energy that greenhouse gases keep in, spread over the whole planet: 1 W/m² over Earth\'s surface is about 500 trillion watts, roughly 25 times the power that all of humanity uses.',
+    text: [
+      'Scientists have published warming projections since 1970, so they can be checked. A 2020 study of 17 projections from 1970 to 2007 found that 10 matched the warming that followed, and 14 once the real rise in greenhouse gases is taken into account. Most misses came from guessing future emissions, not from the physics.',
+      'Today\'s climate models also track the measurements. What comes next depends on emissions: with today\'s policies, about 2.8 °C by 2100 (UNEP estimate). Staying under 1.5 °C leaves about 130 billion metric tons of CO₂ from the start of 2026, roughly three years of current emissions.',
+    ],
+    claims: ['predictions-fail', 'models-unreliable', 'ice-age-1970s', 'too-late'],
+  },
   'pdo.html': {
     units: "The PDO index has no unit: it measures how strongly the North Pacific matches the PDO's typical pattern. Zero is neutral, beyond +1 or −1 is a strong phase, and one phase can last from a few years to a few decades.",
     text: [

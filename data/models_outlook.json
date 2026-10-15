@@ -1,0 +1,164 @@
+{
+ "ar6": {
+  "periods": [
+   "2021–2040",
+   "2041–2060",
+   "2081–2100"
+  ],
+  "scenarios": {
+   "SSP1-1.9": [
+    [
+     1.5,
+     1.2,
+     1.7
+    ],
+    [
+     1.6,
+     1.2,
+     2.0
+    ],
+    [
+     1.4,
+     1.0,
+     1.8
+    ]
+   ],
+   "SSP1-2.6": [
+    [
+     1.5,
+     1.2,
+     1.8
+    ],
+    [
+     1.7,
+     1.3,
+     2.2
+    ],
+    [
+     1.8,
+     1.3,
+     2.4
+    ]
+   ],
+   "SSP2-4.5": [
+    [
+     1.5,
+     1.2,
+     1.8
+    ],
+    [
+     2.0,
+     1.6,
+     2.5
+    ],
+    [
+     2.7,
+     2.1,
+     3.5
+    ]
+   ],
+   "SSP3-7.0": [
+    [
+     1.5,
+     1.2,
+     1.8
+    ],
+    [
+     2.1,
+     1.7,
+     2.6
+    ],
+    [
+     3.6,
+     2.8,
+     4.6
+    ]
+   ],
+   "SSP5-8.5": [
+    [
+     1.6,
+     1.3,
+     1.9
+    ],
+    [
+     2.4,
+     1.9,
+     3.0
+    ],
+    [
+     4.4,
+     3.3,
+     5.7
+    ]
+   ]
+  },
+  "source": "IPCC AR6 Working Group I, Summary for Policymakers, Table SPM.1 (2021)",
+  "url": "https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/"
+ },
+ "budget": {
+  "from": "2026-01-01",
+  "levels": [
+   {
+    "t": 1.5,
+    "p50": 134,
+    "p67": 81
+   },
+   {
+    "t": 1.6,
+    "p50": 317,
+    "p67": 236
+   },
+   {
+    "t": 1.7,
+    "p50": 499,
+    "p67": 391
+   },
+   {
+    "t": 1.8,
+    "p50": 682,
+    "p67": 546
+   },
+   {
+    "t": 1.9,
+    "p50": 865,
+    "p67": 701
+   },
+   {
+    "t": 2.0,
+    "p50": 1047,
+    "p67": 856
+   }
+  ],
+  "emissions": {
+   "year": 2024,
+   "fossil": 38.6,
+   "land": 4.6
+  },
+  "source": "Forster et al. (2026), Indicators of Global Climate Change 2025, Earth System Science Data 18, 3889",
+  "url": "https://doi.org/10.5194/essd-18-3889-2026"
+ },
+ "wmo": {
+  "period": "2026–2030",
+  "one_year_above_15": 91,
+  "mean_above_15": 75,
+  "new_record": 86,
+  "year_above_2": 1,
+  "range": [
+   1.3,
+   1.9
+  ],
+  "published": "2026-05-28",
+  "source": "WMO Global Annual to Decadal Climate Update 2026–2035",
+  "url": "https://wmo.int/node/38645"
+ },
+ "unep": {
+  "current_policies": 2.8,
+  "ndcs": [
+   2.3,
+   2.5
+  ],
+  "published": "2025-11-04",
+  "source": "UNEP Emissions Gap Report 2025",
+  "url": "https://www.unep.org/resources/emissions-gap-report-2025"
+ }
+}

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Predictions vs reality</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Climate models: predictions vs reality, and what comes next">
+<meta property="og:description" content="Seventeen warming projections from 1970 to 2007 checked against what happened, Hansen's 1988 scenarios, today's climate models against measurements, and what the models say comes next: IPCC scenarios, the remaining carbon budget and the WMO 5-year outlook.">
+<meta property="og:url" content="https://earthindicators.org/models.html">
+<meta property="og:image" content="https://earthindicators.org/og/models.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Climate models: predictions vs reality, and what comes next">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Seventeen warming projections from 1970 to 2007 checked against what happened, Hansen's 1988 scenarios, today's climate models against measurements, and what the models say comes next: IPCC scenarios, the remaining carbon budget and the WMO 5-year outlook.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:240px;--phs:200px}
+.st{font-size:13px;color:var(--mut);margin:-2px 0 10px}
+h2.sec{font-size:20px;margin:28px 0 6px}
+/* the two halves of the page: what can be checked, and what can't be yet */
+.part{margin:34px 0 4px;padding:10px 14px;border-radius:10px;border:1px solid var(--line)}
+.part h2{font-size:22px;margin:0 0 4px}
+.part p{margin:0;font-size:14px;line-height:1.5}
+.part.proj{border:2px dashed var(--mut);background:repeating-linear-gradient(135deg,transparent 0 9px,var(--tint) 9px 11px)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin:0 0 6px}
+.tag.m{background:var(--tint);color:var(--ink)}
+.tag.p{border:1.5px dashed var(--mut);color:var(--mut)}
+.key{font-size:13px;color:var(--mut);margin:6px 0 0}
+.wrap.tall{height:var(--ht,640px)}
+@media (max-width:600px){.wrap.tall{height:600px}}
+@media print{.wrap.tall{height:420px}}
+</style></head><body><main>
+<h1>Predictions vs reality</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p class="sub">"The models are always wrong" is one of the most common claims about climate change. It can be checked: scientists have published warming projections since 1970, and the years they were predicting have now happened. The first half of this page compares those predictions, and today's climate models, with what was measured. The second half shows what the models say comes next. That part cannot be checked yet, so it is marked as projection throughout.</p>
+<p class="key"><b>How to read the charts:</b> solid lines and bars are measurements; dashed lines and hatched bars come from models, projections or estimates.</p>
+<p id="err"></p>
+
+<div class="part"><span class="tag m">Checked against measurements</span><h2>Part 1. How well did past predictions do?</h2>
+<p>Predictions made decades ago, and the models used today, set against the temperatures that were actually measured.</p></div>
+
+<section id="old-s" class="hide">
+<h2 class="sec">17 projections from 1970 to 2007</h2>
+<div class="cards" id="old-cards"></div>
+<div class="box"><h2 id="t1"></h2><div class="wrap tall"><canvas id="c1"></canvas></div></div>
+<ul id="old-read"></ul>
+<p class="sub">In 2020, Zeke Hausfather, Henri Drake, Tristan Abbott and Gavin Schmidt collected every projection of global warming published between 1970 and 2007 that gave a time series of future temperatures, and compared each one with the warming over the years it was predicting, up to 2017 at the latest (<a href="https://doi.org/10.1029/2019GL085378" target="_blank" rel="noopener">Geophysical Research Letters 47, e2019GL085378</a>; data on <a href="https://github.com/hausfath/OldModels" target="_blank" rel="noopener">GitHub</a>). The projected rates and the verdicts ("matched" means the difference was within the uncertainty of the two trends) are the study's. The measured rates here are calculated by this page from ERA5 air temperature over the same years; the study used several surface temperature records, so its measured rates differ slightly.</p>
+</section>
+
+<section id="h88-s" class="hide">
+<h2 class="sec">Hansen's 1988 scenarios</h2>
+<div class="cards" id="h88-cards"></div>
+<div class="box"><h2 id="t2"></h2>
+ <div class="seg" id="hsw">Show: <button class="nb on" type="button" data-m="t">Temperature</button><button class="nb" type="button" data-m="f">Greenhouse-gas forcing</button></div>
+ <div class="wrap"><canvas id="c2"></canvas></div></div>
+<ul id="h88-read"></ul>
+<p class="sub">Scenarios from Hansen et al. (1988), <i>Global climate changes as forecast by Goddard Institute for Space Studies three-dimensional model</i>, Journal of Geophysical Research 93, 9341, as digitized by Hausfather et al. (2020). The model runs start in 1958 with the measured rise in greenhouse gases; the scenarios differ from 1988 on. To compare like with like, the measured ERA5 temperatures are shifted so that their 1958–1987 average matches scenario B's. Forcing is the extra energy that the added greenhouse gases trap, in watts per square meter, counted from 1958. Hansen's scenario forcings cover greenhouse gases only, so the measured line does too: well-mixed greenhouse gases from the Indicators of Global Climate Change 2025 (Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>), which use newer estimates of each gas's effect than were available in 1988.</p>
+</section>
+
+<section id="cm-s" class="hide">
+<h2 class="sec">Today's climate models vs measurements</h2>
+<div class="cards" id="cm-cards"></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
+<ul id="cm-read"></ul>
+<p class="sub">CMIP6 is the set of climate model runs behind the IPCC's 2021 report. Shown here: one run (r1i1p1f1) from each of the 16 models with complete global air temperature in both the historical experiment (to 2014, driven by measured greenhouse gases, air pollution, volcanoes and the sun) and its continuation with the middle scenario SSP2-4.5 (from 2015), as averaged by Neil Swart, CCCma (<a href="https://github.com/swartn/cmip6-gmst-anoms" target="_blank" rel="noopener">GitHub</a>). Both models and measurements are global near-surface air temperature, relative to 1850–1900. Measured: ERA5, converted to 1850–1900 with Copernicus's offset of 0.88 °C for 1991–2020 (as on the <a href="air.html">air temperature page</a>); complete years only.</p>
+</section>
+
+<div class="part proj"><span class="tag p">Projection, not measurement</span><h2>Part 2. What the models say comes next</h2>
+<p>None of this has happened yet. These are projections and estimates from the main international assessments, shown as published, each with its range. What actually happens depends above all on how much more CO₂ is emitted.</p></div>
+
+<section id="ar6-s" class="hide">
+<h2 class="sec">Warming by scenario (IPCC)</h2>
+<p class="st"><span class="tag p">Projection</span></p>
+<div class="cards" id="ar6-cards"></div>
+<div class="box"><h2 id="t4"></h2>
+ <div class="seg" id="psw">Period: <button class="nb" type="button" data-p="0">2021–2040</button><button class="nb" type="button" data-p="1">2041–2060</button><button class="nb on" type="button" data-p="2">2081–2100</button></div>
+ <div class="wrap"><canvas id="c4"></canvas></div></div>
+<ul id="ar6-read"></ul>
+<p class="sub">IPCC Sixth Assessment Report, Working Group I, Summary for Policymakers, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): best estimate and very likely range (90% chance the outcome falls inside) of the 20-year average global surface temperature, relative to 1850–1900. The IPCC combined the CMIP6 models with observed warming and other evidence, so these ranges are narrower and less hot than the raw model spread. Current-policies and pledges estimates: UNEP Emissions Gap Report 2025 (<a href="https://www.unep.org/resources/emissions-gap-report-2025" target="_blank" rel="noopener">unep.org</a>). "Long-term level now": the straight-line trend through the last 30 complete years of ERA5, read off at its last year (the same method as the air temperature page).</p>
+</section>
+
+<section id="cb-s" class="hide">
+<h2 class="sec">The remaining carbon budget</h2>
+<p class="st"><span class="tag p">Estimate</span></p>
+<div class="cards" id="cb-cards"></div>
+<div class="box"><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div></div>
+<ul id="cb-read"></ul>
+<p class="sub">Remaining carbon budgets from 1 January 2026: Indicators of Global Climate Change 2025, Forster et al. 2026, Earth System Science Data 18, 3889 (<a href="https://doi.org/10.5194/essd-18-3889-2026" target="_blank" rel="noopener">doi:10.5194/essd-18-3889-2026</a>), calculated by Robin Lamboll with the paper's central setup (<a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>). The paper rounds the 1.5 °C budget to 130 billion metric tons. The years left use the same paper's emissions for 2024: 38.6 billion metric tons of CO₂ from fossil fuels and industry plus 4.6 from land-use change. Today's figure assumes emissions continue at that rate, which is a simplification.</p>
+</section>
+
+<section id="wmo-s" class="hide">
+<h2 class="sec">The next five years (WMO)</h2>
+<p class="st"><span class="tag p">Forecast: chances, not certainties</span></p>
+<div class="cards" id="wmo-cards"></div>
+<ul id="wmo-read"></ul>
+<p class="sub">WMO Global Annual to Decadal Climate Update 2026–2035, published 28 May 2026 (<a href="https://wmo.int/node/38645" target="_blank" rel="noopener">wmo.int</a>), prepared by the UK Met Office from forecasts by climate centers around the world. Temperatures relative to 1850–1900.</p>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const C={},mean=a=>a.reduce((s,x)=>s+x,0)/a.length,f2=x=>x.toFixed(2),f1=x=>x.toFixed(1);
+const cards=(id,c)=>$(id).innerHTML=c.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+const list=(id,L)=>$(id).innerHTML=L.map(x=>`<li>${x}</li>`).join('');
+const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+const ready=(k,ch)=>{C[k]=ch;$('exp').disabled=false};
+const show=id=>$(id).classList.remove('hide');
+// least-squares slope of y against x
+const slope=(X,Y)=>{const mx=mean(X),my=mean(Y);let a=0,b=0;X.forEach((x,i)=>{a+=(x-mx)*(Y[i]-my);b+=(x-mx)**2});return a/b};
+const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
+// hatched fill = model, projection or estimate (solid = measured), so the two never look alike
+const hatch=(hex,a=.18)=>{const k=document.createElement('canvas');k.width=k.height=8;const x=k.getContext('2d');
+ x.fillStyle=rgba(hex,a);x.fillRect(0,0,8,8);x.strokeStyle=hex;x.lineWidth=1.5;x.beginPath();
+ x.moveTo(-2,2);x.lineTo(2,-2);x.moveTo(0,8);x.lineTo(8,0);x.moveTo(6,10);x.lineTo(10,6);x.stroke();return x.createPattern(k,'repeat')};
+const OBS=THEME.deep1,MOD=THEME.deep2,PARIS='#d00000';
+const sel=(id,fn)=>$(id).querySelectorAll('.nb').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('.nb').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset)});
+// horizontal reference lines with a label, e.g. the Paris limits
+const hlines=L=>({id:'hl',afterDatasetsDraw(ch){const {ctx,chartArea:a,scales:{y}}=ch;(typeof L==='function'?L():L).forEach(([v,txt,col,dash,left])=>{
+ const py=y.getPixelForValue(v);if(py<a.top||py>a.bottom)return;ctx.save();ctx.strokeStyle=col;ctx.lineWidth=1.3;ctx.setLineDash(dash?[6,4]:[]);
+ ctx.beginPath();ctx.moveTo(a.left,py);ctx.lineTo(a.right,py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=col;ctx.font='12px system-ui,sans-serif';
+ ctx.textAlign=left?'left':'right';ctx.fillText(txt,left?a.left+4:a.right-4,py-5);ctx.restore()})}});
+
+// ERA5 yearly means (complete years) from the monthly world series, in °C above 1850-1900
+function era5(t){
+ const S={},R=t.trim().split('\n'),w=R[0].split(',').indexOf('world');R.slice(1).forEach(l=>{const p=l.split(','),y=+p[0].slice(0,4),v=+p[w];if(!isNaN(v))(S[y]??=[]).push(v)});
+ const Y=Object.keys(S).map(Number).filter(y=>S[y].length===12).sort((a,b)=>a-b),A={};Y.forEach(y=>A[y]=mean(S[y]));
+ const base=mean(Y.filter(y=>y>=1991&&y<=2020).map(y=>A[y]));Y.forEach(y=>A[y]=A[y]-base+0.88);
+ return {Y,A,last:Y[Y.length-1],rate:(a,b)=>{const X=Y.filter(y=>y>=a&&y<=b);return slope(X,X.map(y=>A[y]))*10}};
+}
+
+// ---- 1. the 17 old projections
+function oldModels(O,E){
+ // the study's own counts are quoted (10 of 17, 14 of 17); its data files hold 18 entries, with all three Hansen 1988 scenarios
+ const P=O.projections,nOK=P.filter(p=>p.match).length,obs=P.map(p=>E.rate(p.from,p.to));
+ const lo=P.reduce((b,p)=>p.rate<b.rate?p:b),hi=P.filter(p=>p.id!=='hansen_1988_a').reduce((b,p)=>p.rate>b.rate?p:b);
+ cards('old-cards',[['10 of 17','projections matched the warming that followed, within the uncertainty'],
+  ['14 of 17','matched once the real rise in greenhouse gases is taken into account (the study\'s second test)'],
+  [String(P[0].pub),'year of the oldest projection checked']]);
+ $('t1').textContent=`Warming rate projected vs measured, over the years each projection covered (°C per decade)`;
+ list('old-read',[
+  `The study counts 17 projections, and 10 of them warmed at a rate that matched the measurements within the uncertainty. Its data include all three of Hansen's 1988 scenarios, so the chart shows ${P.length} bars, with the study's verdict for each (${nOK} matched).`,
+  `The misses go both ways. ${lo.label} expected almost no warming (${f2(lo.rate)} °C per decade; they assumed air pollution would keep cooling the planet), while ${hi.label} projected ${f2(hi.rate)} °C per decade. Projections were not consistently "alarmist".`,
+  `Most misses come from the emissions, not the physics: a projection has to guess how much greenhouse gas the world will add. When the study compared each model's warming with the rise in greenhouse gases that actually happened, 14 of 17 matched. Models from the 1970s, run on computers far weaker than a phone, already got the warming broadly right.`,
+  `The oldest projections here end in 2000; the latest test periods end in 2017, the last year the study could use.`]);
+ show('old-s');
+ const lab=P.map(p=>[p.label,`${p.from}–${p.to}`]);
+ ready('o',new Chart($('c1'),{type:'bar',data:{labels:lab,datasets:[
+   {label:'Measured over the same years (ERA5)',data:obs,backgroundColor:OBS,borderColor:OBS,borderWidth:0,order:0},
+   {label:'Projected',data:P.map(p=>p.rate),backgroundColor:hatch(MOD),borderColor:MOD,borderWidth:1,order:1}]},
+  options:{indexAxis:'y',animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>P[t[0].dataIndex].label+', '+P[t[0].dataIndex].from+'–'+P[t[0].dataIndex].to,
+     label:c=>c.dataset.label+': '+f2(c.parsed.x)+' °C per decade',
+     footer:t=>'Study\'s verdict: '+(P[t[0].dataIndex].match?'matched':'did not match')}}},
+   scales:{x:{title:{display:true,text:'°C per decade'},grid:{color:THEME.grid}},y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11.5}}}}}}))}
+
+// ---- 2. Hansen 1988: scenarios A, B, C against measured temperature and greenhouse-gas forcing
+function hansen(O,E){
+ const H=O.hansen1988,G=O.ghg_forcing,yrs=H.years,iy=y=>yrs.indexOf(y),last=E.last;
+ const bBase=mean(yrs.filter(y=>y<=1987).map(y=>H.B_T[iy(y)])),eBase=mean(yrs.filter(y=>y<=1987).map(y=>E.A[y]));
+ const ET=E.Y.filter(y=>y>=1958).map(y=>({x:y,y:E.A[y]-eBase+bBase}));
+ const rate=(s,a,b)=>{const X=yrs.filter(y=>y>=a&&y<=b);return slope(X,X.map(y=>s[iy(y)]))*10};
+ const gF=y=>G.F[G.years.indexOf(y)],dG=gF(2017)-gF(1988),dB=H.B_F[iy(2017)]-H.B_F[iy(1988)],dC=H.C_F[iy(2017)]-H.C_F[iy(1988)];
+ const rA=rate(H.A_T,1988,2017),rB=rate(H.B_T,1988,2017),rC=rate(H.C_T,1988,2017),rE=E.rate(1988,2017),rE2=E.rate(1988,last);
+ cards('h88-cards',[[f2(rB)+' °C','per decade projected in scenario B, 1988–2017'],[f2(rE)+' °C',`per decade measured (ERA5), 1988–2017; ${f2(rE2)} °C to ${last}`],
+  [Math.round(dG/dB*100)+'%','of scenario B\'s rise in greenhouse-gas forcing actually happened, 1988–2017']]);
+ list('h88-read',[
+  `In June 1988, NASA scientist James Hansen told the US Senate that global warming had begun. His model ran three scenarios: A, with greenhouse gas emissions growing ever faster; B, with steady growth, which he called the most plausible; and C, with drastic cuts after 2000.`,
+  `From 1988 to 2017 the scenarios warmed by ${f2(rA)}, ${f2(rB)} and ${f2(rC)} °C per decade (A, B, C). Measured warming was ${f2(rE)} °C per decade: between B and C.`,
+  `The main reason: greenhouse gases rose more slowly than in scenario B. Their forcing went up ${f2(dG)} W/m² from 1988 to 2017, against ${f2(dB)} in scenario B and ${f2(dC)} in C. Methane leveled off for years in the 1990s and 2000s, and the 1987 Montreal Protocol phased out the CFCs that destroy the ozone layer, which are also strong greenhouse gases. Switch the chart to "Greenhouse-gas forcing" to see it.`,
+  `Taking the real rise in greenhouse gases into account, the study found that Hansen's model warmed at a rate consistent with what happened. The emissions guess was too high, partly because the world acted on CFCs; the physics held up.`]);
+ show('h88-s');
+ const dsH=(k,l,c,w)=>({label:l,data:yrs.map((y,i)=>({x:y,y:H[k][i]})),borderColor:c,backgroundColor:c,borderWidth:w,borderDash:[6,4],pointRadius:0,order:1});
+ const sets={
+  t:{title:`Hansen 1988 scenarios vs measured temperature, 1958–${last} (°C, aligned over 1958–1987)`,y:'°C (aligned over 1958–1987)',u:' °C',
+   ds:[{label:'Measured (ERA5)',data:ET,borderColor:OBS,backgroundColor:OBS,borderWidth:2.5,pointRadius:2,order:0},
+       dsH('A_T','Scenario A','#9467bd',1.6),dsH('B_T','Scenario B (most plausible)',MOD,2.2),dsH('C_T','Scenario C','#5a9a4a',1.6)]},
+  f:{title:`Greenhouse-gas forcing: Hansen 1988 scenarios vs measured, 1958–${G.years[G.years.length-1]} (W/m² since 1958)`,y:'W/m² added since 1958',u:' W/m²',
+   ds:[{label:'Measured (IGCC 2025)',data:G.years.map((y,i)=>({x:y,y:G.F[i]})),borderColor:OBS,backgroundColor:OBS,borderWidth:2.5,pointRadius:0,order:0},
+       dsH('A_F','Scenario A','#9467bd',1.6),dsH('B_F','Scenario B (most plausible)',MOD,2.2),dsH('C_F','Scenario C','#5a9a4a',1.6)]}};
+ const mark={id:'y88',afterDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,px=x.getPixelForValue(1988);ctx.save();ctx.strokeStyle=THEME.mut;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(px,a.top);ctx.lineTo(px,a.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';
+  ctx.textAlign='right';ctx.fillText('model run with measured gases',px-5,a.top+12);ctx.textAlign='left';ctx.fillText('1988: scenarios begin',px+5,a.top+12);ctx.restore()}};
+ const ch=new Chart($('c2'),{type:'line',plugins:[mark],data:{datasets:sets.t.ds},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+f2(c.parsed.y)+ch.$u}}},
+   scales:{x:{type:'linear',min:1958,max:last+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:sets.t.y},grid:{color:THEME.grid}}}}});
+ const set=m=>{const s=sets[m];ch.data.datasets=s.ds;ch.options.scales.y.title.text=s.y;ch.$u=s.u;$('t2').textContent=s.title;ch.update()};
+ set('t');sel('hsw',d=>set(d.m));ready('h',ch)}
+
+// ---- 3. CMIP6 against ERA5
+function cmip(t,E){
+ const R=t.trim().split('\n').filter(l=>l[0]!=='#').slice(1).map(l=>l.split(',').map(Number)).filter(r=>r[0]>=1940&&r[0]<=2040);
+ const M={};R.forEach(r=>M[r[0]]={n:r[1],min:r[2],p17:r[3],med:r[4],p83:r[5],max:r[6]});
+ const last=E.last,L=M[last],o=E.A[last],X=E.Y.filter(y=>y>=1979),mr=slope(X,X.map(y=>M[y].med))*10,er=E.rate(1979,last);
+ const d10=E.Y.slice(-10),o10=mean(d10.map(y=>E.A[y])),m10=mean(d10.map(y=>M[y].med));
+ const where=v=>v>L.p83?'above the middle two-thirds of the models':v<L.p17?'below the middle two-thirds of the models':'inside the middle two-thirds of the models';
+ cards('cm-cards',[[f2(o)+' °C',`measured in ${last} (ERA5), above 1850–1900`],[f2(L.med)+' °C',`middle of the models for ${last} (all ${L.n}: ${f2(L.min)} to ${f2(L.max)})`],
+  [f2(er)+' °C',`per decade measured since 1979; models' middle ${f2(mr)}`]]);
+ $('t3').textContent=`Climate models (CMIP6, SSP2-4.5 from 2015) vs measured global air temperature, 1940–2040 (°C above 1850–1900)`;
+ list('cm-read',[
+  `In ${last} the measured temperature was ${f2(o)} °C above 1850–1900, ${where(o)}; their middle value for that year is ${f2(L.med)} °C. Over the last ten years (${d10[0]}–${last}) measurements averaged ${f2(o10)} °C, the models' middle ${f2(m10)} °C.`,
+  `Since 1979 the world warmed by ${f2(er)} °C per decade (ERA5); the models' middle line warmed by ${f2(mr)} °C per decade over the same years.`,
+  `Each model makes its own weather: El Niño and La Niña years in a model do not line up with the real ones, so single years will always stray from the models' middle. The band shows how much they spread.`,
+  `Some CMIP6 models are known to warm too much ("hot models", with a climate sensitivity above what other evidence supports). That is why the IPCC did not simply average the models for its projections, but weighed them against observed warming; its numbers are in part 2.`]);
+ show('cm-s');
+ const ser=k=>R.map(r=>({x:r[0],y:M[r[0]][k]})),band=(k1,k2,l,a,ord)=>[
+  {label:l,data:ser(k1),borderWidth:0,pointRadius:0,fill:'+1',backgroundColor:rgba(MOD,a),order:ord},{label:l+' ',data:ser(k2),borderWidth:0,pointRadius:0,fill:false,order:ord}];
+ const ds=[{label:'Measured (ERA5)',data:E.Y.map(y=>({x:y,y:E.A[y]})),borderColor:OBS,backgroundColor:OBS,borderWidth:2.5,pointRadius:2,order:0},
+  {label:'Models, middle value',data:ser('med'),borderColor:MOD,backgroundColor:MOD,borderWidth:2,borderDash:[6,4],pointRadius:0,order:1},
+  ...band('p83','p17','Models, middle two-thirds',.28,3),...band('max','min',`Models, full range (${L.n})`,.12,4)];
+ ready('m',new Chart($('c3'),{type:'line',plugins:[hlines([[1.5,'1.5 °C',PARIS,true]])],data:{datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>!/ $/.test(i.text)}},tooltip:{filter:i=>/^Measured|middle value/.test(i.dataset.label),
+    callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+f2(c.parsed.y)+' °C',
+     footer:t=>{const m=M[t[0].parsed.x];return m?`Models: middle two-thirds ${f2(m.p17)} to ${f2(m.p83)}, all ${f2(m.min)} to ${f2(m.max)} °C`:''}}}},
+   scales:{x:{type:'linear',min:1940,max:2040,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}))}
+
+// ---- 4. IPCC AR6 projections by scenario
+const SSPC={'SSP1-1.9':['#00a9cf','#33c3e0'],'SSP1-2.6':['#003466','#5b8fcf'],'SSP2-4.5':['#f69320','#f6a54a'],'SSP3-7.0':['#df0000','#ff5a4f'],'SSP5-8.5':['#980002','#e0565a']};
+const SSPN={'SSP1-1.9':'very low emissions','SSP1-2.6':'low','SSP2-4.5':'intermediate','SSP3-7.0':'high','SSP5-8.5':'very high'};
+function ar6(D,E){
+ const A=D.ar6,U=D.unep,K=Object.keys(A.scenarios),col=k=>SSPC[k][THEME.dark?1:0];
+ const X=E.Y.slice(-30),b=slope(X,X.map(y=>E.A[y])),now=mean(X.map(y=>E.A[y]))+b*(E.last-mean(X));   // 30-year trend line, read off at its last year
+ cards('ar6-cards',[[`about ${f1(U.current_policies)} °C`,'by 2100 with the policies now in place (UNEP 2025, estimate)'],
+  [`${f1(U.ndcs[0])}–${f1(U.ndcs[1])} °C`,'if every country delivers its climate pledges (UNEP 2025, estimate)'],
+  [f2(now)+' °C',`long-term warming level now (measured trend, end of ${E.last})`]]);
+ list('ar6-read',[
+  `The IPCC's scenarios run from very low emissions (SSP1-1.9: CO₂ reaches net zero around 2050) to very high (SSP5-8.5: emissions roughly double by 2050). They are "what if" pathways, not predictions of which one the world will follow.`,
+  `In 2021–2040 all five reach about 1.5 °C: that much warming is already locked in by what has been emitted. After that the scenarios split, and by 2081–2100 they range from ${f1(A.scenarios['SSP1-1.9'][2][0])} to ${f1(A.scenarios['SSP5-8.5'][2][0])} °C (best estimates). The difference is made by emissions in the coming decades.`,
+  `With the policies in place today, UNEP estimates about ${f1(U.current_policies)} °C by 2100, close to the intermediate scenario SSP2-4.5. Under the very-low scenario, warming peaks around mid-century and then slowly declines; under the low one it levels off; in the other three it is still rising in 2100. Warming stops only when net CO₂ emissions reach zero.`]);
+ show('ar6-s');
+ let per=2;
+ const ch=new Chart($('c4'),{plugins:[hlines(()=>[[1.5,'1.5 °C',PARIS,true],[2,'2 °C',PARIS,true],[now,`Now: ${f2(now)} °C (long-term level)`,THEME.mut,false,true],
+   ...(per===2?[[U.current_policies,`Current policies, 2100 (UNEP): about ${f1(U.current_policies)} °C`,THEME.ink,true,true]]:[])])],
+  data:{labels:K.map(k=>[k,SSPN[k]]),datasets:[
+   {type:'line',label:'Best estimate',data:[],showLine:false,pointStyle:'line',pointRadius:22,pointHoverRadius:22,pointBorderWidth:3,borderColor:THEME.ink,backgroundColor:THEME.ink,order:0},
+   {type:'bar',label:'Very likely range (90%)',data:[],backgroundColor:K.map(k=>hatch(col(k),.22)),borderColor:K.map(col),borderWidth:1.5,barPercentage:.6,order:1}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>K[t[0].dataIndex]+' ('+SSPN[K[t[0].dataIndex]]+' emissions), '+A.periods[per],
+    label:c=>{const v=A.scenarios[K[c.dataIndex]][per];return c.datasetIndex?`Very likely range: ${f1(v[1])}–${f1(v[2])} °C`:`Best estimate: ${f1(v[0])} °C`}}}},
+   scales:{x:{grid:{display:false},ticks:{autoSkip:false}},y:{min:0,max:6,title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}});
+ const set=p=>{per=p;ch.data.datasets[0].data=K.map(k=>A.scenarios[k][p][0]);ch.data.datasets[1].data=K.map(k=>[A.scenarios[k][p][1],A.scenarios[k][p][2]]);
+  $('t4').textContent=`IPCC projections: global warming in ${A.periods[p]} by emissions scenario (°C above 1850–1900; best estimate and very likely range)`;ch.update()};
+ set(2);sel('psw',d=>set(+d.p));ready('a',ch)}
+
+// ---- 5. remaining carbon budget
+function budget(D){
+ const B=D.budget,em=B.emissions.fossil+B.emissions.land,L=B.levels,b15=L[0].p50,b20=L.find(l=>l.t===2).p50;
+ const t0=new Date(B.from+'T00:00:00Z'),yrsGone=(Date.now()-t0)/(365.25*864e5),left=b15-em*Math.max(0,yrsGone),out=2026+b15/em;
+ const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+ cards('cb-cards',[[`about ${Math.round(b15/10)*10} Gt`,'of CO₂ left from the start of 2026 for an even (50%) chance of staying under 1.5 °C'],
+  [`about ${f1(b15/em)} years`,`of emissions at the 2024 rate (${f1(em)} billion metric tons a year)`],
+  [left>0?`about ${Math.round(left)} Gt`:'used up',`estimated left on ${today}, if emissions stay at that rate`],
+  [`about ${Math.round(b20/10)*10} Gt`,`for an even chance of staying under 2 °C: about ${Math.round(b20/em)} years`]]);
+ $('t5').textContent=`Remaining carbon budget from 1 January 2026, by warming limit (billion metric tons of CO₂)`;
+ list('cb-read',[
+  `Warming is roughly proportional to the total amount of CO₂ ever emitted. That makes it possible to estimate how much more can be emitted before a given level of warming is reached: the remaining carbon budget.`,
+  `For an even chance of keeping warming under 1.5 °C, about ${Math.round(b15/10)*10} billion metric tons of CO₂ were left at the start of 2026: some ${f1(b15/em)} years of emissions at the 2024 rate, so it runs out around ${Math.floor(out)} unless emissions fall fast. For a two-in-three chance it is only about ${L[0].p67} billion metric tons.`,
+  `This is an estimate with a wide margin: how strongly the climate reacts, and how much the other greenhouse gases and air pollution will add or subtract, are not known precisely. The authors update it every year.`]);
+ show('cb-s');
+ const C50='#c4622d',C67='#8a6d3b',E=em;
+ ready('b',new Chart($('c5'),{type:'bar',data:{labels:L.map(l=>f1(l.t)+' °C'),datasets:[
+   {label:'Even chance (50%)',data:L.map(l=>l.p50),backgroundColor:hatch(C50,.25),borderColor:C50,borderWidth:1.5},
+   {label:'Two-in-three chance (67%)',data:L.map(l=>l.p67),backgroundColor:hatch(C67,.15),borderColor:C67,borderWidth:1.5}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>'Staying under '+t[0].label,label:c=>`${c.dataset.label}: ${Math.round(c.parsed.y)} Gt, about ${f1(c.parsed.y/E)} years at the 2024 rate`}}},
+   scales:{x:{grid:{display:false}},y:{min:0,max:1200,title:{display:true,text:'Billion metric tons of CO₂'},grid:{color:THEME.grid}},
+    y2:{position:'right',min:0,max:1200/E,title:{display:true,text:'Years at the 2024 rate'},grid:{display:false},ticks:{stepSize:5}}}}}))}
+
+// ---- 6. WMO 5-year outlook (cards only: these are chances)
+function wmo(D){
+ const W=D.wmo;
+ cards('wmo-cards',[[W.one_year_above_15+'%',`chance that at least one year in ${W.period} is more than 1.5 °C above 1850–1900`],
+  [W.mean_above_15+'%',`chance that the ${W.period} average is above 1.5 °C`],[W.new_record+'%','chance that at least one of these years beats 2024, the warmest year so far'],
+  [`under ${W.year_above_2}%`,'chance that any single year passes 2 °C']]);
+ list('wmo-read',[
+  `Each year in ${W.period} is expected to be ${f1(W.range[0])} to ${f1(W.range[1])} °C above 1850–1900.`,
+  `A single year above 1.5 °C does not mean the Paris limit has been broken: that limit refers to the long-term level, usually a 20-year average. See the <a href="air.html">air temperature page</a> for how much the answer depends on the period you average over.`]);
+ show('wmo-s')}
+
+Promise.allSettled([
+ Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse)])
+  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>cmip(M,E),()=>ar6(D,E),()=>budget(D),()=>wmo(D)],bad=[];
+   parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
+]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
+$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.m,'t3',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'predictions-vs-reality.jpg')};
+</script></main></body></html>
