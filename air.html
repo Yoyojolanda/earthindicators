@@ -35,6 +35,7 @@
 <p id="err"></p>
 <div id="out" class="hide">
 <div class="seg switch" id="region" role="group" aria-label="Region"><span class="lbl">Show:</span> <button class="nb on" type="button" data-r="world">World</button><button class="nb" type="button" data-r="nh">N. Hemisphere</button><button class="nb" type="button" data-r="sh">S. Hemisphere</button><button class="nb" type="button" data-r="arctic">Arctic</button><button class="nb" type="button" data-r="antarctic">Antarctic</button><button class="nb" type="button" data-r="tropics">Tropics</button></div>
+<div class="seg switch" id="base" role="group" aria-label="Compared with"><span class="lbl">Compared with:</span> <button class="nb on" type="button" data-b="91">1991–2020</button><button class="nb" type="button" data-b="pi">Pre-industrial (1850–1900)</button></div>
 <div class="cards" id="cards"></div>
 <p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
 <div class="box" data-nav="Compared with normal"><h2 id="t1"></h2><div class="sub" style="margin:0 0 6px"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max) &nbsp; <span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</div><div class="wrap"><canvas id="c1"></canvas></div><p class="sub hin" style="margin:6px 0 0"></p></div>
@@ -53,12 +54,17 @@
 <canvas id="leg6" style="width:100%;max-width:440px;height:38px;display:block;margin:8px 0 0"></canvas>
 <p class="sub" id="n6" style="margin:6px 0 0"></p></div>
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
-<p class="sub">Daily mean surface air temperature (2 m above the ground or sea) averaged over the whole globe, area-weighted; each day is the mean of all 24 hourly values (UTC). Anomaly = daily temperature minus the 1991–2020 daily mean. "Above pre-industrial" adds Copernicus's standard 0.88 °C offset (1850–1900 to 1991–2020) to the 12-month average anomaly; Copernicus considers that offset accurate for 12-month averages, not for single days. Values to February 2024 are the series published by Copernicus; later days are computed here from ERA5 in the Copernicus Climate Data Store using the same method, and the newest days are preliminary. Generated using Copernicus Climate Change Service information; ERA5 (Hersbach et al.), <a href="https://cds.climate.copernicus.eu/" target="_blank" rel="noopener">cds.climate.copernicus.eu</a>.</p>
+<p class="sub">Daily mean surface air temperature (2 m above the ground or sea) averaged over the whole globe, area-weighted; each day is the mean of all 24 hourly values (UTC). Anomaly = daily temperature minus the 1991–2020 daily mean. "Pre-industrial" (world only) uses Copernicus's offsets from 1850–1900 to 1991–2020, which differ through the year because the Northern Hemisphere winter has warmed most: 0.88 °C for 12-month averages; for single months their published table (0.80 °C in July and August to 0.96 °C in January and February); for single days their smooth curve through those monthly values, 0.88 + 0.07·cos(2πn/365) + 0.05·sin(2πn/365) for day n of the year (0.79–0.97 °C). The offsets come from three long records (Berkeley Earth, HadCRUT5, NOAAGlobalTemp), since ERA5 starts in 1940 (<a href="https://climate.copernicus.eu/climate-bulletin-about-data-and-analysis" target="_blank" rel="noopener">Copernicus method</a>). Values to February 2024 are the series published by Copernicus; later days are computed here from ERA5 in the Copernicus Climate Data Store using the same method, and the newest days are preliminary. Generated using Copernicus Climate Change Service information; ERA5 (Hersbach et al.), <a href="https://cds.climate.copernicus.eu/" target="_blank" rel="noopener">cds.climate.copernicus.eu</a>.</p>
 </div>
 <script>
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
 let HI={};
+// "Compared with pre-industrial": Copernicus's offsets from 1850-1900 to 1991-2020 (world only). Daily: their single-harmonic
+// fit, offset = 0.88 + 0.07 cos(2πn/365) + 0.05 sin(2πn/365) for day n of a 365-day year (0.79-0.97 °C); monthly: their table.
+window.PI=false;let RAW=null;
+const PIDAY=i=>{const w=2*Math.PI*Math.min(i+1,365)/365;return 0.88+0.07*Math.cos(w)+0.05*Math.sin(w)};
+const PIMON=[.96,.96,.95,.91,.87,.83,.80,.80,.81,.85,.89,.93];
 let c1,c2,c3,c4,expName='global-air-temp.jpg';
 const REGIONS={world:{f:'era5_t2_global_day.json',name:'World',adj:'global',world:true},
  nh:{f:'era5_t2_nh_day.json',name:'Northern Hemisphere',adj:'Northern Hemisphere'},
@@ -71,6 +77,7 @@ const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)retur
 const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
 function run(raw){
+ RAW=raw;const pi=window.PI&&R.world;
  const err=document.getElementById('err');err.textContent='';
  let d;try{d=JSON.parse(raw)}catch(e){err.textContent='That file is not valid JSON.';return}
  const by={};d.forEach(r=>by[String(r.name)]=r.data);
@@ -81,7 +88,7 @@ function run(raw){
  const cur=years[years.length-1];let cd=by[cur].slice();
  if(by['Preliminary'])cd=cd.map((v,i)=>v==null?by['Preliminary'][i]:v);
  let last=-1;cd.forEach((v,i)=>{if(v!=null)last=i});
- const an=(arr)=>arr.map((v,i)=>v==null||clim[i]==null?null:v-clim[i]);
+ const an=(arr)=>arr.map((v,i)=>v==null||clim[i]==null?null:v-clim[i]+(pi?PIDAY(i):0));
  const prior=years.filter(y=>y<cur),y0=years[0];
  const A=prior.map(y=>an(by[y])),a=an(cd);
  const N=366,mn=[],mx=[],p10=[],p90=[];
@@ -107,12 +114,12 @@ function run(raw){
  const WHY={};[[cur-1,'last year'],[wY,'warmest year on record'],[pkY,'warmest single day on record']].forEach(([y,w])=>{if(y)(WHY[y]??=[]).push(w)});
  document.querySelectorAll('.hin').forEach(e=>e.textContent='Highlighted: '+Object.keys(WHY).sort((a,b)=>b-a).map(y=>`${y} (${WHY[y].join(', ')})`).join(', ')+'.');
  const f=x=>{const r=Math.abs(x)<0.005?0:x;return (r>=0?'+':'')+r.toFixed(2)};
- document.getElementById('cards').innerHTML=[[f(now)+' °C',cur+' anomaly, '+fmtDate(last)],[f(rec)+' °C',(now>rec?'Prior record':'Record')+' for this date ('+recY+')'],[f(now-rec)+' °C',now>rec?'Margin over that record':'Below that record'],R.world?[pre==null?'–':f(pre)+' °C','Last 12 months vs pre-industrial (1850–1900)']:[a12==null?'–':f(a12)+' °C','Last 12 months vs 1991–2020'],[streak+' days','Consecutive days above record']].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
- document.getElementById('t1').textContent=`${R.name}: each day of ${cur} compared with the same day in every year since ${y0} (°C above or below the 1991–2020 average)`;
+ document.getElementById('cards').innerHTML=[[f(now)+' °C',(pi?cur+' above pre-industrial, ':cur+' anomaly, ')+fmtDate(last)],[f(rec)+' °C',(now>rec?'Prior record':'Record')+' for this date ('+recY+')'],[f(now-rec)+' °C',now>rec?'Margin over that record':'Below that record'],R.world?[pre==null?'–':f(pre)+' °C','Last 12 months vs pre-industrial (1850–1900)']:[a12==null?'–':f(a12)+' °C','Last 12 months vs 1991–2020'],[streak+' days','Consecutive days above record']].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+ document.getElementById('t1').textContent=`${R.name}: each day of ${cur} compared with the same day in every year since ${y0} (°C ${pi?'above pre-industrial, 1850–1900':'above or below the 1991–2020 average'})`;
  document.getElementById('t3').textContent=`${R.name}: each day of ${cur} in actual temperature (°C), compared with every year since ${y0}`;
- document.getElementById('t2').textContent=`${fmtDate(last)} anomaly, every year`;
+ document.getElementById('t2').textContent=`${fmtDate(last)}, every year: °C ${pi?'above pre-industrial (1850–1900)':'compared with the 1991–2020 average'}`;
  const items=[
-  `As of ${fmtDate(last)}, the ${cur} temperature anomaly is ${f(now)} °C. The previous record for this date was ${f(rec)} °C (${recY}); ${now>rec?cur+' is above it by '+(now-rec).toFixed(2)+' °C':cur+' ranks #'+rank+' of '+(at.length+1)+' years'}.`,
+  `As of ${fmtDate(last)}, the ${cur} temperature is ${pi?`${f(now)} °C above pre-industrial (1850–1900), using Copernicus's offset for this time of year (${PIDAY(last).toFixed(2)} °C)`:`${f(now)} °C compared with the 1991–2020 average`}.`+` The previous record for this date was ${f(rec)} °C (${recY}); ${now>rec?cur+' is above it by '+(now-rec).toFixed(2)+' °C':cur+' ranks #'+rank+' of '+(at.length+1)+' years'}.`,
   `In absolute terms the ${R.adj} average air temperature is ${cd[last].toFixed(2)} °C, against a 1991–2020 average of ${clim[last].toFixed(2)} °C for this date.`,
   `How unusual is that? Compared with the years 1991–2020 on this date, it is ${Math.abs(z91).toFixed(1)} standard deviations ${z91>=0?'above':'below'} their average. But part of that is simply the steady warming. A straight trend line through the last ${zL.length} years puts the expected value for this date in ${cur} at ${f(pred)} °C; today is ${Math.abs(now-pred).toFixed(2)} °C ${now>=pred?'above':'below'} that, or ${Math.abs(zt).toFixed(1)} standard deviations. That second number is what is unusual beyond the trend (weather, El Niño and the like).`,
   streak>0?`${cur} has been above every prior year for ${streak} consecutive days.`:`${cur} is not currently above the record envelope for this date.`,
@@ -138,7 +145,7 @@ function run(raw){
  if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
  c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>/^\d{4}$/.test(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min','90th percentile','10th percentile',String(cur),...Object.keys(HI)].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
-  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
+  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:pi?'°C above 1850–1900':'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  const bc=prior.map(y=>HI[y]||'#8fa9c4');
  c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:[...prior,cur],datasets:[{data:[...at,now],backgroundColor:[...bc,'#d00000']}]},options:{animation:false,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>f(c.parsed.y)+' °C'}}},scales:{x:{ticks:{color:tc,maxRotation:90,autoSkip:true},grid:{display:false}},y:{ticks:{color:tc},grid:{color:THEME.grid}}}}});
@@ -178,12 +185,16 @@ function run(raw){
 }
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>{c1&&c1.resize();c2&&c2.resize();c3&&c3.resize();c4&&c4.resize()}));
 document.getElementById('exp').onclick=()=>{if(!c1||!c2||!c3)return;siteExport([[c1,'t1',1],[c2,'t2',0],[c3,'t3',1],...(R.world&&c4?[[c4,'t4',0]]:[]),...(window.c8?[[window.c8,'t8',0]]:[]),...(window.c7?[[window.c7,'t7',0]]:[]),...(window.c9?[[window.c9,'t9',0]]:[])],expName)};
+function setBase(b){window.PI=b==='pi';document.querySelectorAll('#base .nb').forEach(x=>x.classList.toggle('on',x.dataset.b===b))}
 function load(k){const reg=REGIONS[k];
- return fetch('data/'+reg.f).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{R=reg;run(t);
+ return fetch('data/'+reg.f).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{R=reg;
+  const pb=document.querySelector('#base [data-b=pi]');pb.hidden=!reg.world;document.getElementById('base').hidden=!reg.world;if(!reg.world)setBase('91');
+  run(t);if(window.drawC8)window.drawC8();
   document.querySelectorAll('#region .nb').forEach(x=>x.classList.toggle('on',x.dataset.r===k))})}
 document.querySelectorAll('#region .nb').forEach(x=>x.onclick=()=>load(x.dataset.r).catch(()=>{x.disabled=true;x.title='Data for this region is not available yet'}));
 document.querySelectorAll('#region .nb').forEach(x=>{if(x.dataset.r==='world')return;
  fetch('data/'+REGIONS[x.dataset.r].f,{method:'HEAD'}).then(r=>{if(!r.ok)throw 0}).catch(()=>{x.disabled=true;x.title='The history for this region is still being downloaded from Copernicus'})});
+document.querySelectorAll('#base .nb').forEach(x=>x.onclick=()=>{if(x.classList.contains('on')||!RAW)return;setBase(x.dataset.b);run(RAW);if(window.drawC8)window.drawC8()});
 load('world').catch(()=>{document.getElementById('err').textContent='Could not load the data file. Please try again later.'});
 </script><script>
 // ---- the latest complete month, every year since 1940 (world, ERA5), vs that month's 1991–2020 average: the ranking that
@@ -200,17 +211,22 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   let b=0,n=0;for(let x=1991;x<=2020;x++)if(V[x]!=null){b+=V[x];n++}
   if(n<30||!V[y])return;
   Y.forEach(x=>V[x]-=b/n);
+  const V0={...V};
+  window.drawC8=()=>{                       // redrawn when the "Compared with" switch changes (pre-industrial: Copernicus's offset for this month)
+  const pi=window.PI&&R.world,o=pi?PIMON[m-1]:0;Y.forEach(x=>V[x]=V0[x]+o);
   const rank=[...Y].sort((p,q)=>V[q]-V[p]),r=rank.indexOf(y)+1,top=rank.slice(0,5);
   const ord=k=>k+(k%100>10&&k%100<14?'th':['th','st','nd','rd'][k%10]||'th'),f=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2);
   const col=Y.map(x=>x===y?'#d00000':top.includes(x)?'#e6a23c':'#8fa9c8');
-  document.getElementById('t8').textContent=`${MN[m-1]}, every year ${Y[0]}–${y}: world air temperature compared with the 1991–2020 ${MN[m-1]} average`;
+  document.getElementById('t8').textContent=pi?`${MN[m-1]}, every year ${Y[0]}–${y}: world air temperature above pre-industrial (1850–1900)`:`${MN[m-1]}, every year ${Y[0]}–${y}: world air temperature compared with the 1991–2020 ${MN[m-1]} average`;
+  if(window.c8&&window.c8.destroy)window.c8.destroy();   // before the first draw, window.c8 is the canvas element (same id)
   window.c8=new Chart(document.getElementById('c8'),{type:'bar',data:{labels:Y.map(String),datasets:[{data:Y.map(x=>V[x]),backgroundColor:col}]},
    options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},
     tooltip:{callbacks:{title:t=>`${MN[m-1]} ${Y[t[0].dataIndex]}`,label:c=>{const x=Y[c.dataIndex];return `${f(V[x])} °C, ${ord(rank.indexOf(x)+1)} warmest`}}}},
-    scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020'},grid:{color:THEME.grid}}}}});
+    scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:pi?'°C above 1850–1900':'°C vs 1991–2020'},grid:{color:THEME.grid}}}}});
   const others=top.filter(x=>x!==y).slice(0,4);
-  document.getElementById('n8').textContent=`${MN[m-1]} ${y} was ${f(V[y])} °C compared with the 1991–2020 average for ${MN[m-1]}: the ${r===1?'warmest':ord(r)+'-warmest'} ${MN[m-1]} since ${Y[0]}${r>1?`, behind ${rank.slice(0,r-1).map(x=>`${x} (${f(V[x])})`).join(', ')}`:''}. The warmest five: ${top.map(x=>`${x} (${f(V[x])})`).join(', ')}; red is ${y}, orange the other four. Each bar is the average of all days of the month in ERA5 (Copernicus), so it updates as soon as a month is complete, usually a few days before the official monthly bulletins. Other datasets (NASA, NOAA, Berkeley Earth) use different methods and coverage and usually come out a little lower; when two years are that close, they can rank them in a different order.`;
+  document.getElementById('n8').textContent=`${MN[m-1]} ${y} was ${f(V[y])} °C ${pi?`above pre-industrial (Copernicus's offset for ${MN[m-1]}: ${o.toFixed(2)} °C)`:`compared with the 1991–2020 average for ${MN[m-1]}`}: the ${r===1?'warmest':ord(r)+'-warmest'} ${MN[m-1]} since ${Y[0]}${r>1?`, behind ${rank.slice(0,r-1).map(x=>`${x} (${f(V[x])})`).join(', ')}`:''}. The warmest five: ${top.map(x=>`${x} (${f(V[x])})`).join(', ')}; red is ${y}, orange the other four. Each bar is the average of all days of the month in ERA5 (Copernicus), so it updates as soon as a month is complete, usually a few days before the official monthly bulletins. Other datasets (NASA, NOAA, Berkeley Earth) use different methods and coverage and usually come out a little lower; when two years are that close, they can rank them in a different order.`;
   document.getElementById('b8').hidden=false;
+  };window.drawC8();
  }).catch(e=>console.error('latest month:',e));
 })();
 </script>
