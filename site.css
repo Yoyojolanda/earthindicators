@@ -244,6 +244,16 @@ html.srch-on{overflow:hidden}
  .dd-col{padding:0}
  .dd-h{margin:8px 4px 2px;padding-bottom:4px;font-size:13px;align-self:flex-start}
 }
+/* narrow screens, full header: brand on the left over two rows; the menu button top right, search and theme under it
+   (in one flex row the menu button would wrap onto a line of its own); the opened menu runs full width below */
+@media (max-width:860px){
+ .site-head:not(.mini){display:grid;grid-template-columns:1fr auto auto;grid-template-areas:"brand burger burger" "brand search theme" "menu menu menu";column-gap:2px;row-gap:0;align-items:center}
+ .site-head:not(.mini) .brand{grid-area:brand}
+ .site-head:not(.mini) .burger{grid-area:burger;justify-self:end;margin:-6px -6px 0 0}
+ .site-head:not(.mini) .search-btn{grid-area:search;margin:0}
+ .site-head:not(.mini) .theme-btn{grid-area:theme;margin:0 -6px 0 0}
+ .site-head:not(.mini) .menu{grid-area:menu}
+}
 @media (max-width:520px){.site-head img{height:48px}.site-head .wm{font-size:27px;line-height:30px}.site-head .tag{font-size:12px;line-height:16px}}
 
 /* the old row of page buttons now only holds the export button until site.js moves it; hide it when empty */

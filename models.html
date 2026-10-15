@@ -32,9 +32,9 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 .part h2{font-size:22px;margin:0 0 4px}
 .part p{margin:0;font-size:14px;line-height:1.5}
 .part.proj{border:2px dashed var(--mut);background:repeating-linear-gradient(135deg,transparent 0 9px,var(--tint) 9px 11px)}
-.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin:0 0 6px}
-.tag.m{background:var(--tint);color:var(--ink)}
-.tag.p{border:1.5px dashed var(--mut);color:var(--mut)}
+.ptag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin:0 0 6px}
+.ptag.m{background:var(--tint);color:var(--ink)}
+.ptag.p{border:1.5px dashed var(--mut);color:var(--mut)}
 .key{font-size:13px;color:var(--mut);margin:6px 0 0}
 .wrap.tall{height:var(--ht,640px)}
 /* Hansen's predictions: one row each, status on the right */
@@ -57,7 +57,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <p class="key"><b>How to read the charts:</b> solid lines and bars are measurements; dashed lines and hatched bars come from models, projections or estimates.</p>
 <p id="err"></p>
 
-<div class="part"><span class="tag m">Checked against measurements</span><h2>Part 1. How well did past predictions do?</h2>
+<div class="part"><span class="ptag m">Checked against measurements</span><h2>Part 1. How well did past predictions do?</h2>
 <p>Predictions made decades ago, and the models used today, set against the temperatures that were actually measured.</p></div>
 
 <section id="old-s" class="hide">
@@ -95,12 +95,12 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <p class="sub">CMIP6 is the set of climate model runs behind the IPCC's 2021 report. Shown here: one run (r1i1p1f1) from each of the 16 models with complete global air temperature in both the historical experiment (to 2014, driven by measured greenhouse gases, air pollution, volcanoes and the sun) and its continuation with the middle scenario SSP2-4.5 (from 2015), as averaged by Neil Swart, CCCma (<a href="https://github.com/swartn/cmip6-gmst-anoms" target="_blank" rel="noopener">GitHub</a>). Both models and measurements are global near-surface air temperature, relative to 1850–1900. Measured: ERA5, converted to 1850–1900 with Copernicus's offset of 0.88 °C for 1991–2020 (as on the <a href="air.html">air temperature page</a>); complete years only.</p>
 </section>
 
-<div class="part proj"><span class="tag p">Projection, not measurement</span><h2>Part 2. What the models say comes next</h2>
+<div class="part proj"><span class="ptag p">Projection, not measurement</span><h2>Part 2. What the models say comes next</h2>
 <p>None of this has happened yet. These are projections and estimates from the main international assessments, shown as published, each with its range. What actually happens depends above all on how much more CO₂ is emitted.</p></div>
 
 <section id="ar6-s" class="hide">
 <h2 class="sec">Warming by scenario (IPCC)</h2>
-<p class="st"><span class="tag p">Projection</span></p>
+<p class="st"><span class="ptag p">Projection</span></p>
 <div class="cards" id="ar6-cards"></div>
 <div class="box"><h2 id="t6"></h2><div class="wrap"><canvas id="c6"></canvas></div></div>
 <div class="box"><h2 id="t4"></h2>
@@ -112,7 +112,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 
 <section id="cb-s" class="hide">
 <h2 class="sec">The remaining carbon budget</h2>
-<p class="st"><span class="tag p">Estimate</span></p>
+<p class="st"><span class="ptag p">Estimate</span></p>
 <div class="cards" id="cb-cards"></div>
 <div class="box"><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div></div>
 <ul id="cb-read"></ul>
@@ -121,7 +121,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 
 <section id="wmo-s" class="hide">
 <h2 class="sec">The next five years (WMO)</h2>
-<p class="st"><span class="tag p">Forecast: chances, not certainties</span></p>
+<p class="st"><span class="ptag p">Forecast: chances, not certainties</span></p>
 <div class="cards" id="wmo-cards"></div>
 <ul id="wmo-read"></ul>
 <p class="sub">WMO Global Annual to Decadal Climate Update 2026–2035, published 28 May 2026 (<a href="https://wmo.int/node/38645" target="_blank" rel="noopener">wmo.int</a>), prepared by the UK Met Office from forecasts by climate centers around the world. Temperatures relative to 1850–1900.</p>
@@ -270,7 +270,8 @@ function score(G,M,L,D,ml){
  const B=(c,t)=>`<span class="badge ${c}">${t}</span>`,S={};
  S.end2024=()=>{const v=r12['2024-12'];return v==null?[B('open','Open'),'']:[v>=1.5?B('ok','Right'):B('no','Wrong'),`12-month average to Dec 2024: ${f2(v)} °C.`]};
  S.barely2025=()=>{const Y=M.filter(r=>r.y===2025);if(Y.length<12)return [B('open','Open'),''];const lo=Y.reduce((b,r)=>r.r12<b.r12?r:b);
-  return lo.r12>=1.5?[B('ok','Right'),`It did not fall below 1.5 °C in 2025 (lowest ${f2(lo.r12)} °C).`]:[B('mid','Close call'),`Lowest in 2025: ${f2(lo.r12)} °C (to ${ml(lo)}), ${f2(1.5-lo.r12)} °C below 1.5. The paper does not define "barely".`]};
+  // "barely" is not defined in the paper; this site counts up to 0.05 °C below 1.5 as barely (less than the 12-month average often moves within three months)
+  return lo.r12>=1.5?[B('ok','Right'),`It did not fall below 1.5 °C in 2025 (lowest ${f2(lo.r12)} °C).`]:1.5-lo.r12<=0.05?[B('ok','Right'),`Lowest in 2025: ${f2(lo.r12)} °C (to ${ml(lo)}), ${f2(1.5-lo.r12)} °C below 1.5: barely, by this site's rule of up to 0.05 °C.`]:[B('no','Wrong'),`Lowest in 2025: ${f2(lo.r12)} °C (to ${ml(lo)}), ${f2(1.5-lo.r12)} °C below 1.5: more than this site's 0.05 °C for "barely".`]};
  S.near15=()=>{const A=M.filter(r=>r.x>=2025+1.5/12);const lo=A.reduce((b,r)=>r.r12<b.r12?r:b);
   return [B('open','Running'),`Since the paper: between ${f2(lo.r12)} (to ${ml(lo)}) and ${f2(Math.max(...A.map(r=>r.r12)))} °C; ${f2(L.r12)} °C to ${ml(L)}. "Much" is not defined; the chart above shows how it is going.`]};
  S.augdec=()=>{const d=[8,9,10,11,12].filter(k=>by[mm(2026,k)]!=null).map(k=>[k,by[mm(2026,k)]-by[mm(2024,k)]]);const txt=d.map(([k,x])=>`${MN[k-1]} ${x>=0?'+':'−'}${Math.abs(x).toFixed(2)}`).join(', ');
@@ -286,7 +287,7 @@ function score(G,M,L,D,ml){
  S.hotter2027=()=>{const a=ann(2027),b=ann(2026);if(a!=null&&b!=null)return [a>b?B('ok','Right'):B('no','Wrong'),`2027: ${f2(a)} °C; 2026: ${f2(b)} °C.`];return [B('open','Open'),b!=null?`2026: ${f2(b)} °C.`:'Decided when 2027 is complete.']};
  $('score').innerHTML=T.map(t=>{const [st,meas]=(S[t.id]||(()=>[B('open','Open'),'']))(),src=SRC[t.src];
   return `<tr><td>${t.text}<span class="m">Made ${t.made}: <a href="${src.url}" target="_blank" rel="noopener">${src.title}</a></span>${meas?`<span class="r">${meas}</span>`:''}</td><td class="st">${st}</td></tr>`}).join('');
- $('score-n').textContent=`All in Hansen's own measure: NASA GISTEMP, °C above 1880–1920, updated each month. "Right" and "Wrong" are given only when the outcome is settled and the prediction gives a clear line; "Running" and "Close call" mark wording without a fixed threshold ("much", "barely").`;
+ $('score-n').textContent=`All in Hansen's own measure: NASA GISTEMP, °C above 1880–1920, updated each month. "Right" and "Wrong" are given only when the outcome is settled and the prediction gives a clear line; "Running" marks wording without a fixed threshold ("much"). For "barely", this site counts up to 0.05 °C, less than the 12-month average often moves within three months.`;
  $('score-b').hidden=false}
 
 // ---- 3. CMIP6 against ERA5

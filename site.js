@@ -247,10 +247,12 @@
   const fitTag = () => {
     const wm = document.querySelector('.site-head .wm'), tag = document.querySelector('.site-head .tag');
     if (!wm || !tag) return;
-    tag.style.letterSpacing = '0'; tag.style.marginRight = '0';
-    const extra = wm.getBoundingClientRect().width - tag.getBoundingClientRect().width, n = tag.textContent.length;
-    // widens the tagline, or tightens it slightly if it is the longer one
-    if (n > 1) { const ls = extra / (n - 1); tag.style.letterSpacing = ls + 'px'; tag.style.marginRight = -ls + 'px'; }
+    tag.style.letterSpacing = '0'; tag.style.marginRight = '0'; tag.style.fontSize = '';
+    const w = wm.getBoundingClientRect().width, t = tag.getBoundingClientRect().width, n = tag.textContent.length;
+    if (t > w) {   // the tagline is the wider one (phones): make its letters a little smaller, never squeeze them together
+      tag.style.fontSize = (parseFloat(getComputedStyle(tag).fontSize) * w / t * 0.995) + 'px'; return;
+    }
+    if (n > 1) { const ls = (w - t) / (n - 1); tag.style.letterSpacing = ls + 'px'; tag.style.marginRight = -ls + 'px'; }   // widen it to the name's width
   };
   fitTag();
   if (document.fonts) document.fonts.ready.then(fitTag);
