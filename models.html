@@ -416,18 +416,20 @@ function ghgPaths(D,W){
  // earlier required paths (grey): each report's own percentage change, applied to this series' value in its base year
  const OP=(D.ghg_old_paths||[]).map((o,n)=>{const e0=at(o.base);let pts=[{x:o.base,y:e0}];
   if(o.points)o.points.forEach(([y,pc])=>pts.push({x:y,y:e0*(1+pc/100)}));else for(let y=o.base+1;y<=o.to;y++)pts.push({x:y,y:e0*Math.pow(1+o.rate/100,y-o.base)});
-  const c=o.target==='1.5 °C'?'#b9a3a3':THEME.mut;
-  return {label:`${o.src.replace('Emissions Gap Report','UNEP').replace('UNEP UNEP','UNEP')}, required for ${o.target}`,old:o,data:pts,borderColor:c,backgroundColor:c,borderWidth:1.6,borderDash:[3,3],pointRadius:0,fill:false,order:2}});
+  // each earlier path its own dash pattern and end marker; colour by target (fainter versions of the current IPCC paths)
+  const c=rgba(o.target==='1.5 °C'?PARIS:'#e08a1e',THEME.dark?.75:.6),ST=[[[2,3],'circle'],[[9,3,2,3],'triangle'],[[12,5],'rect']][n%3];
+  return {label:`${o.src.replace(/ Emissions Gap Report/,'')}, required for ${o.target}`,old:o,data:pts,borderColor:c,backgroundColor:c,borderWidth:2,borderDash:ST[0],
+   pointStyle:ST[1],pointRadius:pts.map((q,i)=>i===pts.length-1?4.5:0),pointHoverRadius:5,fill:false,order:2}});
  // where it is heading: the last ten years' straight-line trend, extended to 2035 (a calculation, not a forecast); and UNEP's pledge estimate
  const TY=Y.slice(-10),TV=TY.map(at),tb=slope(TY,TV),tm=mean(TV),tx=mean(TY),ext=y=>tm+tb*(y-tx);
  const TR={label:`Trend of ${TY[0]}–${L}, extended (a calculation, not a forecast)`,trend:true,data:[{x:L,y:ext(L)},{x:2035,y:ext(2035)}],borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,borderDash:[2,4],pointRadius:0,fill:false,order:1};
  const PL=D.ghg_pledges,PLv=PL?at(PL.base)*(1+PL.change/100):null;
- const PD=PL?{label:`If all pledges are delivered (${PL.src.replace('Emissions Gap Report','UNEP')})`,pledge:true,data:[{x:PL.year,y:PLv}],showLine:false,pointStyle:'triangle',pointRadius:7,borderColor:'#2e7d32',backgroundColor:hatch('#2e7d32',.3),borderWidth:2,order:0}:null;
+ const PD=PL?{label:`If all pledges are delivered (${PL.src.replace(/ Emissions Gap Report/,'')})`,pledge:true,data:[{x:PL.year,y:PLv}],showLine:false,pointStyle:'triangle',pointRadius:7,borderColor:'#2e7d32',backgroundColor:hatch('#2e7d32',.3),borderWidth:2,order:0}:null;
  const ES=EST?{label:`${EST.x}, first estimate (${L} total + EDGAR's ${WC.pct>=0?'+':'−'}${Math.abs(WC.pct).toFixed(1)}%)`,est:true,data:[EST],showLine:false,pointStyle:'circle',pointRadius:5,pointHoverRadius:6,borderColor:THEME.ink,backgroundColor:THEME.card,borderWidth:2,order:0}:null;
  const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0};
  ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,...(ES?[ES]:[]),pd('1.5',PARIS),pd('2','#e08a1e'),...OP,TR,...(PD?[PD]:[]),...ds]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
+   plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas,boxWidth:30,boxHeight:2}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
     label:c=>{const d=c.dataset,y=c.parsed.y;
      if(d.kind){const j=P.years.indexOf(c.parsed.x);return `${d.kind} °C path (IPCC 2023): ${f1(y)} Gt`+(j>=0?` (−${P[d.kind].mid[j]}%, range −${P[d.kind].lo[j]} to −${P[d.kind].hi[j]}%)`:'')}
      if(d.old)return `${d.old.src}, ${d.old.target}: ${f1(y)} Gt (${d.old.note})`;
