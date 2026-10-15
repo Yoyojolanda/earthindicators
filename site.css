@@ -72,6 +72,7 @@ a{color:var(--link)}
 .lgd button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .lgd .sw{flex:0 0 22px;height:0;border-top:3px solid var(--grey)}
 .lgd .bx{flex:0 0 22px;height:11px;border-radius:2px}
+.lgd .sv{flex:0 0 26px;height:12px;line-height:0}   /* line sample with the line's own dash pattern, or a point marker */
 .lgd .tx{overflow:hidden;text-overflow:ellipsis}
 .lgd .off{opacity:.38;text-decoration:line-through}
 

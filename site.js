@@ -670,8 +670,19 @@
       const fill = typeof bg === 'string' ? bg : cols && cols.length > 1 ? `linear-gradient(90deg,${cols[0]} 50%,${cols[1]} 50%)` : cols ? cols[0] : null;
       return { text: ds.label, datasetIndex: i, hidden: !ch.isDatasetVisible(i),
         color: typeof ds.borderColor === 'string' ? ds.borderColor : '#888', fill,
-        line: !bar && (ds.borderWidth === undefined || ds.borderWidth > 0), dash: !!(ds.borderDash && ds.borderDash.length) }; })
+        line: !bar && (ds.borderWidth === undefined || ds.borderWidth > 0), dash: !!(ds.borderDash && ds.borderDash.length),
+        // the line's own dash pattern; datasets drawn only as points (showLine: false) get their point shape instead
+        dashArr: ds.borderDash && ds.borderDash.length ? ds.borderDash.slice() : null,
+        point: !bar && ds.showLine === false ? { style: typeof ds.pointStyle === 'string' ? ds.pointStyle : 'circle',
+          fill: typeof bg === 'string' ? bg : 'none' } : null }; })
       .filter(it => it.text && (!st.filter || st.filter(it, ch.data)));
+  }
+  // a point marker for the legend: circle, triangle, square (rect), diamond (rectRot), centered in a 26x12 box
+  function svgPoint(it) {
+    const c = it.color, f = it.point.fill, a = ' stroke="' + c + '" stroke-width="2" fill="' + f + '"';
+    const sh = { triangle: '<polygon points="13,1.5 18.5,10.5 7.5,10.5"' + a + '/>', rect: '<rect x="8.5" y="1.5" width="9" height="9"' + a + '/>',
+      rectRot: '<polygon points="13,0.8 18.2,6 13,11.2 7.8,6"' + a + '/>' }[it.point.style] || '<circle cx="13" cy="6" r="4.3"' + a + '/>';
+    return '<svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true">' + sh + '</svg>';
   }
   function renderLegend(ch) {
     const st = LG.get(ch); if (!st) return;
@@ -684,7 +695,9 @@
       b.type = 'button'; b.title = 'Click to show or hide'; b.setAttribute('aria-pressed', String(!it.hidden));
       if (it.hidden) b.className = 'off';
       const sw = document.createElement('span');
-      if (it.line) { sw.className = 'sw'; sw.style.borderTopColor = it.color; if (it.dash) sw.style.borderTopStyle = 'dashed'; }
+      if (it.point) { sw.className = 'sv'; sw.innerHTML = svgPoint(it); }
+      else if (it.line) { sw.className = 'sv'; sw.innerHTML = '<svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><line x1="1" y1="6" x2="25" y2="6" stroke="' + it.color +
+        '" stroke-width="3"' + (it.dashArr ? ' stroke-dasharray="' + it.dashArr.join(' ') + '"' : '') + '/></svg>'; }
       else { sw.className = 'bx'; sw.style.background = it.fill || it.color; }
       const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = it.text;
       b.append(sw, tx);
@@ -826,7 +839,14 @@
       }
       leg[n].forEach((it, k) => {
         const lx = flow[n][k].lx, ly = y + flow[n][k].row * rowH;
-        if (it.line) { x.strokeStyle = it.color; x.lineWidth = 3 * r; x.setLineDash(it.dash ? [4 * r, 3 * r] : []);
+        if (it.point) {
+          const cx = lx + 11 * r, cy = ly + 7 * r, q = 4.5 * r; x.strokeStyle = it.color; x.lineWidth = 2 * r; x.setLineDash([]); x.beginPath();
+          if (it.point.style === 'triangle') { x.moveTo(cx, cy - q); x.lineTo(cx + q, cy + q * .8); x.lineTo(cx - q, cy + q * .8); x.closePath(); }
+          else if (it.point.style === 'rect') x.rect(cx - q, cy - q, 2 * q, 2 * q);
+          else if (it.point.style === 'rectRot') { x.moveTo(cx, cy - q); x.lineTo(cx + q, cy); x.lineTo(cx, cy + q); x.lineTo(cx - q, cy); x.closePath(); }
+          else x.arc(cx, cy, q, 0, 2 * Math.PI);
+          if (it.point.fill !== 'none') { x.fillStyle = it.point.fill; x.fill(); } x.stroke(); }
+        else if (it.line) { x.strokeStyle = it.color; x.lineWidth = 3 * r; x.setLineDash(it.dashArr ? it.dashArr.map(v => v * r) : it.dash ? [4 * r, 3 * r] : []);
           x.beginPath(); x.moveTo(lx, ly + 7 * r); x.lineTo(lx + 22 * r, ly + 7 * r); x.stroke(); x.setLineDash([]); }
         else { x.fillStyle = it.fill || it.color; x.fillRect(lx, ly + 2 * r, 22 * r, 11 * r); }
         x.fillStyle = THEME.mut; x.fillText(it.text, lx + 29 * r, ly);

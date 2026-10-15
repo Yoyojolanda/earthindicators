@@ -429,7 +429,7 @@ function ghgPaths(D,W){
  const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0};
  ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,...(ES?[ES]:[]),pd('1.5',PARIS),pd('2','#e08a1e'),...OP,TR,...(PD?[PD]:[]),...ds]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas,boxWidth:30,boxHeight:2}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
+   plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
     label:c=>{const d=c.dataset,y=c.parsed.y;
      if(d.kind){const j=P.years.indexOf(c.parsed.x);return `${d.kind} °C path (IPCC 2023): ${f1(y)} Gt`+(j>=0?` (−${P[d.kind].mid[j]}%, range −${P[d.kind].lo[j]} to −${P[d.kind].hi[j]}%)`:'')}
      if(d.old)return `${d.old.src}, ${d.old.target}: ${f1(y)} Gt (${d.old.note})`;
@@ -457,7 +457,9 @@ function whatItTakes(D,W,fc){
  const rows=[];for(let k=1;k<=steps;k++){const v=per*k,[n,rv]=pick(v),q=rv/v;rows.push([S0+k,v,`${Math.abs(q-1)<=0.08?'About as much as':q<1?'More than':'Almost as much as'} ${n} (${f1(rv)})`])}
  cards('wt-cards',[[f1(cut)+' Gt',`less every year by 2030 than in ${S0}, to get onto the IPCC's 2 °C path`],[f1(per)+' Gt',`less each year, ${S0+1} to 2030, ${steps} years in a row`]]);
  $('wt-tab').innerHTML=`<tr><td><b>Year</b></td><td class="st"><b>Lower than ${S0}</b></td></tr>`+rows.map(([y,v,t])=>`<tr><td><b>${y}</b><span class="r">${t}</span></td><td class="st">${f1(v)} Gt</td></tr>`).join('');
- $('wt-tn').textContent=`Yearly emissions in billions of metric tons of CO₂-equivalent. `+(S0>L?`Starting point: ${S0}, about ${f1(start)} (the ${L} total plus EDGAR's first estimate of the change, ${WC.pct>=0?'+':'−'}${Math.abs(WC.pct).toFixed(1)}%). `:'')+`Each row is the total cut by then compared with ${S0}, so ${S0+steps} means the whole cut. Country comparisons: ${W.emitters.year} emissions.`;
+ $('wt-tn').textContent=`Yearly emissions in billions of metric tons of CO₂-equivalent. `+(S0>L?`Starting point: ${S0}, about ${f1(start)} (the ${L} total plus EDGAR's first estimate of the change, ${WC.pct>=0?'+':'−'}${Math.abs(WC.pct).toFixed(1)}%). `:'')+`Each row is the total cut by then compared with ${S0}, so ${S0+steps} means the whole cut. Country comparisons: ${W.emitters.year} emissions.`+
+  (W.partial&&W.partial.year===S0+1?(()=>{const q=W.partial,s1=start*(1+q.pct/100),n=2030-q.year,per2=(s1-t30)/n;
+   return ` ${q.year} is not on track: Climate TRACE's first figures show emissions in ${q.period} ${q.year} ${q.pct>=0?'up':'down'} ${Math.abs(q.pct).toFixed(1)}% on the year before, not ${f1(per)} billion metric tons lower. If ${q.year} ends about level, the whole cut has to fit into ${q.year+1}–2030: about ${f1(per2)} less each year, ${n} years in a row.`})():'');
  // the IPCC's options
  const O=W.options.list,B=[['below0','Cheaper than the current way','#5390c8'],['0-20','0–20 $/t','#f7aa00'],['20-50','20–50 $/t','#e5733b'],['50-100','50–100 $/t','#de4b16'],['100-200','100–200 $/t','#9e2b1c'],['na','Cost not given','#adada9']];
  const S=k=>O.reduce((s,o)=>s+(o.bands[k]||0),0),cheap=S('below0'),u20=cheap+S('0-20'),u100=u20+S('20-50')+S('50-100');
