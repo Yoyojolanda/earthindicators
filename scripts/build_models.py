@@ -275,6 +275,21 @@ def main():
             {"id": "peak2027", "made": "October 2026", "src": "chart", "text": "The coming El Niño will lift the 12-month average to 1.65–1.75 °C around early 2027."},
             {"id": "hotter2027", "made": "23 July 2026", "src": "post", "text": "2027 will be warmer still than 2026."}],
         "ghg": ghg_emissions(),
+        # earlier "required" paths, as percentage changes from each report's own base year (so they can be applied to this
+        # site's emissions series without mixing different inventories), and UNEP's estimate for full delivery of the pledges
+        "ghg_old_paths": [
+            {"made": 2010, "target": "2 °C", "base": 2009, "points": [[2020, -8.3]],
+             "note": "about 44 GtCO2e in 2020 against about 48 in 2009", "src": "UNEP Emissions Gap Report 2010",
+             "url": "https://www.unep.org/resources/emissions-gap-report-2010"},
+            {"made": 2019, "target": "2 °C", "base": 2019, "rate": -2.7, "to": 2030,
+             "note": "2.7% less every year from 2020 to 2030", "src": "UNEP Emissions Gap Report 2019",
+             "url": "https://www.unep.org/resources/emissions-gap-report-2019"},
+            {"made": 2019, "target": "1.5 °C", "base": 2019, "rate": -7.6, "to": 2030,
+             "note": "7.6% less every year from 2020 to 2030", "src": "UNEP Emissions Gap Report 2019",
+             "url": "https://www.unep.org/resources/emissions-gap-report-2019"}],
+        "ghg_pledges": {"year": 2035, "change": -15, "base": 2019, "src": "UNEP Emissions Gap Report 2025",
+                        "note": "full delivery of all national pledges, before the US withdrawal",
+                        "url": "https://www.unep.org/resources/emissions-gap-report-2025"},
         # IPCC AR6 Synthesis Report, Table SPM.1: GHG emission reductions from 2019 (%), median [5th-95th percentile]
         "ipcc_ghg_paths": {"base": 2019, "years": [2030, 2035, 2040, 2050],
             "1.5": {"label": "1.5 °C (>50% chance, no or limited overshoot)", "mid": [43, 60, 69, 84], "lo": [34, 49, 58, 73], "hi": [60, 77, 90, 98]},

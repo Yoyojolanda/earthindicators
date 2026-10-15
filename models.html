@@ -116,7 +116,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="cards" id="gp-cards"></div>
 <div class="box"><h2 id="t8"></h2><div class="wrap"><canvas id="c8"></canvas></div></div>
 <ul id="gp-read"></ul>
-<p class="sub">Measured: total greenhouse gas emissions by gas, in billions of metric tons of CO₂-equivalent (each gas weighted by how much it warms over 100 years), from the Indicators of Global Climate Change 2025 (Lamb et al., in Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>). Fluorinated gases are in the data from 1990 (about 1% of the total then). Required paths: IPCC AR6 Synthesis Report, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/syr/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): the median cut from 2019 levels in the scenarios that limit warming to 1.5 °C (at least an even chance, with no or limited overshoot) and to 2 °C (at least a two-in-three chance), for 2030, 2035, 2040 and 2050. The straight lines between those years are a simplification; the IPCC gives only those years, each with a range (in the tooltips).</p>
+<p class="sub">Measured: total greenhouse gas emissions by gas, in billions of metric tons of CO₂-equivalent (each gas weighted by how much it warms over 100 years), from the Indicators of Global Climate Change 2025 (Lamb et al., in Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>). Fluorinated gases are in the data from 1990 (about 1% of the total then). Required paths: IPCC AR6 Synthesis Report, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/syr/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): the median cut from 2019 levels in the scenarios that limit warming to 1.5 °C and to 2 °C. "At least an even chance" (1.5 °C) and "at least two in three" (2 °C) refer to how strongly the climate reacts, which is not known exactly: for each scenario, at least half (or two-thirds) of the plausible climate responses stay below the limit. "No or limited overshoot" means passing 1.5 °C by at most about 0.1 °C, for up to several decades, before coming back below it by 2100, for 2030, 2035, 2040 and 2050. The straight lines between those years are a simplification; the IPCC gives only those years, each with a range (in the tooltips).</p>
 </section>
 
 <section id="cb-s" class="hide">
@@ -392,17 +392,37 @@ function ghgPaths(D){
  list('gp-read',[
   `In ${L} the world emitted ${f1(at(L))} billion metric tons of greenhouse gases (CO₂-equivalent), ${ch>=0?'more':'less'} than in ${P.base} (${f1(b)}). On the IPCC's 1.5 °C path it would have been about ${f1(p15)} by now; on the 2 °C path about ${f1(p2)}. The gap: ${f1(at(L)-p15)} and ${f1(at(L)-p2)} billion metric tons a year.`,
   `To get back onto the 1.5 °C path, emissions would have to fall to about ${f1(b*(1-P['1.5'].mid[i30]/100))} by 2030 (−${P['1.5'].mid[i30]}% from ${P.base}); for 2 °C, to about ${f1(b*(1-P['2'].mid[i30]/100))} (−${P['2'].mid[i30]}%). Since 1970, emissions have never fallen by more than about 2.3 billion metric tons in a year; that was in 2020, during COVID, and they rose again the year after.`,
+  (()=>{const O=D.ghg_old_paths||[],o10=O.find(o=>o.made===2010),o19=O.find(o=>o.made===2019&&o.target==='2 °C');if(!o10||!o19)return '';
+   const pa=(a,b,n)=>(Math.pow(b/a,1/n)-1)*100,r10=pa(at(o10.base),at(o10.base)*(1+o10.points[0][1]/100),o10.points[0][0]-o10.base),t30=path('2',2030),rNow=pa(at(L),t30,2030-L);
+   return `The cut needed every year for 2 °C keeps growing, because emissions kept rising (grey lines: earlier required paths). In 2010, UNEP's path meant about ${Math.abs(r10).toFixed(1)}% less a year until 2020; in 2019, ${Math.abs(o19.rate)}% less a year until 2030. To reach the IPCC's 2030 level for 2 °C (${f1(t30)}) from ${L}, it now takes about ${Math.abs(rNow).toFixed(1)}% less every year.`})(),
+  `The red 1.5 °C path is what would have been needed to stay below 1.5 °C without overshooting it. It is no longer within reach: in November 2025 the UN Secretary-General said a temporary overshoot above 1.5 °C is now inevitable, by the early 2030s at the latest. UNEP's 2025 report says warming could still be brought back to 1.5 °C by 2100, but only with cuts of about 26% by 2030 and 46% by 2035 from 2019, and removal of CO₂ from the air on an unprecedented scale.`,
+  (()=>{const TY=Y.slice(-10),TV=TY.map(at),tb=slope(TY,TV),ext=y=>mean(TV)+tb*(y-mean(TY)),PL=D.ghg_pledges;
+   return `Where it is heading: over ${TY[0]}–${L} emissions rose by about ${f1(tb)} billion metric tons a year. Extended in a straight line (a calculation, not a forecast), that gives about ${f1(ext(2030))} in 2030 and ${f1(ext(2035))} in 2035, against ${f1(path('1.5',2035))} and ${f1(path('2',2035))} required for 1.5 and 2 °C.`+(PL?` If every country delivered its pledges in full, UNEP estimates about ${f1(at(PL.base)*(1+PL.change/100))} in ${PL.year} (−${Math.abs(PL.change)}% from ${PL.base}; the green triangle), still above both paths. With the policies actually in place, UNEP expects about ${f1(D.unep.current_policies)} °C of warming by 2100.`:'')})(),
   `CO₂ from fossil fuels is about two-thirds of the total. Methane comes next; it breaks down within about a decade, so cutting it slows warming fastest (see the <a href="ch4.html">methane page</a>).`]);
  show('gp-s');
- const cum=Y.map(()=>0),ds=K.map(([k,l,c],j)=>({label:l,data:Y.map((y,i)=>{const v=G[k][i];cum[i]+=v||0;return {x:y,y:v==null?null:cum[i],v}}),backgroundColor:rgba(c,.85),borderColor:c,borderWidth:0,pointRadius:0,fill:j?'-1':'origin',stack:'g',order:5}));
- const pd=(key,c)=>({label:'Required path: '+P[key].label,data:[P.base,...P.years].map(y=>({x:y,y:path(key,y)})),borderColor:c,backgroundColor:c,borderWidth:2.4,borderDash:[6,4],pointRadius:3,pointStyle:'rectRot',fill:false,order:1,stack:key});
- const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0,stack:'t'};
- ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,pd('1.5',PARIS),pd('2','#e08a1e'),...ds]},
+ const cum=Y.map(()=>0),ds=K.map(([k,l,c],j)=>({label:l,gas:true,data:Y.map((y,i)=>{const v=G[k][i];cum[i]+=v||0;return {x:y,y:v==null?null:cum[i],v}}),backgroundColor:rgba(c,.85),borderColor:c,borderWidth:0,pointRadius:0,fill:j?'-1':'origin',order:5}));
+ const pd=(key,c)=>({label:'IPCC 2023, required for '+P[key].label,kind:key,data:[P.base,...P.years].map(y=>({x:y,y:path(key,y)})),borderColor:c,backgroundColor:c,borderWidth:2.4,borderDash:[6,4],pointRadius:3,pointStyle:'rectRot',fill:false,order:1});
+ // earlier required paths (grey): each report's own percentage change, applied to this series' value in its base year
+ const OP=(D.ghg_old_paths||[]).map((o,n)=>{const e0=at(o.base);let pts=[{x:o.base,y:e0}];
+  if(o.points)o.points.forEach(([y,pc])=>pts.push({x:y,y:e0*(1+pc/100)}));else for(let y=o.base+1;y<=o.to;y++)pts.push({x:y,y:e0*Math.pow(1+o.rate/100,y-o.base)});
+  const c=o.target==='1.5 °C'?'#b9a3a3':THEME.mut;
+  return {label:`${o.src.replace('Emissions Gap Report','UNEP').replace('UNEP UNEP','UNEP')}, required for ${o.target}`,old:o,data:pts,borderColor:c,backgroundColor:c,borderWidth:1.6,borderDash:[3,3],pointRadius:0,fill:false,order:2}});
+ // where it is heading: the last ten years' straight-line trend, extended to 2035 (a calculation, not a forecast); and UNEP's pledge estimate
+ const TY=Y.slice(-10),TV=TY.map(at),tb=slope(TY,TV),tm=mean(TV),tx=mean(TY),ext=y=>tm+tb*(y-tx);
+ const TR={label:`Trend of ${TY[0]}–${L}, extended (a calculation, not a forecast)`,trend:true,data:[{x:L,y:ext(L)},{x:2035,y:ext(2035)}],borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,borderDash:[2,4],pointRadius:0,fill:false,order:1};
+ const PL=D.ghg_pledges,PLv=PL?at(PL.base)*(1+PL.change/100):null;
+ const PD=PL?{label:`If all pledges are delivered (${PL.src.replace('Emissions Gap Report','UNEP')})`,pledge:true,data:[{x:PL.year,y:PLv}],showLine:false,pointStyle:'triangle',pointRadius:7,borderColor:'#2e7d32',backgroundColor:hatch('#2e7d32',.3),borderWidth:2,order:0}:null;
+ const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0};
+ ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,pd('1.5',PARIS),pd('2','#e08a1e'),...OP,TR,...(PD?[PD]:[]),...ds]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{legend:{labels:{filter:i=>i.datasetIndex<3}},tooltip:{filter:i=>i.datasetIndex<3||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
-    label:c=>{if(c.datasetIndex===1||c.datasetIndex===2){const key=c.datasetIndex===1?'1.5':'2',j=P.years.indexOf(c.parsed.x);return `${key} °C path: ${f1(c.parsed.y)} Gt`+(j>=0?` (−${P[key].mid[j]}%, range −${P[key].lo[j]} to −${P[key].hi[j]}%)`:'')}
-     const v=c.raw&&c.raw.v!==undefined?c.raw.v:c.parsed.y;return c.dataset.label+': '+(v==null?'–':f1(v)+' Gt')}}}},
-   scales:{x:{type:'linear',min:Y[0],max:2050,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{stacked:false,min:0,title:{display:true,text:'Billion metric tons CO₂-eq a year'},grid:{color:THEME.grid}}}}}))}
+   plugins:{legend:{labels:{filter:(i,d)=>!d.datasets[i.datasetIndex].gas}},tooltip:{filter:i=>!i.dataset.gas||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
+    label:c=>{const d=c.dataset,y=c.parsed.y;
+     if(d.kind){const j=P.years.indexOf(c.parsed.x);return `${d.kind} °C path (IPCC 2023): ${f1(y)} Gt`+(j>=0?` (−${P[d.kind].mid[j]}%, range −${P[d.kind].lo[j]} to −${P[d.kind].hi[j]}%)`:'')}
+     if(d.old)return `${d.old.src}, ${d.old.target}: ${f1(y)} Gt (${d.old.note})`;
+     if(d.trend)return `Trend extended: ${f1(y)} Gt`;
+     if(d.pledge)return `All pledges delivered, ${PL.year}: ${f1(y)} Gt (−${Math.abs(PL.change)}% from ${PL.base}; ${PL.note})`;
+     const v=c.raw&&c.raw.v!==undefined?c.raw.v:y;return d.label+': '+(v==null?'–':f1(v)+' Gt')}}}},
+   scales:{x:{type:'linear',min:Y[0],max:2050,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'Billion metric tons CO₂-eq a year'},grid:{color:THEME.grid}}}}}))}
 
 // ---- 5. remaining carbon budget
 function budget(D){

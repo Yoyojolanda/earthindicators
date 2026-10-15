@@ -1928,6 +1928,50 @@
   "source": "Lamb et al., greenhouse gas emissions for the Indicators of Global Climate Change 2025 (Forster et al. 2026); CO2-equivalent with 100-year global warming potentials",
   "url": "https://github.com/ClimateIndicator/data"
  },
+ "ghg_old_paths": [
+  {
+   "made": 2010,
+   "target": "2 °C",
+   "base": 2009,
+   "points": [
+    [
+     2020,
+     -8.3
+    ]
+   ],
+   "note": "about 44 GtCO2e in 2020 against about 48 in 2009",
+   "src": "UNEP Emissions Gap Report 2010",
+   "url": "https://www.unep.org/resources/emissions-gap-report-2010"
+  },
+  {
+   "made": 2019,
+   "target": "2 °C",
+   "base": 2019,
+   "rate": -2.7,
+   "to": 2030,
+   "note": "2.7% less every year from 2020 to 2030",
+   "src": "UNEP Emissions Gap Report 2019",
+   "url": "https://www.unep.org/resources/emissions-gap-report-2019"
+  },
+  {
+   "made": 2019,
+   "target": "1.5 °C",
+   "base": 2019,
+   "rate": -7.6,
+   "to": 2030,
+   "note": "7.6% less every year from 2020 to 2030",
+   "src": "UNEP Emissions Gap Report 2019",
+   "url": "https://www.unep.org/resources/emissions-gap-report-2019"
+  }
+ ],
+ "ghg_pledges": {
+  "year": 2035,
+  "change": -15,
+  "base": 2019,
+  "src": "UNEP Emissions Gap Report 2025",
+  "note": "full delivery of all national pledges, before the US withdrawal",
+  "url": "https://www.unep.org/resources/emissions-gap-report-2025"
+ },
  "ipcc_ghg_paths": {
   "base": 2019,
   "years": [
