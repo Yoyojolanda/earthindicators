@@ -176,7 +176,20 @@ AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, Â
 }
 
 
+def save_c3s_offsets_image():
+    # one-off: Copernicus's table of monthly offsets 1850-1900 -> 1991-2020 (only published as an image)
+    import os
+    os.makedirs("reference", exist_ok=True)
+    try:
+        req = urllib.request.Request("https://climate.copernicus.eu/sites/default/files/custom-uploads/image%20%281%29.png", headers={"User-Agent": "Mozilla/5.0 earthindicators.org"})
+        open("reference/c3s_preindustrial_offsets.png", "wb").write(urllib.request.urlopen(req, timeout=60).read())
+        print("saved offsets image")
+    except Exception as e:
+        print("offsets image failed", e)
+
+
 def main():
+    save_c3s_offsets_image()
     old = {"source": "Hausfather, Drake, Abbott & Schmidt (2020), Geophysical Research Letters 47, e2019GL085378",
            "doi": "https://doi.org/10.1029/2019GL085378", "data": "https://github.com/hausfath/OldModels",
            "projections": old_models(), "hansen1988": hansen(), "hansen1988_source": "Temperature 1958-2019: https://www.realclimate.org/data/scen_ABC_temp.data; forcing: Hausfather et al. 2020", "ghg_forcing": igcc_ghg_forcing(),
