@@ -28,6 +28,9 @@ jobs:
       - name: El Niño tree-ring winters, Cook and Cane 2024 (downloaded once; kept afterwards)
         continue-on-error: true
         run: python -u scripts/build_nino_treering.py
+      - name: Hansen's monthly temperature table (GISTEMP, 1880-1920 baseline) for the climate models page
+        continue-on-error: true
+        run: python -u scripts/build_models.py --hansen-temp
       - name: Commit changes
         if: always()
         run: |

@@ -176,6 +176,27 @@ AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, Â
 }
 
 
+def hansen_temp():
+    # Hansen's own temperature table: NASA GISTEMP v4 land-ocean index relative to 1880-1920, monthly, as maintained by
+    # J. Hansen's group at Columbia. Used to test Hansen et al. 2025 in its own baseline. Written as month,anomaly.
+    req = urllib.request.Request("https://www.columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt",
+                                 headers={"User-Agent": "Mozilla/5.0 (earthindicators.org data update)"})
+    text = urllib.request.urlopen(req, timeout=60).read().decode("utf-8", "replace")
+    assert "1880-1920" in text.splitlines()[0], text[:200]
+    out = []
+    for line in text.splitlines():
+        p = line.split()
+        if len(p) >= 13 and p[0].isdigit() and len(p[0]) == 4:
+            for k, v in enumerate(p[1:13]):
+                if "*" not in v and "(" not in v:
+                    out.append((f"{p[0]}-{k + 1:02d}", float(v)))
+    assert len(out) > 1700 and out[0][0] == "1880-01", (len(out), out[:1])
+    with open("data/models_hansen_temp.csv", "w") as f:
+        f.write("# NASA GISTEMP v4 land-ocean index, Â°C relative to 1880-1920, from https://www.columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt\n")
+        f.write("month,anom\n" + "".join(f"{m},{v:.2f}\n" for m, v in out))
+    print("wrote data/models_hansen_temp.csv through", out[-1][0])
+
+
 def main():
     old = {"source": "Hausfather, Drake, Abbott & Schmidt (2020), Geophysical Research Letters 47, e2019GL085378",
            "doi": "https://doi.org/10.1029/2019GL085378", "data": "https://github.com/hausfath/OldModels",
@@ -213,4 +234,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--hansen-temp" in sys.argv:      # weekly: only Hansen's monthly temperature table
+        hansen_temp()
+    else:
+        main()
+        try:
+            hansen_temp()
+        except Exception as e:
+            print("Hansen temperature table not updated:", e)
