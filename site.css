@@ -252,7 +252,7 @@ html.srch-on{overflow:hidden}
  .site-head:not(.mini) .burger{grid-area:burger;justify-self:end;margin:-6px -6px 0 0}
  .site-head:not(.mini) .search-btn{grid-area:search;margin:0}
  .site-head:not(.mini) .theme-btn{grid-area:theme;margin:0 -6px 0 0}
- .site-head:not(.mini) .menu{grid-area:menu}
+ .site-head:not(.mini) .menu{grid-area:menu;margin-left:0}   /* the desktop margin-left:auto would shrink it to its content and push it right */
 }
 @media (max-width:520px){.site-head img{height:48px}.site-head .wm{font-size:27px;line-height:30px}.site-head .tag{font-size:12px;line-height:16px}}
 
