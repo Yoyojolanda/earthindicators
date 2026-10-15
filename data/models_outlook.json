@@ -1524,6 +1524,64 @@
   },
   "url": "https://www.columbia.edu/~jeh1/Data/Temperature/"
  },
+ "hansen_sources": {
+  "paper": {
+   "title": "Hansen et al. 2025, Global warming has accelerated (Environment)",
+   "url": "https://doi.org/10.1080/00139157.2025.2434494"
+  },
+  "post": {
+   "title": "Hansen, Kharecha, Morgan & Vest, Beware media hype. It's not the El Nino! (Climate Uncensored)",
+   "url": "https://jimehansen.substack.com/p/beware-media-hype-its-not-the-el"
+  },
+  "chart": {
+   "title": "Hansen's monthly temperature chart, data through September 2026",
+   "url": "https://www.columbia.edu/~jeh1/Data/Temperature/"
+  }
+ },
+ "hansen_tests": [
+  {
+   "id": "end2024",
+   "made": "February 2025",
+   "src": "paper",
+   "text": "The 12-month average will still be above +1.5 °C at the end of 2024."
+  },
+  {
+   "id": "barely2025",
+   "made": "February 2025",
+   "src": "paper",
+   "text": "In 2025 it will at most barely fall below +1.5 °C."
+  },
+  {
+   "id": "near15",
+   "made": "February 2025",
+   "src": "paper",
+   "text": "It will not fall much below +1.5 °C, but stay near or above it for the next few years."
+  },
+  {
+   "id": "augdec",
+   "made": "23 July 2026",
+   "src": "post",
+   "text": "August to December 2026 will each be warmer than the same month in 2024."
+  },
+  {
+   "id": "record2026",
+   "made": "23 July 2026",
+   "src": "post",
+   "text": "2026 will be the warmest year on record."
+  },
+  {
+   "id": "peak2027",
+   "made": "October 2026",
+   "src": "chart",
+   "text": "The coming El Niño will lift the 12-month average to 1.65–1.75 °C around early 2027."
+  },
+  {
+   "id": "hotter2027",
+   "made": "23 July 2026",
+   "src": "post",
+   "text": "2027 will be warmer still than 2026."
+  }
+ ],
  "unep": {
   "current_policies": 2.8,
   "ndcs": [
