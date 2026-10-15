@@ -1,0 +1,2 @@
+largest difference from Hansen's table: {'one shift': 0.058008130081300846, 'per month': 0.003658536585365857}
+last month 2026-09
