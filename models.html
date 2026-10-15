@@ -110,6 +110,15 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <p class="sub">IPCC Sixth Assessment Report, Working Group I, Summary for Policymakers, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): best estimate and very likely range (90% chance the outcome falls inside) of the 20-year average global surface temperature, relative to 1850–1900. The lines to 2100 are the same assessment year by year, from IPCC AR6 Chapter 4 (Lee et al. 2021; files in <a href="https://github.com/chrisroadmap/ar6" target="_blank" rel="noopener">Chris Smith's AR6 repository</a>), each point a 20-year average plotted at the middle of its 20 years, shifted from 1995–2014 to 1850–1900 with the IPCC's 0.85 °C; the shaded ranges (shown for the low and high scenarios, as in the IPCC's own figure) can differ from the table by up to 0.1 °C. The measured line is the 20-year average of ERA5, plotted the same way. The IPCC combined the CMIP6 models with observed warming and other evidence, so these ranges are narrower and less hot than the raw model spread. Current-policies and pledges estimates: UNEP Emissions Gap Report 2025 (<a href="https://www.unep.org/resources/emissions-gap-report-2025" target="_blank" rel="noopener">unep.org</a>). "Long-term level now": the straight-line trend through the last 30 complete years of ERA5, read off at its last year (the same method as the air temperature page).</p>
 </section>
 
+<section id="gp-s" class="hide">
+<h2 class="sec">Emissions vs the path to the targets</h2>
+<p class="st"><span class="ptag m">Measured</span> <span class="ptag p">Required path</span></p>
+<div class="cards" id="gp-cards"></div>
+<div class="box"><h2 id="t8"></h2><div class="wrap"><canvas id="c8"></canvas></div></div>
+<ul id="gp-read"></ul>
+<p class="sub">Measured: total greenhouse gas emissions by gas, in billions of metric tons of CO₂-equivalent (each gas weighted by how much it warms over 100 years), from the Indicators of Global Climate Change 2025 (Lamb et al., in Forster et al. 2026, <a href="https://github.com/ClimateIndicator/data" target="_blank" rel="noopener">data</a>). Fluorinated gases are in the data from 1990 (about 1% of the total then). Required paths: IPCC AR6 Synthesis Report, Table SPM.1 (<a href="https://www.ipcc.ch/report/ar6/syr/summary-for-policymakers/" target="_blank" rel="noopener">ipcc.ch</a>): the median cut from 2019 levels in the scenarios that limit warming to 1.5 °C (at least an even chance, with no or limited overshoot) and to 2 °C (at least a two-in-three chance), for 2030, 2035, 2040 and 2050. The straight lines between those years are a simplification; the IPCC gives only those years, each with a range (in the tooltips).</p>
+</section>
+
 <section id="cb-s" class="hide">
 <h2 class="sec">The remaining carbon budget</h2>
 <p class="st"><span class="ptag p">Estimate</span></p>
@@ -371,6 +380,30 @@ function ar6Lines(D,E){
    scales:{x:{type:'linear',min:1980,max:2100,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{min:0,max:5,title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}));
  return Lm}
 
+// ---- 4c. greenhouse gas emissions against the IPCC's required paths
+function ghgPaths(D){
+ const G=D.ghg,P=D.ipcc_ghg_paths,Y=G.years,K=[['co2_fossil','CO₂ from fossil fuels and industry','#6b6862'],['co2_land','CO₂ from land use (deforestation)','#9a7650'],['ch4','Methane','#4f81b0'],['n2o','Nitrous oxide','#b9ad9c'],['fgas','Fluorinated gases','#d0a43a']];
+ const tot=Y.map((y,i)=>K.reduce((s,[k])=>s+(G[k][i]||0),0)),at=y=>tot[Y.indexOf(y)],L=Y[Y.length-1],b=at(P.base);
+ const path=(key,y)=>{const X=[P.base,...P.years],V=[0,...P[key].mid];if(y<=P.base)return b;for(let j=1;j<X.length;j++)if(y<=X[j])return b*(1-(V[j-1]+(V[j]-V[j-1])*(y-X[j-1])/(X[j]-X[j-1]))/100);return b*(1-V[V.length-1]/100)};
+ const p15=path('1.5',L),p2=path('2',L),ch=(at(L)/b-1)*100,ch15=(p15/b-1)*100,i30=P.years.indexOf(2030);
+ cards('gp-cards',[[f1(at(L))+' Gt',`greenhouse gases emitted in ${L} (CO₂-equivalent)`],[f1(p15)+' Gt',`where ${L} should have been on the IPCC's 1.5 °C path`],
+  [f1(p2)+' Gt',`where ${L} should have been on the 2 °C path`],[(ch>=0?'+':'−')+Math.abs(ch).toFixed(0)+'%',`change since ${P.base}, instead of ${Math.abs(ch15).toFixed(0)}% down for 1.5 °C`]]);
+ $('t8').textContent=`Greenhouse gas emissions ${Y[0]}–${L}, and the IPCC's required paths from ${P.base} (billion metric tons of CO₂-equivalent a year)`;
+ list('gp-read',[
+  `In ${L} the world emitted ${f1(at(L))} billion metric tons of greenhouse gases (CO₂-equivalent), ${ch>=0?'more':'less'} than in ${P.base} (${f1(b)}). On the IPCC's 1.5 °C path it would have been about ${f1(p15)} by now; on the 2 °C path about ${f1(p2)}. The gap: ${f1(at(L)-p15)} and ${f1(at(L)-p2)} billion metric tons a year.`,
+  `To get back onto the 1.5 °C path, emissions would have to fall to about ${f1(b*(1-P['1.5'].mid[i30]/100))} by 2030 (−${P['1.5'].mid[i30]}% from ${P.base}); for 2 °C, to about ${f1(b*(1-P['2'].mid[i30]/100))} (−${P['2'].mid[i30]}%). Since 1970, emissions have never fallen by more than about 2.3 billion metric tons in a year; that was in 2020, during COVID, and they rose again the year after.`,
+  `CO₂ from fossil fuels is about two-thirds of the total. Methane comes next; it breaks down within about a decade, so cutting it slows warming fastest (see the <a href="ch4.html">methane page</a>).`]);
+ show('gp-s');
+ const cum=Y.map(()=>0),ds=K.map(([k,l,c],j)=>({label:l,data:Y.map((y,i)=>{const v=G[k][i];cum[i]+=v||0;return {x:y,y:v==null?null:cum[i],v}}),backgroundColor:rgba(c,.85),borderColor:c,borderWidth:0,pointRadius:0,fill:j?'-1':'origin',stack:'g',order:5}));
+ const pd=(key,c)=>({label:'Required path: '+P[key].label,data:[P.base,...P.years].map(y=>({x:y,y:path(key,y)})),borderColor:c,backgroundColor:c,borderWidth:2.4,borderDash:[6,4],pointRadius:3,pointStyle:'rectRot',fill:false,order:1,stack:key});
+ const tl={label:'Total, measured',data:Y.map((y,i)=>({x:y,y:tot[i]})),borderColor:THEME.ink,backgroundColor:THEME.ink,borderWidth:1.6,pointRadius:0,fill:false,order:0,stack:'t'};
+ ready('g',new Chart($('c8'),{type:'line',data:{datasets:[tl,pd('1.5',PARIS),pd('2','#e08a1e'),...ds]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>i.datasetIndex<3}},tooltip:{filter:i=>i.datasetIndex<3||i.raw.x<=L,callbacks:{title:t=>String(t[0].parsed.x),
+    label:c=>{if(c.datasetIndex===1||c.datasetIndex===2){const key=c.datasetIndex===1?'1.5':'2',j=P.years.indexOf(c.parsed.x);return `${key} °C path: ${f1(c.parsed.y)} Gt`+(j>=0?` (−${P[key].mid[j]}%, range −${P[key].lo[j]} to −${P[key].hi[j]}%)`:'')}
+     const v=c.raw&&c.raw.v!==undefined?c.raw.v:c.parsed.y;return c.dataset.label+': '+(v==null?'–':f1(v)+' Gt')}}}},
+   scales:{x:{type:'linear',min:Y[0],max:2050,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{stacked:false,min:0,title:{display:true,text:'Billion metric tons CO₂-eq a year'},grid:{color:THEME.grid}}}}}))}
+
 // ---- 5. remaining carbon budget
 function budget(D){
  const B=D.budget,em=B.emissions.fossil+B.emissions.land,L=B.levels,b15=L[0].p50,b20=L.find(l=>l.t===2).p50;
@@ -408,8 +441,8 @@ function wmo(D){
 
 Promise.allSettled([
  Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse),get('models_hansen_temp.csv')])
-  .then(([O,E,M,D,HT])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E,HT,D),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
+  .then(([O,E,M,D,HT])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E,HT,D),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>ghgPaths(D),()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
-$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.n,'t7',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
+$('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.n,'t7',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.g,'t8',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
 </script></main></body></html>

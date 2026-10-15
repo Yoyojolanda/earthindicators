@@ -167,6 +167,20 @@ def ar6_series():
             "source": "IPCC AR6 WG1 Chapter 4, assessed global surface temperature change (Lee et al. 2021); files: github.com/chrisroadmap/ar6"}
 
 
+def ghg_emissions():
+    # total greenhouse gas emissions by gas, billion metric tons CO2-equivalent (GWP100), Lamb et al. for IGCC 2025
+    R = {int(float(r["year"])): r for r in rows(IGCC + "greenhouse_gas_emissions/greehouse_gas_emissions_co2eq.csv")}
+    keys = (("CO2-FFI", "co2_fossil"), ("CO2-LULUCF", "co2_land"), ("CH4", "ch4"), ("N2O", "n2o"), ("F-gases", "fgas"))
+    # F-gases are only in the data from 1990; earlier years keep the other four and leave F-gases blank (None)
+    ys = [y for y in sorted(R) if all(R[y][k].strip() for k, _ in keys[:4])]
+    assert ys[0] == 1970 and ys[-1] >= 2024 and ys == list(range(ys[0], ys[-1] + 1)), ys[:3]
+    assert all(R[y]["F-gases"].strip() for y in ys if y >= 1990)
+    num = lambda v: round(float(v), 3) if v.strip() else None
+    return {"years": ys, **{n: [num(R[y][k]) for y in ys] for k, n in keys},
+            "source": "Lamb et al., greenhouse gas emissions for the Indicators of Global Climate Change 2025 (Forster et al. 2026); CO2-equivalent with 100-year global warming potentials",
+            "url": "https://github.com/ClimateIndicator/data"}
+
+
 AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, °C above 1850-1900
     "SSP1-1.9": [[1.5, 1.2, 1.7], [1.6, 1.2, 2.0], [1.4, 1.0, 1.8]],
     "SSP1-2.6": [[1.5, 1.2, 1.8], [1.7, 1.3, 2.2], [1.8, 1.3, 2.4]],
@@ -260,6 +274,13 @@ def main():
             {"id": "record2026", "made": "23 July 2026", "src": "post", "text": "2026 will be the warmest year on record."},
             {"id": "peak2027", "made": "October 2026", "src": "chart", "text": "The coming El Niño will lift the 12-month average to 1.65–1.75 °C around early 2027."},
             {"id": "hotter2027", "made": "23 July 2026", "src": "post", "text": "2027 will be warmer still than 2026."}],
+        "ghg": ghg_emissions(),
+        # IPCC AR6 Synthesis Report, Table SPM.1: GHG emission reductions from 2019 (%), median [5th-95th percentile]
+        "ipcc_ghg_paths": {"base": 2019, "years": [2030, 2035, 2040, 2050],
+            "1.5": {"label": "1.5 °C (>50% chance, no or limited overshoot)", "mid": [43, 60, 69, 84], "lo": [34, 49, 58, 73], "hi": [60, 77, 90, 98]},
+            "2": {"label": "2 °C (>67% chance)", "mid": [21, 35, 46, 64], "lo": [1, 22, 34, 53], "hi": [42, 55, 63, 77]},
+            "source": "IPCC AR6 Synthesis Report (2023), Summary for Policymakers, Table SPM.1",
+            "url": "https://www.ipcc.ch/report/ar6/syr/summary-for-policymakers/"},
         "unep": {"current_policies": 2.8, "ndcs": [2.3, 2.5], "published": "2025-11-04",
                  "source": "UNEP Emissions Gap Report 2025", "url": "https://www.unep.org/resources/emissions-gap-report-2025"},
     }
