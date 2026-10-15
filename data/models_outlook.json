@@ -1510,6 +1510,20 @@
   "source": "WMO Global Annual to Decadal Climate Update 2026–2035",
   "url": "https://wmo.int/node/38645"
  },
+ "hansen_chart": {
+  "data_through": "2026-09",
+  "peak": {
+   "x": 2027.21,
+   "lo": 1.65,
+   "hi": 1.75
+  },
+  "low": {
+   "x": 2026.54,
+   "lo": 1.4,
+   "hi": 1.45
+  },
+  "url": "https://www.columbia.edu/~jeh1/Data/Temperature/"
+ },
  "unep": {
   "current_policies": 2.8,
   "ndcs": [

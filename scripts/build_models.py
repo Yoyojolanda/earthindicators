@@ -241,6 +241,12 @@ def main():
         "wmo": {"period": "2026–2030", "one_year_above_15": 91, "mean_above_15": 75, "new_record": 86, "year_above_2": 1,
                 "range": [1.3, 1.9], "published": "2026-05-28",
                 "source": "WMO Global Annual to Decadal Climate Update 2026–2035", "url": "https://wmo.int/node/38645"},
+        # Hansen's chart "Global Surface Temperature (Base Period 1880-1920)", version with data through September 2026:
+        # projected next El Nino peak of the 12-month running mean, read from the chart image (3000 px; axes calibrated
+        # on the gridlines to 0.003 °C and 0.03 yr). Frozen here: the chart is redrawn every month.
+        "hansen_chart": {"data_through": "2026-09", "peak": {"x": 2027.21, "lo": 1.65, "hi": 1.75},
+                         "low": {"x": 2026.54, "lo": 1.40, "hi": 1.45},
+                         "url": "https://www.columbia.edu/~jeh1/Data/Temperature/"},
         "unep": {"current_policies": 2.8, "ndcs": [2.3, 2.5], "published": "2025-11-04",
                  "source": "UNEP Emissions Gap Report 2025", "url": "https://www.unep.org/resources/emissions-gap-report-2025"},
     }
