@@ -72,7 +72,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <div class="cards" id="h25-cards"></div>
 <div class="box"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div></div>
 <ul id="h25-read"></ul>
-<p class="sub">Hansen, Kharecha, Sato and 15 co-authors, many of them at NASA's Goddard Institute for Space Studies (GISS), 2025: <i>Global warming has accelerated: are the United Nations and the public well-informed?</i> Environment: Science and Policy for Sustainable Development 67(1), 6–44 (<a href="https://doi.org/10.1080/00139157.2025.2434494" target="_blank" rel="noopener">doi:10.1080/00139157.2025.2434494</a>), published February 2025. Measured: ERA5 monthly global air temperature, each month compared with its own 1991–2020 average and converted to 1850–1900 with Copernicus's offset of 0.88 °C, then averaged over 12 months. The paper measures from 1880–1920 with NASA's record instead; the two baselines are close but not identical.</p>
+<p class="sub">Hansen, Kharecha, Sato and 15 co-authors, many of them at NASA's Goddard Institute for Space Studies (GISS), 2025: <i>Global warming has accelerated: are the United Nations and the public well-informed?</i> Environment: Science and Policy for Sustainable Development 67(1), 6–44 (<a href="https://doi.org/10.1080/00139157.2025.2434494" target="_blank" rel="noopener">doi:10.1080/00139157.2025.2434494</a>), published February 2025. Measured in the paper's own terms: NASA GISTEMP v4 (<a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">data.giss.nasa.gov/gistemp</a>, built from NOAA's GHCN station and ERSST sea surface data), each month taken relative to that month's 1880–1920 average, as in the table Hansen's group keeps at <a href="https://www.columbia.edu/~jeh1/Data/Temperature/new_tables/landocean_1880_full.txt" target="_blank" rel="noopener">columbia.edu/~jeh1</a> (this site's version matches it to within 0.004 °C), then averaged over 12 months. The grey line is ERA5 above 1850–1900, as used elsewhere on this site, for comparison.</p>
 </section>
 
 <section id="cm-s" class="hide">
@@ -212,20 +212,23 @@ function hansen(O,E){
  set('t');sel('hsw',d=>set(d.m));ready('h',ch)}
 
 // ---- 2b. Hansen et al. 2025: "temperature will not fall much below +1.5 °C" over the next few years, tested monthly
-function hansen25(E){
- const M=E.Mo.filter(r=>r.r12!=null),pub=2025+1.5/12,L=M[M.length-1],after=M.filter(r=>r.x>=pub);
+function hansen25(E,gt){
+ // the paper's own measure: NASA GISTEMP relative to 1880-1920 (as in Hansen's table); ERA5 above 1850-1900 for comparison
+ const G=gt.trim().split('\n').filter(l=>/^\d{4}-/.test(l)).map(l=>{const [m,v]=l.split(',');return {m,y:+m.slice(0,4),k:+m.slice(5,7),a:+v,x:+m.slice(0,4)+(+m.slice(5,7)-.5)/12}});
+ G.forEach((r,i)=>{if(i>=11)r.r12=mean(G.slice(i-11,i+1).map(q=>q.a))});
+ const M=G.filter(r=>r.r12!=null),pub=2025+1.5/12,L=M[M.length-1],after=M.filter(r=>r.x>=pub);
  const lo=after.reduce((b,r)=>r.r12<b.r12?r:b,after[0]),below=after.filter(r=>r.r12<1.5).length;
  const ml=r=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][r.k-1]+' '+r.y;
  // how far the 12-month average fell after the previous big El Niño (peak in 2016, lowest in the 2.5 years after), for comparison
  const pk=(a,b)=>M.filter(r=>r.x>=a&&r.x<b).reduce((m,r)=>r.r12>m.r12?r:m),tr=(r,yrs)=>M.filter(q=>q.x>r.x&&q.x<=r.x+yrs).reduce((m,q)=>q.r12<m.r12?q:m);
  const p16=pk(2015.5,2017),t16=tr(p16,2.5),p24=pk(2023.5,2025.2),t24=tr(p24,2.5);
- cards('h25-cards',[[f2(L.r12)+' °C',`12-month average to ${ml(L)}, above 1850–1900`],[f2(lo.r12)+' °C',`lowest 12-month average since the paper (to ${ml(lo)})`],
+ cards('h25-cards',[[f2(L.r12)+' °C',`12-month average to ${ml(L)}, above 1880–1920 (NASA)`],[f2(lo.r12)+' °C',`lowest 12-month average since the paper (to ${ml(lo)})`],
   [String(below),`of the ${after.length} months since the paper with the 12-month average below 1.5 °C`]]);
- $('t7').textContent=`Global air temperature, 12-month average since 2015, against Hansen et al.'s 2025 prediction (°C above 1850–1900)`;
+ $('t7').textContent=`Global temperature, 12-month average since 2015, against Hansen et al.'s 2025 prediction (°C above 1880–1920, NASA GISTEMP)`;
  list('h25-read',[
   `In early 2025, Hansen and colleagues argued that the 2023–24 jump in global temperature was only half El Niño. Most of the rest, they found, came from cleaner ship fuel since 2020: fewer sulfur particles, so fewer bright clouds over the oceans and more sunlight absorbed. If so, the extra warmth would not go away when El Niño ended. They predicted that global temperature would not fall much below +1.5 °C, but would hover near or above it for the next few years.`,
   (()=>{const g=m=>M.find(r=>r.m===m),d24=g('2024-12'),Y25=M.filter(r=>r.y===2025),lo25=Y25.reduce((b,r)=>r.r12<b.r12?r:b,Y25[0]);
-   return d24&&lo25?`The paper's most specific short-term test: the 12-month average would still be above 1.5 °C at the end of 2024, and "at most, barely fall below +1.5 °C in 2025". Measured (ERA5): ${f2(d24.r12)} °C to Dec 2024; the lowest during 2025 was ${f2(lo25.r12)} °C (to ${ml(lo25)})${lo25.r12>=1.5?', so it did not fall below 1.5 °C in 2025 at all':`, ${f2(1.5-lo25.r12)} °C below 1.5`}. ${M.some(r=>r.y>2025&&r.r12<lo25.r12)?`It dipped further in 2026, to ${f2(lo.r12)} °C.`:''}`:''})(),
+   return d24&&lo25?`The paper's most specific short-term test: the 12-month average would still be above 1.5 °C at the end of 2024, and "at most, barely fall below +1.5 °C in 2025". Measured in the paper's own terms (NASA, above 1880–1920): ${f2(d24.r12)} °C to Dec 2024; the lowest during 2025 was ${f2(lo25.r12)} °C (to ${ml(lo25)})${lo25.r12>=1.5?', so it did not fall below 1.5 °C in 2025 at all':`, ${f2(1.5-lo25.r12)} °C below 1.5`}. ${M.some(r=>r.y>2025&&r.r12<lo25.r12)?`It dipped further in 2026, to ${f2(lo.r12)} °C.`:''}`:''})(),
   `Since then the 12-month average has been between ${f2(lo.r12)} and ${f2(Math.max(...after.map(r=>r.r12)))} °C; it is ${f2(L.r12)} °C now. For comparison: after the 2015–16 El Niño it fell ${f2(p16.r12-t16.r12)} °C within two and a half years, from ${f2(p16.r12)} to ${f2(t16.r12)} °C; after the 2023–24 El Niño it has fallen ${f2(p24.r12-t24.r12)} °C so far, from ${f2(p24.r12)} to ${f2(t24.r12)} °C. The drop is similar; the level it fell to is much higher. The paper does not say how much is "much"; this chart shows how the test is going.`,
   `The paper also concludes that the climate is more sensitive than the IPCC's best estimate: about 4.5 °C of eventual warming for a doubling of CO₂, against the IPCC's 3 °C. That would mean more warming for the same emissions than the IPCC projections in part 2. Other scientists call it the high end of current estimates, but not one that can be ruled out.`,
   `Its other main warning, a possible shutdown of the Atlantic overturning circulation within 20 to 30 years, cannot be tested yet; the measurements are on the <a href="slow.html">slow signals page</a>.`]);
@@ -233,13 +236,14 @@ function hansen25(E){
  const mark={id:'pub',afterDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,px=x.getPixelForValue(pub);ctx.save();ctx.strokeStyle=THEME.mut;ctx.setLineDash([3,3]);
   ctx.beginPath();ctx.moveTo(px,a.top);ctx.lineTo(px,a.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';
   ctx.textAlign='right';ctx.fillText('Feb 2025: paper published',px-5,a.top+12);ctx.restore()}};
- const S=E.Mo.filter(r=>r.x>=2015);
+ const S=G.filter(r=>r.x>=2015),Er=E.Mo.filter(r=>r.r12!=null&&r.x>=2015);
  ready('n',new Chart($('c7'),{type:'line',plugins:[mark,hlines([[1.5,'1.5 °C: predicted to stay near or above',PARIS,true,true]])],data:{datasets:[
-   {label:'12-month average (ERA5)',data:M.filter(r=>r.x>=2015).map(r=>({x:r.x,y:r.r12})),borderColor:OBS,backgroundColor:OBS,borderWidth:2.6,pointRadius:0,order:0},
+   {label:'12-month average (NASA GISTEMP, above 1880–1920)',data:M.filter(r=>r.x>=2015).map(r=>({x:r.x,y:r.r12})),borderColor:OBS,backgroundColor:OBS,borderWidth:2.6,pointRadius:0,order:0},
+   {label:'For comparison: ERA5, above 1850–1900',data:Er.map(r=>({x:r.x,y:r.r12})),borderColor:THEME.mut,backgroundColor:THEME.mut,borderWidth:1.3,pointRadius:0,order:2},
    {label:'Single months',data:S.map(r=>({x:r.x,y:r.a})),showLine:false,borderColor:rgba(OBS,.45),backgroundColor:rgba(OBS,.45),pointRadius:1.8,order:1}]},
   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{tooltip:{callbacks:{title:t=>{const r=E.Mo.find(q=>Math.abs(q.x-t[0].parsed.x)<1e-6);return r?ml(r):''},label:c=>c.dataset.label+': '+f2(c.parsed.y)+' °C'}}},
-   scales:{x:{type:'linear',min:2015,max:Math.ceil(L.x+.1),ticks:{stepSize:1,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}))}
+   plugins:{tooltip:{callbacks:{title:t=>{const r=G.find(q=>Math.abs(q.x-t[0].parsed.x)<1e-6)||E.Mo.find(q=>Math.abs(q.x-t[0].parsed.x)<1e-6);return r?ml(r):''},label:c=>c.dataset.label+': '+f2(c.parsed.y)+' °C'}}},
+   scales:{x:{type:'linear',min:2015,max:Math.ceil(Math.max(L.x,Er.length?Er[Er.length-1].x:0)+.1),ticks:{stepSize:1,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}}))}
 
 // ---- 3. CMIP6 against ERA5
 function cmip(t,E){
@@ -358,8 +362,8 @@ function wmo(D){
  show('wmo-s')}
 
 Promise.allSettled([
- Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse)])
-  .then(([O,E,M,D])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
+ Promise.all([get('models_old.json').then(JSON.parse),get('era5_t2_regions_monthly.csv').then(era5),get('models_cmip6.csv'),get('models_outlook.json').then(JSON.parse),get('models_hansen_temp.csv')])
+  .then(([O,E,M,D,HT])=>{const parts=[()=>oldModels(O,E),()=>hansen(O,E),()=>hansen25(E,HT),()=>cmip(M,E),()=>{E.Lm=ar6Lines(D,E);ar6(D,E)},()=>budget(D),()=>wmo(D)],bad=[];
    parts.forEach((f,i)=>{try{f()}catch(e){console.error(e);bad.push(i)}});if(bad.length)throw bad})
 ]).then(r=>{if(r[0].status==='rejected'){console.error(r[0].reason);$('err').textContent='Could not load all of the data. Please try again later.'}});
 $('exp').onclick=()=>{const L=[[C.o,'t1',0],[C.h,'t2',0],[C.n,'t7',0],[C.m,'t3',0],[C.l,'t6',0],[C.a,'t4',0],[C.b,'t5',0]].filter(x=>x[0]);if(L.length)siteExport(L,'climate-models.jpg')};
