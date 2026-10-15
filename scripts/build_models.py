@@ -160,7 +160,21 @@ AR6 = {  # IPCC AR6 WG1 SPM, Table SPM.1: best estimate and very likely range, Â
 }
 
 
+def save_h88_raw():
+    # Hansen 1988 scenarios as digitized by RealClimate (Gavin Schmidt), beyond the 2017 end of the Hausfather copy.
+    # Saved as-is under reference/h88/ for inspection; a failed download is not fatal.
+    import os
+    os.makedirs("reference/h88", exist_ok=True)
+    for f in ("scen_ABC_temp.data", "H88_scenarios.dat"):
+        try:
+            open("reference/h88/" + f, "wb").write(get("https://www.realclimate.org/data/" + f))
+            print("saved reference/h88/" + f)
+        except Exception as e:
+            print("could not download", f, e)
+
+
 def main():
+    save_h88_raw()
     old = {"source": "Hausfather, Drake, Abbott & Schmidt (2020), Geophysical Research Letters 47, e2019GL085378",
            "doi": "https://doi.org/10.1029/2019GL085378", "data": "https://github.com/hausfath/OldModels",
            "projections": old_models(), "hansen1988": hansen(), "ghg_forcing": igcc_ghg_forcing(),
