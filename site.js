@@ -7,6 +7,12 @@
   const stored = (() => { try { return localStorage.getItem('ei-theme') || 'auto'; } catch (e) { return 'auto'; } })();
   const dark = stored === 'dark' || (stored === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   if (stored !== 'auto') document.documentElement.dataset.theme = stored; else delete document.documentElement.dataset.theme;
+  // A reader who picks light gets light: "only light" is the standard opt-out from a browser's own forced dark mode
+  // (Brave's night mode, Chrome's "auto dark mode for web contents"), which otherwise repaints the page dark anyway.
+  if (stored === 'light') {
+    document.documentElement.style.colorScheme = 'only light';
+    const m = document.querySelector('meta[name="color-scheme"]'); if (m) m.content = 'only light';
+  }
   // colors for charts; pages read window.THEME, so grids, bands and dark lines stay visible in both themes
   window.THEME = dark
     ? { dark, ink: '#e9e4d8', mut: '#a8a090', grid: 'rgba(255,255,255,.14)', band1: '#26313e', band2: '#3b4f66', clim: '#cfc8b8', fill0: 'rgba(40,30,25,.6)',
