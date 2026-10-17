@@ -15,9 +15,9 @@
   }
   // colors for charts; pages read window.THEME, so grids, bands and dark lines stay visible in both themes
   window.THEME = dark
-    ? { dark, ink: '#e9e4d8', mut: '#a8a090', grid: 'rgba(255,255,255,.14)', band1: '#26313e', band2: '#3b4f66', clim: '#cfc8b8', fill0: 'rgba(40,30,25,.6)',
+    ? { dark, ink: '#e9e4d8', mut: '#a8a090', axis: '#a8a090', grid: 'rgba(255,255,255,.14)', band1: '#26313e', band2: '#3b4f66', clim: '#cfc8b8', fill0: 'rgba(40,30,25,.6)',
         deep1: '#ff8a80', deep2: '#7fb3e8', bar: '#6f8fb3', trend: '#9cc2ec', card: '#1d1a15', zero: 'rgba(255,255,255,.55)', thin: '#4f6580' }
-    : { dark, ink: '#1c1c1c', mut: '#555', grid: 'rgba(0,0,0,.18)', band1: '#dce6f0', band2: '#a9c0d8', clim: '#333', fill0: 'rgba(255,245,240,.6)',
+    : { dark, ink: '#1c1c1c', mut: '#555', axis: '#737373', grid: 'rgba(120,120,120,.32)', band1: '#dce6f0', band2: '#a9c0d8', clim: '#333', fill0: 'rgba(255,245,240,.6)',
         deep1: '#7a0000', deep2: '#0f3f6b', bar: '#8fa9c4', trend: '#1f3f66', card: '#fff', zero: 'rgba(0,0,0,.6)', thin: '#b8c7d9' };
   const themeLabel = { auto: 'Theme: automatic (follows your device)', light: 'Theme: light', dark: 'Theme: dark' };
   const themeIcon = t => t === 'light'
@@ -648,7 +648,9 @@
   const chartSetup = () => {
   if (!window.Chart) return;
   if (dark) {                            // light mode keeps Chart.js's own defaults
-    Chart.defaults.color = THEME.mut;
+    // axis: in the light theme a middle grey, readable on white and also when a browser's forced night mode
+    // (e.g. Brave) darkens the page behind the chart, which it can't recolor
+    Chart.defaults.color = THEME.axis;
     Chart.defaults.borderColor = THEME.grid;
     document.documentElement.classList.add('charts-dark');   // printing flips these charts back to light (site.css)
   }

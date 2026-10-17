@@ -95,7 +95,7 @@ function run(raw){
  expName=`nino34-${cur}-${fmtDate(last).replace(' ','')}.jpg`;
  document.getElementById('out').classList.remove('hide');
  document.getElementById('exp').disabled=false;
- const x=[...Array(N).keys()],tc=col('--fg'),gc=col('--line');
+ const x=[...Array(N).keys()],tc=THEME.axis,gc=col('--line');
  const ds=[
   {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},
   {label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},
@@ -157,7 +157,7 @@ function ace(text,meta){
   const top=Object.values(storms[b]).sort((x,y)=>y.v-x.v).slice(0,6).filter(s=>s.v>=.5);
   document.getElementById('pA'+k).textContent=top.length?`Largest contributions in ${cur}: `+top.map(s=>`${s.name} ${s.v.toFixed(1)}`).join(', ')+'.':`No storms in ${cur} so far.`;
   const poly=(ch,lo,hi,c)=>{const{ctx,scales:{x,y}}=ch;ctx.save();ctx.beginPath();for(let i=0;i<N;i++){const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}for(let i=N-1;i>=0;i--)ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]));ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()};
-  const shown=['1991–2020 average',String(recY),String(cur)],tc=col('--fg');
+  const shown=['1991–2020 average',String(recY),String(cur)],tc=THEME.axis;
   aceCh.push(new Chart(document.getElementById('cA'+k),{type:'line',plugins:[{id:'aceband',beforeDraw(ch){poly(ch,mn,mx,THEME.band1);poly(ch,p10,p90,THEME.band2)}}],
    data:{labels:[...Array(N).keys()],datasets:[
     {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},
@@ -202,7 +202,7 @@ function paleo(raw,csv){
  const rec=R.map(r=>({x:r.y,y:r.r,w:r.w})),pre=rec.filter(p=>p.x<1871).reduce((a,p)=>p.y>a.y?p:a);
  const instMax=inst.reduce((a,p)=>p.y>a.y?p:a),x0=1100,x1=Jn+1;
  document.getElementById('tP').textContent=`El Niño winters since ${R[0].w}: tree rings, measurements and ${lbl(Jn)}`;
- const tc=col('--fg');
+ const tc=THEME.axis;
  if(cP)cP.destroy();
  cP=new Chart(document.getElementById('cP'),{data:{datasets:[
    ...(mark?[{type:'line',label:mark.t,data:[mark],showLine:false,pointRadius:7,pointHoverRadius:8,pointStyle:'circle',

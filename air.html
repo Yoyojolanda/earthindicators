@@ -132,7 +132,7 @@ function run(raw){
  document.getElementById('b4').hidden=!R.world;   // the averages vs pre-industrial only exist for the global series
  document.getElementById('out').classList.remove('hide');
  document.getElementById('exp').disabled=false;
- const x=[...Array(N).keys()],tc=col('--fg'),gc=col('--line');
+ const x=[...Array(N).keys()],tc=THEME.axis,gc=col('--line');
  const ds=[
   {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},
   {label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},

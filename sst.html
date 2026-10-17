@@ -104,7 +104,7 @@ function run(raw){
  expName=`sst-${R.name.toLowerCase().replace(/[^a-z]+/g,'-')}-${cur}-${fmtDate(last).replace(' ','')}.jpg`;
  document.getElementById('out').classList.remove('hide');
  document.getElementById('exp').disabled=false;
- const x=[...Array(N).keys()],tc=col('--fg'),gc=col('--line');
+ const x=[...Array(N).keys()],tc=THEME.axis,gc=col('--line');
  const ds=[
   {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},
   {label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},
