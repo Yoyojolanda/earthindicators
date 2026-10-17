@@ -30,6 +30,14 @@ claim can't be answered without them. Covered claims get extra search words (dat
   Search words: optimum, climate optimum, warmer is better, beneficial warming, good for humanity.
 - Additions: fire weather / longer fire seasons (Jolly et al. 2015) to wildfires; marine heatwaves roughly doubled
   since the 1980s (IPCC) to extreme-picks.
+- Addition to too-late (heard 2026-10-17, Thomas Reis on X: "1.5 is physically impossible", aerosols mask ~0.5 °C so
+  "we already live in a near 2 degree world", "smart money assumes 3 °C", "Earth is getting darker"). Mostly covered
+  by too-late; no new answer. Add: (1) one line that Earth reflects less sunlight than in the early 2000s, measured by
+  CERES (link eei.html, absorbed-sunlight chart), and that whether warming is speeding up is still debated; (2) give
+  the aerosol masking as an estimate with its range (IPCC AR6: about 0.4 °C, range 0.0-0.8), not as a measured number;
+  (3) keep "1.5 can no longer be avoided" (UN) rather than "physically impossible": getting back below it later would
+  need large-scale CO2 removal. Search words: 3 degrees, 3 °C world, near 2 degrees, aerosol masking, hidden warming,
+  darker Earth, albedo, stress test, on track, 1.5 impossible.
 
 ## Built
 
