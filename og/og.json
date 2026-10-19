@@ -93,12 +93,12 @@
   ],
   "sparkLabel": "yearly, 1940–2025",
   "source": "Copernicus ERA5",
-  "through": "Oct 16, 2026"
+  "through": "Oct 17, 2026"
  },
  "sst": {
   "title": "Sea surface temperature",
-  "big": "+0.84 °C",
-  "label": "vs 1991–2020 average on Oct 16",
+  "big": "+0.89 °C",
+  "label": "vs 1991–2020 average on Oct 18",
   "spark": [
    -0.2998904109589043,
    -0.21846849315068484,
@@ -147,15 +147,13 @@
   ],
   "sparkLabel": "yearly, 1982–2025",
   "source": "NOAA OISST",
-  "through": "Oct 16, 2026"
+  "through": "Oct 18, 2026"
  },
  "nino": {
   "title": "El Niño and La Niña (Niño 3.4)",
-  "big": "+3.26 °C",
-  "label": "central Pacific vs 1991–2020, Oct 16",
+  "big": "+3.47 °C",
+  "label": "central Pacific vs 1991–2020, Oct 18",
   "spark": [
-   -0.44200000000000017,
-   -0.46499999999999986,
    -0.49099999999999966,
    -0.504999999999999,
    -0.5350000000000001,
@@ -505,8 +503,8 @@
    3.216000000000001,
    3.285,
    3.304000000000002,
-   3.279,
-   3.3230000000000004,
+   3.294999999999998,
+   3.3000000000000007,
    3.4019999999999975,
    3.3210000000000015,
    3.3309999999999995,
@@ -518,11 +516,13 @@
    3.3049999999999997,
    3.308,
    3.3359999999999985,
-   3.2609999999999992
+   3.2609999999999992,
+   3.3500000000000014,
+   3.471
   ],
   "sparkLabel": "last 12 months",
   "source": "NOAA OISST",
-  "through": "Oct 16, 2026"
+  "through": "Oct 18, 2026"
  },
  "land-ice": {
   "title": "Land ice: glaciers and ice sheets",
@@ -2298,8 +2298,8 @@
    97.78585,
    99.66565,
    102.64284,
-   107.30010999999999,
-   111.73391000000001
+   107.24933,
+   112.23236
   ],
   "sparkLabel": "1993–2026",
   "source": "NASA",
@@ -2366,7 +2366,7 @@
  "co2": {
   "title": "Carbon dioxide (CO₂)",
   "big": "426.3 ppm",
-  "label": "30-day average to Oct 17",
+  "label": "30-day average to Oct 18",
   "spark": [
    331.40379999999993,
    332.01328947368427,
@@ -2421,7 +2421,7 @@
   ],
   "sparkLabel": "yearly, 1975–2025",
   "source": "NOAA Mauna Loa",
-  "through": "Oct 17, 2026"
+  "through": "Oct 18, 2026"
  },
  "ch4": {
   "title": "Methane",
