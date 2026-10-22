@@ -59,10 +59,14 @@ jobs:
               for v in ds.data_vars:
                   a = ds[v]
                   if a.ndim >= 2:
-                      x = a.values.astype("float32"); print(v, a.dims, a.shape, np.nanmin(x), np.nanmax(x), np.isfinite(x).mean(), a.attrs)
+                      x = a.isel({a.dims[0]: 0}).values.astype("float32") if a.ndim > 2 else a.values.astype("float32"); print(v, a.dims, a.shape, np.nanmin(x), np.nanmax(x), np.isfinite(x).mean(), a.attrs)
           except Exception as e: print("ERR", e)
           PY
           python -u probe.py > probe.txt 2>&1 || true
+      - name: Save
+        if: always()
+        run: |
+          df -h . | tail -1 >> probe.txt; free -m >> probe.txt
           git init -q out && cd out && cp ../probe.txt . && git checkout -q -b probe-out
           git config user.name github-actions && git config user.email actions@users.noreply.github.com
           git add probe.txt && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
