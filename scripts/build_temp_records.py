@@ -26,10 +26,11 @@ def get(url):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
                 return r.read().decode("utf-8", "replace")
-        except Exception as e:
+        except Exception as e_:
+            e = e_
             print(f"  {url}: {e}; retry {attempt + 1}", flush=True)
             time.sleep(10 * (attempt + 1))
-    raise RuntimeError(f"download failed: {url}")
+    raise RuntimeError(f"download failed: {url} ({e})")
 
 
 def gistemp():
@@ -150,7 +151,8 @@ def main():
             print(f"{name}: {min(s)} to {max(s)}, {len(s)} months ({url})", flush=True)
         except Exception as e:
             print(f"{name}: FAILED ({e}); keeping the previous values", flush=True)
-            cols[name], srcs[name] = old.get(name, {}), olds.get(name, "")
+            prev = olds.get(name, "").split(" [")[0]
+            cols[name], srcs[name] = old.get(name, {}), f"{prev} [{date.today()}: update failed, previous values kept: {str(e)[:200]}]".strip()
     if not ok:
         sys.exit("every record failed; nothing written")
     months = sorted(set().union(*cols.values()))
