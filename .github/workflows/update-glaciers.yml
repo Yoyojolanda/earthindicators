@@ -1,0 +1,42 @@
+name: Update glacier data
+
+on:
+  schedule:
+    - cron: "25 16 3 * *"      # monthly check (the 3rd); Copernicus/WGMS add a year once a year
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 ecmwf-datastores-client
+
+      # World glacier mass change per year (Copernicus gridded product made by WGMS), with the same
+      # Copernicus key as ERA5. Skips the download when the product version has not changed.
+      - name: Build world glacier mass change (Copernicus / WGMS)
+        continue-on-error: true
+        timeout-minutes: 120
+        env:
+          CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
+        run: |
+          printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
+          chmod 600 ~/.cdsapirc
+          python -u scripts/build_glaciers.py || rc=$?
+          rm -f ~/.cdsapirc
+          exit ${rc:-0}
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.cdsapirc data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update glacier data" && git pull --rebase && git push)

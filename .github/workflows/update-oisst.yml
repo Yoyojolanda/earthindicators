@@ -1,0 +1,137 @@
+name: Update sea-surface temperature data (Niño 3.4, world, regions)
+
+# One job for every NOAA OISST series, so Python and its packages are installed once per run.
+# Each series refetches only its last 30 days (preliminary values become final after about two weeks);
+# a series with nothing cached yet downloads 1982 to now, saving each year as it goes.
+on:
+  schedule:
+    - cron: "7 9,21 * * *"     # twice a day, odd minutes: NOAA PSL posts new OISST days at no fixed time, and GitHub delays runs set on the hour the most
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+    inputs:
+      only:
+        description: "Run only this series (e.g. sst-map). Leave empty for all."
+        required: false
+        default: ""
+      force:
+        description: "Refetch series even if they were updated in the last 3 hours"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oisst
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}   # a re-run starts from the latest commit, so it sees what the first attempt saved
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install numpy xarray netCDF4 pydap
+          echo "HTTP.TIMEOUT=120" > ~/.dodsrc
+          # series rebuilt in the last 3 hours (e.g. by the first attempt of a re-run) are skipped
+          echo "SKIP_HOURS=${{ inputs.force && '0' || '3' }}" >> "$GITHUB_ENV"
+
+      - name: Niño 3.4 (5S-5N, 170W-120W)
+        id: nino34
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'nino34' }}
+        timeout-minutes: 60
+        run: python -u scripts/build_nino34.py --compare reference/climatereanalyzer.json --check-out data/nino34_check.txt
+
+      # Global: 60S-60N, every 4th grid point (1 degree)
+      - name: World (60S-60N)
+        id: world
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'world' }}
+        timeout-minutes: 60
+        run: |
+          python -u scripts/build_nino34.py --lat -60 60 --lon 0 360 --stride 4 \
+            --out data/oisst2.1_world_sst_day.json --cache data/world_daily_sst.csv
+
+      # Boxes as on Climate Reanalyzer (longitudes in degrees east), except the North Pacific, for which they
+      # have none: same latitudes as the North Atlantic, Asia to the Americas. Land has no OISST values.
+      - name: Gulf of Maine (42-45N, 66-71W)
+        id: gmaine
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'gmaine' }}
+        timeout-minutes: 40
+        run: python -u scripts/build_nino34.py --lat 42 45 --lon 289 294 --out data/oisst2.1_gmaine_sst_day.json --cache data/gmaine_daily_sst.csv
+
+      - name: Gulf of Mexico (20-30N, 82-98W)
+        id: gmex
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'gmex' }}
+        timeout-minutes: 50
+        run: python -u scripts/build_nino34.py --lat 20 30 --lon 262 278 --out data/oisst2.1_gmex_sst_day.json --cache data/gmex_daily_sst.csv
+
+      - name: Subpolar North Atlantic (45-60N, 20-45W)
+        id: spna
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'spna' }}
+        timeout-minutes: 50
+        run: python -u scripts/build_nino34.py --lat 45 60 --lon 315 340 --out data/oisst2.1_spna_sst_day.json --cache data/spna_daily_sst.csv
+
+      - name: Atlantic hurricane region, MDR (10-20N, 20-85W)
+        id: mdr
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'mdr' }}
+        timeout-minutes: 70
+        run: python -u scripts/build_nino34.py --lat 10 20 --lon 275 340 --out data/oisst2.1_mdr_sst_day.json --cache data/mdr_daily_sst.csv
+
+      - name: North Atlantic (0-60N, 0-80W), every 2nd grid point
+        id: natl
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'natl' }}
+        timeout-minutes: 110
+        run: python -u scripts/build_nino34.py --lat 0 60 --lon 280 360 --stride 2 --out data/oisst2.1_natl_sst_day.json --cache data/natl_daily_sst.csv
+
+      - name: North Pacific (0-60N, 120E-100W), every 3rd grid point
+        id: npac
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'npac' }}
+        timeout-minutes: 110
+        run: python -u scripts/build_nino34.py --lat 0 60 --lon 120 260 --stride 3 --out data/oisst2.1_npac_sst_day.json --cache data/npac_daily_sst.csv
+
+      # global SST maps (SST page: latest day and month; El Niño page: latest month vs 1982, 1997, 2015).
+      # Each map is fetched only when a new day or month is out, so most runs only read the files' time axes
+      - name: Global SST maps (daily and monthly)
+        id: sstmap
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'sst-map' || inputs.only == 'pacific-map' }}
+        timeout-minutes: 40
+        run: python -u scripts/build_sst_map.py
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update sea-surface temperature data" && git pull --rebase && git push)
+
+      # every series is allowed to fail on its own without blocking the others, but the run still shows red
+      - name: Report failed series
+        if: always()
+        run: |
+          failed=""
+          [[ "${{ steps.nino34.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed Niño3.4"
+          [[ "${{ steps.world.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed world"
+          [[ "${{ steps.gmaine.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed Gulf-of-Maine"
+          [[ "${{ steps.gmex.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed Gulf-of-Mexico"
+          [[ "${{ steps.spna.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed subpolar-N-Atlantic"
+          [[ "${{ steps.mdr.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed MDR"
+          [[ "${{ steps.natl.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed N-Atlantic"
+          [[ "${{ steps.npac.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed N-Pacific"
+          [[ "${{ steps.sstmap.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed SST-maps"
+          [ -z "$failed" ] || { echo "::error::failed:$failed"; exit 1; }

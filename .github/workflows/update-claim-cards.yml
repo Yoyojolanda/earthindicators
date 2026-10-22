@@ -1,0 +1,34 @@
+name: Update claim share links
+
+on:
+  push:
+    branches: [main]
+    paths: ["claims.html", "scripts/build_claim_cards.py", "scripts/build_og.py"]
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: claim-cards
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install matplotlib
+
+      - name: Make one share page and preview image per claim
+        run: python scripts/build_claim_cards.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add c og/c
+          git diff --cached --quiet || (git commit -m "Update claim share links" && git pull --rebase && git push)

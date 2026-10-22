@@ -1,0 +1,33 @@
+name: Test ARCO-ERA5 against the regional cache
+
+# Manual only. Reads Google's public ARCO-ERA5 copy and compares it with data/era5_t2_regions_daily.csv.
+# Commits nothing: the result is in the run's log and summary page.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "First day to test (inside the cache, 2015-05-01 or later)"
+        default: "2016-01-01"
+      to:
+        description: "Last day to test"
+        default: "2016-12-31"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray zarr gcsfs dask netCDF4
+      - name: Compare ARCO-ERA5 with the cache
+        env:
+          ARCO_FROM: ${{ inputs.from }}
+          ARCO_TO: ${{ inputs.to }}
+          ARCO_THREADS: "8"
+        run: python -u scripts/test_arco_overlap.py

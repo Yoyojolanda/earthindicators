@@ -1,0 +1,46 @@
+name: Clean up preview image history
+
+# Manual only, and only after typing "yes": rewrites the whole history so that the generated preview images
+# (og/ and s/) keep only their current versions. Every commit gets a new ID; data files and code are unchanged.
+# Local copies need a one-time "git fetch origin && git reset --hard origin/main" afterwards.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "yes" to rewrite the history'
+        required: true
+        default: "no"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chart-cards           # never while the share links are being redrawn
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: inputs.confirm == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0        # the full history
+      - run: pip install git-filter-repo
+      - name: Rewrite history, keeping the current preview images
+        run: |
+          start=$(git rev-parse HEAD)
+          echo "size before: $(du -sh .git | cut -f1)"
+          mkdir -p /tmp/keep && cp -a og s /tmp/keep/
+          url=$(git remote get-url origin)
+          git filter-repo --force --path og/ --path s/ --invert-paths
+          cp -a /tmp/keep/og /tmp/keep/s .
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add og s
+          git commit -q -m "Preview images (history cleaned up; older versions removed)"
+          git remote add origin "$url"
+          git gc -q --prune=now --aggressive
+          echo "size after: $(du -sh .git | cut -f1)"
+          # only if nothing new was pushed in the meantime (a data update would otherwise be lost): else run again
+          git push --force-with-lease=main:"$start" origin HEAD:main

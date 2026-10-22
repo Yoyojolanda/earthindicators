@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Water vapor tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="The water cycle: water vapor in the air">
+<meta property="og:description" content="How much water vapor the atmosphere holds, month by month since 1940, and how it rises with temperature. Copernicus ERA5.">
+<meta property="og:url" content="https://earthindicators.org/water.html">
+<meta property="og:image" content="https://earthindicators.org/og/water.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Water vapor in the air: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="How much water vapor the atmosphere holds, month by month since 1940, and how it rises with temperature. Copernicus ERA5.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:400px;--hs:300px;--ph:260px;--phs:200px}
+.seg{display:inline-flex;gap:6px;margin:0 0 8px;font-size:13px;align-items:center;color:var(--mut)}
+.seg .nb{padding:3px 10px}.seg .nb.on{border-color:var(--acc);color:var(--acc)}
+@media print{h2:has(+ #read){break-before:page;break-after:avoid}}</style></head><body><main>
+<h1>The water cycle: water vapor in the air (Copernicus ERA5)</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2>
+ <div class="seg" id="u1">Show: <button class="nb on" data-u="pct">% of normal</button><button class="nb" data-u="kg">kg/m² (mm)</button></div>
+ <div class="wrap"><canvas id="c1"></canvas></div>
+ <p class="sub" id="n1" style="margin:8px 0 0"></p></div>
+<div class="box"><h2 id="t4"></h2>
+ <div class="seg" id="b4">Region: <button class="nb" data-b="world">World</button><button class="nb" data-b="nh">Northern Hemisphere</button><button class="nb" data-b="sh">Southern Hemisphere</button><button class="nb" data-b="tropics">Tropics</button><button class="nb" data-b="nhmid">30–60°N</button></div>
+ <div class="wrap"><canvas id="c4"></canvas></div>
+ <p class="sub" id="n4" style="margin:8px 0 0"></p></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div>
+ <p class="sub" id="n2" style="margin:8px 0 0"></p></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div>
+ <p class="sub" id="n3" style="margin:8px 0 0"></p></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Total column water vapor: all the water vapor above each square meter of Earth's surface, from the ground to the top of the atmosphere, averaged over the whole globe (weighted by area). 1 kg/m² equals a 1 mm layer of liquid water, which is why it is also called precipitable water. "Normal" is the 1991–2020 average for the same calendar month. ERA5 is a reanalysis: millions of observations (weather balloons, satellites, ships, stations) combined into one picture of the atmosphere for every hour since 1940, with a weather model filling the gaps between them. Before satellites (1979) it has far fewer humidity observations to work with, so the early decades are less certain. Monthly values appear about 5 days after the month ends; the newest months can still be revised slightly. Data: Copernicus Climate Change Service, ERA5 monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7" target="_blank" rel="noopener">doi:10.24381/cds.f17050d7</a>).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const charts=[],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],AREA=5.1e14,ERIE=484;
+const MLONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const sg=(x,d=1)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const mlab=s=>{const[y,m]=s.split('-');return ML[m-1]+' '+y};
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const fit=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});const k=a/b;return{k,c:my-k*mx}};
+const run=(a,w)=>a.map((_,i)=>i+1<w?null:mean(a.slice(i+1-w,i+1)));
+const ord=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
+const SAT=1979;   // first year with satellite humidity data in ERA5; trends and the scatter start here
+let D,unit='pct',expName='water-vapor.jpg',band='world';
+const BANDS={world:'the whole globe',nh:'the Northern Hemisphere',sh:'the Southern Hemisphere',tropics:'the tropics (23.5°S–23.5°N)',nhmid:'the northern mid-latitudes (30–60°N)'};
+
+function parse(t,col='world'){const L=t.trim().split(/\r?\n/),h=L[0].split(','),j=h.indexOf(col);if(j<0)return[];
+ return L.slice(1).map(l=>l.split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])&&p[j]!=='').map(p=>({m:p[0],y:+p[0].slice(0,4),k:+p[0].slice(5)-1,v:+p[j]}))}
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+const grid={color:THEME.grid};
+const xYears=labels=>({ticks:{maxRotation:0,autoSkip:false,callback:v=>{const[y,m]=labels[v].split('-');return m=='01'&&+y%10==0?y:''}},grid:{display:false}});
+// light band behind the years before satellite humidity data
+const preSat=i1=>({id:'preSat',beforeDatasetsDraw(ch){const{ctx,chartArea:a,scales:{x}}=ch;if(i1<=0)return;
+ const r=Math.min(x.getPixelForValue(i1),a.right);if(r<=a.left)return;
+ ctx.save();ctx.fillStyle=THEME.dark?'rgba(255,255,255,.05)':'rgba(0,0,0,.045)';ctx.fillRect(a.left,a.top,r-a.left,a.bottom-a.top);
+ ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+ ctx.fillText('before satellites: less certain',a.left+6,a.top+6);ctx.restore()}});
+
+function build(tw,tt){
+ bandChart(tw);
+ D=parse(tw);if(D.length<120)throw new Error('too few months');
+ const N=D.length,last=D[N-1],cur=last.y;
+ // 1991-2020 normal for each calendar month
+ const clim=[...Array(12)].map((_,k)=>mean(D.filter(r=>r.k==k&&r.y>=1991&&r.y<=2020).map(r=>r.v)));
+ D.forEach(r=>{r.a=r.v-clim[r.k];r.p=r.a/clim[r.k]*100});
+ const climYear=mean(clim);
+ // rank of the newest month among the same calendar month in all years
+ const same=D.filter(r=>r.k==last.k).sort((a,b)=>b.v-a.v),rank=same.findIndex(r=>r.m==last.m)+1,y0=D[0].y;
+ const l12=D.slice(-12),l12p=mean(l12.map(r=>r.p)),l12a=mean(l12.map(r=>r.a));
+ // complete calendar years
+ const byY={};D.forEach(r=>(byY[r.y]=byY[r.y]||[]).push(r));
+ const Y=Object.keys(byY).map(Number).filter(y=>byY[y].length==12);
+ const YP=Object.fromEntries(Y.map(y=>[y,mean(byY[y].map(r=>r.p))])),YA=Object.fromEntries(Y.map(y=>[y,mean(byY[y].map(r=>r.a))]));
+ const Ys=Y.filter(y=>y>=SAT),tr=fit(Ys.map(y=>({x:y,y:YP[y]}))),dec=tr.k*10;
+ const recM=same[0];   // record for this calendar month
+ // extra water now vs the first satellite decade, in km³ (1 kg/m² over 510 million km² = 510 km³)
+ const early=Ys.filter(y=>y<SAT+10),extra=(l12a-mean(early.map(y=>YA[y])))*AREA/1e12;
+
+ // ---- air temperature: yearly world means from the same monthly ERA5 dataset, vs 1991-2020
+ let S=null;
+ if(tt){const T=parse(tt),tY={};T.forEach(r=>(tY[r.y]=tY[r.y]||[]).push(r.v));
+  const TY=Object.fromEntries(Object.keys(tY).filter(y=>tY[y].length==12).map(y=>[+y,mean(tY[y])]));
+  const base=[...Array(30)].map((_,i)=>TY[1991+i]).filter(v=>v!=null);
+  if(base.length==30){const tb=mean(base);
+   const P=Ys.filter(y=>TY[y]!=null).map(y=>({x:TY[y]-tb,y:YP[y],yr:y}));
+   if(P.length>=20)S={P,f:fit(P),tb}}}
+
+ $('cards').innerHTML=[
+  [last.v.toFixed(1)+' kg/m²',`Global average, ${MLONG[last.k]} ${cur} (${sg(last.p)}% vs the 1991–2020 ${MLONG[last.k]} average)`],
+  [rank==1?'Record':ord(rank)+' highest',`${MLONG[last.k]} ${cur} among all ${same.length} ${MLONG[last.k]}s since ${y0}`],
+  [sg(l12p)+'%',`Last 12 months (${mlab(l12[0].m)}–${mlab(last.m)}) vs 1991–2020`],
+  [sg(dec,2)+'%',`Trend per decade, ${SAT}–${Ys[Ys.length-1]} (complete years)`],
+  ...(S?[[sg(S.f.k,1)+'% per °C',`More water vapor for each 1 °C of global warming (yearly values ${S.P[0].yr}–${S.P[S.P.length-1].yr})`]]:[])
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+
+ // ---- chart 1: every month vs its 1991-2020 normal, 12-month mean, record months
+ const labels=D.map(r=>r.m),iSat=labels.indexOf(SAT+'-01');
+ const recIdx=new Set(clim.map((_,k)=>{let b=-1;D.forEach((r,i)=>{if(r.k==k&&(b<0||r.v>D[b].v))b=i});return b}));
+ function chart1(){
+  const pct=unit=='pct',val=r=>pct?r.p:r.a,u=pct?'%':' kg/m²',d=pct?1:2;
+  const m=D.map(val),r12=run(m,12);
+  $('t1').textContent=`Water vapor in the air vs the 1991–2020 average for the same month, ${y0}–${cur}`;
+  if(charts[0])charts[0].destroy();
+  charts[0]=freeze(new Chart($('c1'),{type:'line',plugins:[preSat(iSat)],data:{labels,datasets:[
+    {label:'Monthly',data:m,borderColor:THEME.thin,borderWidth:1,pointRadius:0},
+    {label:'12-month running mean',data:r12,borderColor:'#d00000',borderWidth:2.5,pointRadius:0},
+    {label:'Record for that calendar month',data:m.map((v,i)=>recIdx.has(i)?v:null),showLine:false,borderColor:THEME.ink,backgroundColor:'#7b5ea7',pointRadius:4.5,pointHoverRadius:6,pointStyle:'circle'}]},
+   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>mlab(t[0].label),
+      label:c=>c.datasetIndex==2?'Record '+MLONG[D[c.dataIndex].k]:c.dataset.label+': '+sg(c.parsed.y,d)+u,
+      footer:t=>{const r=D[t[0].dataIndex];return t[0].datasetIndex==0?`${r.v.toFixed(2)} kg/m² (normal ${clim[r.k].toFixed(2)})`:''}}}},
+    scales:{x:xYears(labels),y:{title:{display:true,text:pct?'% above or below normal':'kg/m² (= mm of water) above or below normal'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+  document.querySelectorAll('#u1 .nb').forEach(b=>b.classList.toggle('on',b.dataset.u==unit))}
+ chart1();
+ document.querySelectorAll('#u1 .nb').forEach(b=>b.onclick=()=>{unit=b.dataset.u;chart1()});
+ $('n1').textContent=`Purple dots: the highest value on record for each calendar month. ${[...recIdx].filter(i=>D[i].y>=cur-2).length} of the 12 were set in ${cur-2} or later.`;
+
+ // ---- chart 2: each year month by month: range of all earlier years, normal, last year and this year
+ const prior=D.filter(r=>r.y<cur),mx=clim.map((_,k)=>Math.max(...prior.filter(r=>r.k==k).map(r=>r.v))),mn=clim.map((_,k)=>Math.min(...prior.filter(r=>r.k==k).map(r=>r.v)));
+ const yr=y=>clim.map((_,k)=>{const r=D.find(r=>r.y==y&&r.k==k);return r?r.v:null});
+ const prevRec=k=>{const P=prior.filter(r=>r.k==k);return P.find(r=>r.v==mx[k]).y};
+ $('t2').textContent=`Each month of ${cur} and ${cur-1} vs all earlier years (${y0}–${cur-1})`;
+ charts[1]=freeze(new Chart($('c2'),{type:'line',data:{labels:ML,datasets:[
+   {label:`Highest, ${y0}–${cur-1}`,data:mx,borderColor:THEME.band2,borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:THEME.band1,order:4},
+   {label:`Lowest, ${y0}–${cur-1}`,data:mn,borderColor:THEME.band2,borderWidth:1,pointRadius:0,order:4},
+   {label:'1991–2020 average',data:clim,borderColor:THEME.clim,borderWidth:1.5,borderDash:[5,4],pointRadius:0,order:3},
+   {label:String(cur-1),data:yr(cur-1),borderColor:'#e08a00',borderWidth:2,pointRadius:2.5,order:1},
+   {label:String(cur),data:yr(cur),borderColor:'#d00000',borderWidth:3,pointRadius:3.5,backgroundColor:'#d00000',order:0}]},   // lower order = drawn on top
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>MLONG[t[0].dataIndex],label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' kg/m²',
+     footer:t=>`Highest before ${cur}: ${prevRec(t[0].dataIndex)}`}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'kg/m² (= mm of water)'},grid}}}}));
+ const above=clim.map((_,k)=>yr(cur)[k]).map((v,k)=>v!=null&&v>mx[k]?MLONG[k]:null).filter(Boolean);
+ const top=clim.indexOf(Math.max(...clim)),low=clim.indexOf(Math.min(...clim));
+ $('n2').textContent=`On average the air holds most water in ${MLONG[top]} and least in ${MLONG[low]}: the northern hemisphere has most of the land, and its summer warms the whole globe's air. `+
+  (above.length?`Months of ${cur} above every earlier year: ${above.join(', ')}.`:`No month of ${cur} so far is above every earlier year.`);
+
+ // ---- chart 3: yearly water vapor vs yearly air temperature
+ if(S){const{P,f}=S,xs=P.map(p=>p.x),x0=Math.min(...xs)-.05,x1=Math.max(...xs)+.05,mid=mean(P.map(p=>p.y))-7*mean(xs);
+  const col=y=>y>=2020?'#d00000':y>=2010?'#e08a00':y>=2000?'#7b5ea7':y>=1990?'#2f7fbf':'#8fa9c8';
+  $('t3').textContent=`Warmer years have more water vapor: yearly averages, ${P[0].yr}–${P[P.length-1].yr}`;
+  charts[2]=new Chart($('c3'),{type:'scatter',data:{datasets:[
+    {label:'Each year',data:P,pointBackgroundColor:P.map(p=>col(p.yr)),pointBorderColor:P.map(p=>col(p.yr)),borderColor:THEME.ink,pointRadius:4.5,pointHoverRadius:6},
+    {label:`Best-fit line: ${sg(f.k,1)}% per °C`,type:'line',data:[{x:x0,y:f.c+f.k*x0},{x:x1,y:f.c+f.k*x1}],borderColor:THEME.ink,borderWidth:2,pointRadius:0},
+    {label:'Physics: about 7% per °C (Clausius–Clapeyron)',type:'line',data:[{x:x0,y:mid+7*x0},{x:x1,y:mid+7*x1}],borderColor:'#2f7fbf',borderWidth:1.5,borderDash:[6,4],pointRadius:0}]},
+   options:{animation:false,maintainAspectRatio:false,
+    plugins:{tooltip:{filter:i=>i.datasetIndex==0,callbacks:{label:c=>`${c.raw.yr}: air ${sg(c.raw.x,2)} °C, water vapor ${sg(c.raw.y,1)}% (vs 1991–2020)`}}},
+    scales:{x:{type:'linear',title:{display:true,text:'Global air temperature, °C above or below 1991–2020'},grid},
+     y:{title:{display:true,text:'Water vapor, % above or below 1991–2020'},grid}}}});
+  $('n3').textContent=`Each dot is one year. Colors: gray-blue 1979–1989, blue 1990s, purple 2000s, orange 2010s, red 2020 onwards. The solid line is fitted to the dots; the dashed line has the 7% per °C slope that physics predicts, drawn through the middle of the dots for comparison. Temperature: ERA5 2 m air temperature, from the same Copernicus dataset.`}
+ else{charts[2]=null;$('t3').closest('.box').hidden=true}
+
+ // ---- interpretation
+ const recentRec=[...recIdx].filter(i=>D[i].y>=cur-2).length;
+ $('read').innerHTML=[
+  `${MLONG[last.k]} ${cur}: ${last.v.toFixed(2)} kg/m² averaged over the globe, ${sg(last.p)}% compared with the 1991–2020 ${MLONG[last.k]} average. ${rank==1?`That is the highest ${MLONG[last.k]} since the record began in ${y0}${same[1]?`, above the previous record of ${same[1].v.toFixed(2)} kg/m² (${same[1].y})`:''}.`:`That ranks ${ord(rank)} of ${same.length}; the record is ${recM.v.toFixed(2)} kg/m² (${recM.y}).`}`,
+  `Since ${SAT}, the amount of water vapor in the air has changed by ${sg(dec,2)}% per decade (linear trend of the yearly averages). Over the last 12 months it held about ${Math.round(extra).toLocaleString('en-US')} km³ more water than on average in ${SAT}–${SAT+9}, roughly ${(extra/ERIE).toFixed(1)} times the volume of Lake Erie (${ERIE} km³).`,
+  ...(S?[`Year to year, water vapor changes by ${sg(S.f.k,1)}% for every 1 °C rise in global air temperature (${S.P[0].yr}–${S.P[S.P.length-1].yr}). Physics (the Clausius–Clapeyron equation) says warmer air can hold about 7% more water vapor per °C. The slope on this page is calculated from the yearly values of the reanalysis, which are built from observations, not from a climate projection.`]:[]),
+  `Why it matters, according to the IPCC (2021, AR6 Working Group I): more water vapor gives storms more water to rain out, so the heaviest downpours get heavier, roughly in step with the moisture. Total rainfall over the whole globe rises much more slowly, about 1–3% per °C, because it is limited by how fast the atmosphere can lose heat. More water in the heaviest bursts, but only a little more water in total, means longer dry spells in between in many places. And a downpour does not make up for the dry spell: soil can only soak up water so fast, so when rain comes down harder than that, much of it runs straight off into streams and rivers (feeding flash floods and washing away topsoil) instead of refilling the soil and groundwater. Soil that has dried out and hardened takes water in even more slowly at first. The same amount of rain, arriving in fewer and heavier bursts, leaves the land drier. Warmer air also dries out soils and plants faster. Both flood and drought risk go up. These are findings from the scientific literature, not calculated on this page.`,
+  `Water vapor is itself a greenhouse gas, the largest one, but it does not drive warming on its own: extra vapor rains out within about 10 days. It only builds up when the air warms for another reason, mainly CO₂, and then it amplifies that warming (the water vapor feedback, the strongest amplifying feedback in the climate system according to the IPCC).`,
+  `El Niño years run moister and La Niña years drier, so single months and years swing up and down; the record is about the long rise, not any one month.${recentRec>=3?` Still, ${recentRec} of the 12 calendar-month records were set in ${cur-2} or later.`:''}`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`water-vapor-${last.m}.jpg`;
+ $('out').classList.remove('hide');
+ $('exp').disabled=false}
+
+// ---- chart 4: one latitude band, every month and its 36-month running average (kg/m², not vs normal)
+function bandChart(tw){
+ if(parse(tw,band).length<120)band='world';   // a band whose history is not filled in yet
+ document.querySelectorAll('#b4 .nb').forEach(b=>{b.hidden=parse(tw,b.dataset.b).length<120;b.classList.toggle('on',b.dataset.b==band);
+  b.onclick=()=>{band=b.dataset.b;bandChart(tw)}});
+ const B=parse(tw,band),labels=B.map(r=>r.m),v=B.map(r=>r.v),r36=run(v,36),iSat=labels.indexOf(SAT+'-01'),n=B.length;
+ const last=B[n-1],cur=last.y,top=r36.reduce((b,x,i)=>x!=null&&(b<0||x>r36[b])?i:b,-1),prevTop=r36.slice(0,-1).reduce((b,x,i)=>x!=null&&(b<0||x>r36[b])?i:b,-1);
+ $('t4').textContent=`Water vapor over ${BANDS[band]}: 36-month running average, ${B[0].y}–${cur}`;
+ if(charts[3])charts[3].destroy();
+ charts[3]=new Chart($('c4'),{type:'line',plugins:[preSat(iSat)],data:{labels,datasets:[
+   {label:'Monthly',data:v,borderColor:THEME.thin,borderWidth:1,pointRadius:0,order:1,hidden:true},   // hidden at first: its seasonal swing would flatten the average
+   {label:'36-month running average',data:r36,borderColor:'#d00000',borderWidth:2.5,pointRadius:0,order:0}]},   // average on top
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>mlab(labels[t[0].dataIndex]),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' kg/m²'}}},
+   scales:{x:xYears(labels),y:{title:{display:true,text:'kg/m² (= mm of water)'},grid}}}});
+ $('n4').textContent=`The 36-month average smooths out the seasons and most of the El Niño / La Niña swings (click Monthly in the legend to see the seasonal swing it averages out). In the 36 months to ${mlab(last.m)} it was ${r36[n-1].toFixed(2)} kg/m², `
+  +(top===n-1?`the highest in the record (previous high ${r36[prevTop].toFixed(2)}, 36 months to ${mlab(labels[prevTop])}).`:`below the record of ${r36[top].toFixed(2)} (36 months to ${mlab(labels[top])}).`)
+  +' Bands nearer the equator hold more water because the air there is warmer; compare the change over time, not the level between bands.'}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
+$('exp').onclick=()=>siteExport([1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),expName);
+const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
+Promise.all([txt('era5_tcwv_monthly.csv'),txt('era5_t2_regions_monthly.csv').catch(()=>null)]).then(([a,b])=>build(a,b))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the water vapor data. Please try again later.'});
+</script></main></body></html>

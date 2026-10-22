@@ -1,0 +1,43 @@
+name: Check repository size
+
+# Monthly. The preview images (og/, s/) are redrawn regularly and every changed copy stays in the history for good.
+# Past 800 MB this run turns red and opens an issue; the cleanup itself ("Clean up preview image history") is
+# started by hand, because it rewrites history and local copies then need a one-time reset.
+on:
+  schedule:
+    - cron: "17 6 1 * *"       # the 1st of every month
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check size
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          mb=$(( $(gh api "repos/$REPO" --jq .size) / 1024 ))
+          echo "Repository size: $mb MB (limit for a warning: 800 MB; GitHub's recommended maximum: 1 GB)"
+          [ "$mb" -lt 800 ] && exit 0
+          if [ "$(gh issue list --repo "$REPO" --state open --search 'Repository size in:title' --json number --jq length)" = "0" ]; then
+            gh issue create --repo "$REPO" --title "Repository size: $mb MB, time to clean up the preview image history" --body "$(cat <<'MD'
+          @tsjuri The repository is getting close to GitHub's recommended maximum of 1 GB, mostly from old copies of the chart preview images.
+
+          To clean up: Actions tab → **Clean up preview image history** → Run workflow, and type `yes`.
+          It removes old versions of the files in `og/` and `s/` from the history and keeps the current ones. Data files and code are not touched.
+
+          Afterwards, in your local copy, run once:
+          ```
+          git fetch origin && git reset --hard origin/main
+          ```
+          (commit or copy anything you are still working on first). GitHub may take a few days to show the smaller size.
+          MD
+          )"
+          fi
+          echo "::error::Repository is $mb MB; see the open issue"
+          exit 1

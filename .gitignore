@@ -1,0 +1,5 @@
+# Python caches, made automatically when scripts run
+__pycache__/
+*.pyc
+# macOS folder settings
+.DS_Store

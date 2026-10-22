@@ -1,0 +1,46 @@
+name: Update hurricane energy (ACE) data
+
+on:
+  schedule:
+    - cron: "45 15 * * *"     # daily, 15:45 UTC; NOAA updates IBTrACS a few times a week
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The two IBTrACS files are tens of MB each and change only a few times a week (hardly at all from
+      # December to May), so first ask NOAA when they last changed and skip the download if nothing is new.
+      - name: Check for new IBTrACS files
+        id: check
+        run: |
+          base=https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv
+          stamp=$(for b in NA EP; do curl -fsSI --retry 3 --retry-delay 20 "$base/ibtracs.$b.list.v04r01.csv" | grep -i '^last-modified:' | tr -d '\r'; done || true)
+          echo "$stamp"
+          if [ "$(printf '%s\n' "$stamp" | grep -c .)" -eq 2 ] && [ "$stamp" = "$(cat data/ace_source.txt 2>/dev/null)" ]; then
+            echo "new=no" >> "$GITHUB_OUTPUT"; echo "No change since the last run"
+          else
+            echo "new=yes" >> "$GITHUB_OUTPUT"; printf '%s\n' "$stamp" > /tmp/ace_stamp
+          fi
+      - name: Build data
+        if: steps.check.outputs.new == 'yes'
+        timeout-minutes: 30
+        run: |
+          python -u scripts/build_ace.py
+          [ "$(grep -c . /tmp/ace_stamp)" -eq 2 ] && cp /tmp/ace_stamp data/ace_source.txt || true
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ace_daily.csv data/ace_check.txt data/ace_meta.json $(ls data/ace_source.txt 2>/dev/null)
+          if ! git diff --cached --quiet; then
+            git commit -m "Update hurricane energy (ACE) data"
+            git pull --rebase && git push
+          fi

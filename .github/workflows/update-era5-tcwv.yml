@@ -1,0 +1,44 @@
+name: Update water vapour data (ERA5)
+
+on:
+  schedule:
+    - cron: "15 5 * * *"       # daily check, 05:15 UTC; only downloads when a new month or missing years are due
+  workflow_dispatch:           # lets you run it manually from the Actions tab (the first run fills 1940 onwards)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: era5-tcwv
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 cdsapi
+
+      - name: Build global water vapour (Copernicus ERA5 monthly averages)
+        continue-on-error: true
+        timeout-minutes: 320
+        env:
+          CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
+        run: |
+          printf 'url: https://cds.climate.copernicus.eu/api\nkey: %s\n' "$CDS_API_KEY" > ~/.cdsapirc
+          chmod 600 ~/.cdsapirc
+          python -u scripts/build_era5_tcwv.py
+          rm -f ~/.cdsapirc
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.cdsapirc
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update water vapour data" && git pull --rebase && git push)

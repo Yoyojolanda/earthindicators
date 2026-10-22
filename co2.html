@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>CO₂ tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Carbon dioxide (CO₂) at Mauna Loa">
+<meta property="og:description" content="Atmospheric CO₂, daily from Mauna Loa, and how fast it is rising. NOAA Global Monitoring Laboratory data.">
+<meta property="og:url" content="https://earthindicators.org/co2.html">
+<meta property="og:image" content="https://earthindicators.org/og/co2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Carbon dioxide (CO₂) at Mauna Loa: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Atmospheric CO₂, daily from Mauna Loa, and how fast it is rising. NOAA Global Monitoring Laboratory data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Atmospheric CO₂ tracker (Mauna Loa)</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div><p class="sub" id="n3" style="margin:8px 0 0"></p></div>
+<div class="box hide" id="dbox" data-nav="Decadal rate"><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div>
+ <p class="sub" id="dn" style="margin:8px 0 0"></p></div>
+<div class="box hide" id="hbox" data-nav="Over Earth's history"><h2 id="t4"></h2>
+ <div class="seg" id="hv">Time span: <button class="nb" type="button" data-v="ice">800,000 years</button><button class="nb" type="button" data-v="ceno">66 million years</button></div>
+ <div class="wrap"><canvas id="c4"></canvas></div>
+ <p class="sub" id="hn" style="margin:8px 0 0"></p></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Daily means are averages of the hourly measurements that pass NOAA's quality checks; days without enough valid hours are missing and are shown as gaps, not filled in. Monthly means use months with at least 10 valid days; the trend is a centered 12-month running mean of those. Annual growth compares each month with the same month a year earlier and averages the differences, using NOAA's Mauna Loa monthly means (from 1958, so growth starts in 1959). The decadal rate compares the average of the 10 years up to each month with the average of the 10 years before, from the same monthly means (so it starts in 1978). Recent values are preliminary and may be revised. Data: NOAA Global Monitoring Laboratory, Mauna Loa daily mean CO₂ (<a href="https://gml.noaa.gov/ccgg/trends/" target="_blank" rel="noopener">gml.noaa.gov/ccgg/trends</a>). Dr. Xin Lan, NOAA/GML, and Dr. Ralph Keeling, Scripps Institution of Oceanography.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const zl=t=>({id:'zl',afterDatasetsDraw(ch){if(!ch.isDatasetVisible(2))return;const{ctx,chartArea:a,scales:{y}}=ch;ctx.save();ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#d9822b';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t,(a.left+a.right)/2,y.getPixelForValue(0)-5);ctx.restore()}}); // label on the zero line
+
+const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],NN=365,PRE=280,charts=[];
+const fmtDate=i=>{let m=11;while(MS[m]>i)m--;return ML[m]+' '+(i-MS[m]+1)};
+const dn=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);                    // continuous day number
+const ymd=n=>{const t=new Date(n*864e5);return[t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate()]};
+const fmtDay=n=>{const[y,m,d]=ymd(n);return`${ML[m-1]} ${d}, ${y}`};
+const sg=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(2);
+let expName='co2.jpg';
+
+function compute(t){
+ const D=new Map();
+ t.split(/\r?\n/).forEach(l=>{if(/^\s*#/.test(l))return;const p=l.trim().split(/\s+/);if(p.length<5)return;
+  const y=+p[0],m=+p[1],d=+p[2],v=parseFloat(p[4]);if(y>1900&&m>=1&&m<=12&&d>=1&&d<=31&&v>250&&v<700)D.set(dn(y,m,d),v)});
+ const days=[...D.keys()].sort((a,b)=>a-b),L=days[days.length-1],[cy,cm,cd]=ymd(L),v=D.get(L);
+ const avg=(a,b)=>{let s=0,n=0;for(let k=a;k<=b;k++)if(D.has(k)){s+=D.get(k);n++}return n?{m:s/n,n}:null};
+ // monthly means (>=10 valid days)
+ const MM=new Map(),acc=new Map();
+ days.forEach(k=>{const[y,m]=ymd(k),key=y*12+m-1,a=acc.get(key)||[0,0];a[0]+=D.get(k);a[1]++;acc.set(key,a)});
+ acc.forEach(([s,n],key)=>{if(n>=10)MM.set(key,s/n)});
+ const keys=[...acc.keys()].sort((a,b)=>a-b),k0=keys[0],k1=keys[keys.length-1];
+ // centered 12-month running mean (2x12 MA); needs all 13 months
+ const trend=[];for(let k=k0+6;k<=k1-6;k++){let s=0,ok=true;for(let j=-6;j<=6;j++){const x=MM.get(k+j);if(x==null){ok=false;break}s+=Math.abs(j)==6?x/2:x}trend.push({x:Math.floor(k/12)+(k%12+.5)/12,y:ok?s/12:null})}
+ const monthly=[];for(let k=k0;k<=k1;k++)monthly.push({x:Math.floor(k/12)+(k%12+.5)/12,y:MM.has(k)?MM.get(k):null});
+ // annual growth: mean of month-vs-same-month-last-year differences (>=6 month pairs)
+ const y0=Math.floor(k0/12),growth={};
+ for(let y=y0+1;y<=cy;y++){const d=[];for(let m=0;m<12;m++){const a=MM.get(y*12+m),b=MM.get((y-1)*12+m);if(a!=null&&b!=null)d.push(a-b)}
+  if(d.length>=6)growth[y]={g:d.reduce((s,x)=>s+x,0)/d.length,n:d.length}}
+ // per-year daily series on a day-of-year axis, 7-day trailing mean of available days (gaps > 7 days stay empty)
+ const byYear=y=>{const a=Array(NN).fill(null);for(let i=0;i<NN;i++){const m=MS.findLastIndex(s=>s<=i),k=dn(y,m+1,i-MS[m]+1);if(k>L)break;const r=avg(k-6,k);if(r)a[i]=r.m}return a};
+ const w=avg(L-29,L),wp=avg(L-365-29,L-365);
+ let hi=days[0];days.forEach(k=>{if(D.get(k)>D.get(hi))hi=k});
+ return{D,days,L,cy,cm,cd,v,w,wp,monthly,trend,growth,byYear,hi,first:days[0]}}
+
+function freeze(ch,hide=[]){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;hide.forEach(i=>ch.setDatasetVisibility(i,false));ch.update();return ch}
+const grid={color:THEME.grid};
+const ym=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
+
+function run(t){
+ const R=compute(t);
+ if(DM){const V=new Map(DM.map(p=>[p.k,p.v])),g={};DM.forEach(p=>{const y=Math.floor(p.k/12);if(g[y])return;const d=[];
+   for(let m=0;m<12;m++){const a=V.get(y*12+m),b=V.get((y-1)*12+m);if(a!=null&&b!=null)d.push(a-b)}
+   if(d.length>=6)g[y]={g:d.reduce((s,x)=>s+x,0)/d.length,n:d.length}});R.growth=g}   // NOAA monthly means, back to 1959
+ const{cy}=R,gk=R.growth[cy]?cy:cy-1,G=R.growth[gk];
+ const done=Object.keys(R.growth).map(Number).filter(y=>y<cy);
+ const last10=done.slice(-10).map(y=>R.growth[y].g),avg10=last10.reduce((s,x)=>s+x,0)/last10.length;
+ const top=done.reduce((b,y)=>R.growth[y].g>R.growth[b].g?y:b,done[0]);
+ const lastDate=fmtDay(R.L),short=lastDate.replace(/, \d+$/,'');
+ const cards=[[R.v.toFixed(2)+' ppm',`Daily mean, ${lastDate}`],
+  [R.w?R.w.m.toFixed(2)+' ppm':'–',`30-day average to ${short}`],
+  [R.w&&R.wp?sg(R.w.m-R.wp.m)+' ppm':'–',`vs the same 30 days in ${cy-1}`],
+  [G?sg(G.g)+' ppm/yr':'–',gk==cy?`Growth in ${cy} so far (${G.n} months vs ${cy-1})`:`Growth in ${gk}`],
+  [R.D.get(R.hi).toFixed(2)+' ppm',`Highest daily value on record (${fmtDay(R.hi)})`]];
+ $('cards').innerHTML=cards.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Monthly mean CO₂ and long-term trend, ${ymd(R.first)[0]}–${cy}`;
+ $('t2').textContent=`Daily CO₂: ${cy} vs recent years (7-day average)`;
+ $('t3').textContent=`Annual growth in CO₂, ${Math.min(...Object.keys(R.growth).map(Number))}–${cy}`;
+ const pct=(R.w?R.w.m:R.v)/PRE*100-100;
+ $('read').innerHTML=[
+  `On ${lastDate} the daily mean at Mauna Loa was ${R.v.toFixed(2)} ppm. Over the last 30 days it averaged ${R.w.m.toFixed(2)} ppm${R.wp?`, ${Math.abs(R.w.m-R.wp.m).toFixed(2)} ppm ${R.w.m>=R.wp.m?'higher':'lower'} than the same 30 days a year earlier`:''}.`,
+  G?`${gk==cy?`So far in ${cy}`:`In ${gk}`}, CO₂ has been rising at ${G.g.toFixed(2)} ppm per year, compared with an average of ${avg10.toFixed(2)} ppm per year over the previous ${last10.length} complete years. The largest annual increase in this record is ${R.growth[top].g.toFixed(2)} ppm (${top}).`:'',
+  `CO₂ at Mauna Loa peaks around May and bottoms out around late September or October, as Northern Hemisphere vegetation takes up carbon in summer and releases it in winter. Compare the same dates across years rather than consecutive months.`,
+  `The current level is about ${pct.toFixed(0)}% above the pre-industrial level of roughly ${PRE} ppm.`,
+  `Single days can swing by a ppm or more with weather and air-mass changes; the 30-day and monthly averages are more reliable for comparisons.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`co2-${cy}-${short.replace(' ','')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // 1. Keeling curve
+ const x0=ymd(R.first)[0];
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Monthly mean',data:R.monthly,borderColor:'#7fa7cc',borderWidth:1.2,pointRadius:0},
+   {label:'Trend (12-month running mean)',data:R.trend,borderColor:'#d00000',borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>ym(t[0].parsed.x),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' ppm'}}},
+   scales:{x:{type:'linear',min:x0,max:cy+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
+ // 2. this year vs recent years
+ const COL=[['#d00000',3],['#e6a23c',1.4],['#7b5ea7',1.4],['#5a9e6f',1.4],['#4f81b0',1.4]];
+ const ds2=COL.map(([c,w],k)=>({label:String(cy-k),data:R.byYear(cy-k),borderColor:c,borderWidth:w,pointRadius:0,order:k}));
+ ds2.push({label:`${cy-10} (10 years earlier)`,data:R.byYear(cy-10),borderColor:THEME.mut,borderDash:[5,4],borderWidth:1.3,pointRadius:0,order:9});
+ charts.push(freeze(new Chart($('c2'),{type:'line',data:{labels:[...Array(NN).keys()],datasets:ds2},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' ppm')}}},
+   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'ppm'},grid}}}})));
+ // 3. annual growth
+ const ys=Object.keys(R.growth).map(Number);
+ // decade averages of the annual growth (like NOAA's chart): black line across each decade's bars; dashed while the decade is unfinished
+ const DEC=[];for(let d=Math.ceil(ys[0]/10)*10;d<=cy;d+=10){const a=ys.filter(y=>y>=d&&y<d+10&&y<cy);if(a.length>=3)DEC.push({d,a,v:a.reduce((t,y)=>t+R.growth[y].g,0)/a.length,full:a.length===10})}
+ const decLines={id:'dec',afterDatasetsDraw(ch){const{ctx,scales:{x,y}}=ch,w=x.getPixelForValue(1)-x.getPixelForValue(0);ctx.save();ctx.strokeStyle=THEME.ink;ctx.lineWidth=3;
+  DEC.forEach(D=>{const i0=ys.indexOf(D.a[0]),i1=ys.indexOf(D.a[D.a.length-1]),py=y.getPixelForValue(D.v);ctx.setLineDash(D.full?[]:[6,4]);
+   ctx.beginPath();ctx.moveTo(x.getPixelForValue(i0)-w/2,py);ctx.lineTo(x.getPixelForValue(i1)+w/2,py);ctx.stroke()});ctx.restore()}};
+ $('n3').textContent=`Black lines: average annual growth in each decade${DEC.length?` (${DEC.map(D=>`${D.d}s: ${D.v.toFixed(2)}${D.full?'':` so far, ${D.a.length} years`}`).join('; ')} ppm per year)`:''}. Times ten, that is roughly how many ppm CO₂ gained over the decade. The dashed line is a decade that is not finished yet; the current year is left out of it until it is complete. Purple: largest increase on record; red: ${cy} so far.`;
+ charts.push(new Chart($('c3'),{type:'bar',plugins:[decLines],data:{labels:ys.map(String),datasets:[{label:'Annual growth',data:ys.map(y=>R.growth[y].g),
+   backgroundColor:ys.map(y=>y==cy?'#d00000':y==top?'#7b5ea7':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,
+   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const y=ys[c.dataIndex],g=R.growth[y];return sg(g.g)+' ppm/yr'+(y==cy?` (so far, ${g.n} months)`:g.n<12?` (${g.n} months with data)`:'')}}}},
+   scales:{x:{ticks:{maxRotation:90,autoSkip:true},grid:{display:false}},y:{title:{display:true,text:'ppm per year'},grid}}}}));
+ RM=R.monthly.filter(p=>p.y!=null).map(p=>({k:Math.round(p.x*12-.5),v:p.y}));ddraw();
+ NOW={v:(()=>{const a=R.monthly.filter(p=>p.y!=null).slice(-12);return a.reduce((s,p)=>s+p.y,0)/a.length})(),y:cy};hdraw();
+ $('exp').disabled=false}
+
+// ---- decadal rate: 10-year average minus the 10 years before. NOAA's monthly file (from 1958, so the decadal rate starts in 1978) when it
+//      is there, otherwise monthly means from the daily file (from 1974, so the decadal rate starts in 1994)
+let DM,RM=null,dc=null;
+const w10=(V,e)=>{let s=0,n=0;for(let j=e-119;j<=e;j++){const x=V.get(j);if(x!=null){s+=x;n++}}return n>=110?s/n:null};
+function ddraw(){
+ if(DM===undefined||!RM)return;
+ const S=DM&&DM.length>500?DM:RM,V=new Map(S.map(p=>[p.k,p.v])),P=[];
+ // average of the 10 years to this month minus the average of the 10 years before (Jacobson's method): smooth, and needs 20 years of data
+ S.forEach(p=>{const a=w10(V,p.k),b=w10(V,p.k-120);if(a!=null&&b!=null)P.push({x:Math.floor(p.k/12)+(p.k%12+.5)/12,y:a-b,k:p.k})});
+ if(P.length<24)return;
+ const lab=k=>ML[k%12]+' '+Math.floor(k/12),L=P[P.length-1],F=P[0],y0=Math.floor(F.k/12),ly=Math.floor(L.k/12);
+ const yr=y=>{const a=P.filter(p=>Math.floor(p.k/12)===y);return a.length?a.reduce((s,p)=>s+p.y,0)/a.length:null};
+ const first=yr(y0+1)!=null?yr(y0+1):F.y,top=P.reduce((b,p)=>p.y>b.y?p:b,P[0]);
+ const pl=P.filter(p=>p.x>=1995&&p.x<2003),plv=pl.length?Math.min(...pl.map(p=>p.y)):null;
+ $('t5').textContent=`Decadal rate of CO₂ growth (ppm gained per 10 years), ${y0}–${ly}`;
+ $('dn').textContent=`Over the 10 years to ${lab(L.k)}, CO₂ at Mauna Loa averaged ${L.y.toFixed(1)} ppm more than over the 10 years before. Each point compares two ten-year averages, so the seasonal cycle and year-to-year swings (El Niño, volcanoes) are smoothed out, and the line shows the long-term growth rate. Around ${y0+1} the decadal rate was about ${first.toFixed(0)} ppm; now it is ${L.y.toFixed(0)} ppm${top===L||L.y>=top.y-.3?', close to the highest in the record':` (highest: ${top.y.toFixed(1)} ppm, ${lab(top.k)})`}, so CO₂ is not just rising but rising faster.${plv!=null&&y0<1985?` The flat stretch in the 1990s and early 2000s (about ${plv.toFixed(0)} ppm per decade) followed the economic collapse of the former Soviet Union and the cooling after the 1991 Pinatubo eruption.`:''} For the amount of CO₂ in the air to stop rising, this line has to come down to zero, which needs emissions to fall to about net zero. It has not yet turned down.`;
+ if(dc)dc.destroy();
+ dc=new Chart($('c5'),{type:'line',plugins:[zl('NET ZERO')],data:{datasets:[
+   {label:'Gain per 10 years (10-year average vs the 10 years before)',data:P,borderColor:'#4f81b0',backgroundColor:THEME.band2,fill:'origin',borderWidth:1.6,pointRadius:0},
+   {label:`${lab(L.k)}: +${L.y.toFixed(1)} ppm`,data:[{x:L.x,y:L.y}],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false},
+   {label:'Net zero: CO₂ stops rising',data:[{x:y0,y:0},{x:ly+1,y:0}],borderColor:'#d9822b',borderDash:[6,4],borderWidth:2.2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{filter:i=>i.datasetIndex===0,callbacks:{title:t=>{const p=P[t[0].dataIndex];return '10 years to '+lab(p.k)+' vs the 10 years before'},label:c=>'+'+c.parsed.y.toFixed(2)+' ppm in 10 years'}}},
+   scales:{x:{type:'linear',min:y0,max:ly+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{min:0,title:{display:true,text:'ppm per 10 years'},grid}}}});
+ $('dbox').classList.remove('hide');
+}
+// NOAA monthly file: year month decimal average deseasonalized ndays sdev unc
+const parseMM=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l))
+ .map(l=>l.trim().split(/\s+/).map(Number)).filter(r=>r.length>=4&&r[0]>1900&&r[3]>250).map(r=>({k:r[0]*12+r[1]-1,v:r[3]}));
+
+// ---- CO2 through Earth's history: Antarctic ice cores (800,000 years) and the CenCO2PIP reconstruction (66 million years)
+let NOW=null,HD=null,hv='ice',hc=null;
+const csvR=t=>{const[h,...r]=t.trim().split(/\r?\n/),k=h.split(',');return r.map(l=>{const v=l.split(',');return Object.fromEntries(k.map((x,i)=>[x,v[i]===''?null:+v[i]]))})};
+function hdraw(){
+ if(!NOW||!HD)return;
+ const{ice,ceno}=HD,off=(NOW.y-1950)/1000,today={x:0,y:NOW.v},dash={borderColor:'#d00000',borderDash:[5,4],borderWidth:1.3,pointRadius:0};
+ document.querySelectorAll('#hv .nb').forEach(b=>b.classList.toggle('on',b.dataset.v===hv));
+ if(hc)hc.destroy();
+ let ds,xs,ys,tip;
+ if(hv==='ice'){
+  const pts=ice.map(r=>({x:r.age_bp/1000+off,y:r.co2_ppm})),xmax=Math.ceil(pts[pts.length-1].x/10)*10;
+  const hi=ice.filter(r=>r.year_ce<1800).reduce((m,r)=>r.co2_ppm>m.co2_ppm?r:m),lo=ice.reduce((m,r)=>r.co2_ppm<m.co2_ppm?r:m);
+  ds=[{label:'Antarctic ice cores',data:pts,borderColor:'#4f81b0',borderWidth:1.3,pointRadius:0},
+   {label:`${NOW.y}: ${NOW.v.toFixed(0)} ppm (Mauna Loa)`,data:[today,{x:xmax,y:NOW.v}],...dash},
+   {label:'Today',data:[today],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false,order:0}];
+  xs={type:'linear',reverse:true,min:-xmax*.012,max:xmax,title:{display:true,text:'Thousand years ago'},ticks:{callback:v=>v<0?'':v.toLocaleString('en')},grid:{display:false}};
+  ys={title:{display:true,text:'CO₂ (ppm)'},grid:{color:THEME.grid}};
+  tip=x=>x<1?`${Math.round(NOW.y-x*1000)}`:x<10?`${(x).toFixed(1)} thousand years ago`:`${Math.round(x).toLocaleString('en')} thousand years ago`;
+  $('t4').textContent=`CO₂ over the last ${(Math.floor(xmax/100)*100).toLocaleString('en')},000 years: air bubbles in Antarctic ice, and today`;
+  $('hn').textContent=`Before the industrial era, CO₂ in the air trapped in Antarctic ice stayed between about ${Math.floor(lo.co2_ppm/10)*10} ppm (ice ages) and ${Math.round(hi.co2_ppm)} ppm (warm periods); the highest was about ${Math.round((hi.age_bp/1000+off))} thousand years ago. Today's ${NOW.v.toFixed(0)} ppm is ${Math.round((NOW.v/hi.co2_ppm-1)*100)}% above that highest value, and almost all of the rise happened in the last 150 years: too fast to see at this scale, so it looks like a vertical line. The ice cores end in the 2000s; the red dot is the Mauna Loa average of the last 12 months. Drag across the chart to zoom in on recent millennia.`;
+ }else{
+  const P=ceno.map(r=>({x:r.age_ma,lo:r.p2_5,md:r.p50,hi:r.p97_5})),xmax=Math.ceil(P[P.length-1].x);
+  const last=P.find(p=>p.x>=1&&p.md>=NOW.v);
+  ds=[{label:'95% range',data:P.map(p=>({x:p.x,y:p.lo})),borderWidth:0,pointRadius:0,backgroundColor:THEME.band2,order:3},
+   {label:'95% range ',data:P.map(p=>({x:p.x,y:p.hi})),borderWidth:0,pointRadius:0,backgroundColor:THEME.band2,fill:'-1',order:3},
+   {label:'Best estimate',data:P.map(p=>({x:p.x,y:p.md})),borderColor:'#1f5fa0',borderWidth:2.2,pointRadius:0,order:1},
+   {label:`${NOW.y}: ${NOW.v.toFixed(0)} ppm`,data:[today,{x:xmax,y:NOW.v}],...dash},
+   {label:'Today',data:[today],borderColor:'#d00000',backgroundColor:'#d00000',pointRadius:5,showLine:false,order:0}];
+  xs={type:'linear',reverse:true,min:-xmax*.012,max:xmax,title:{display:true,text:'Million years ago'},ticks:{stepSize:5,callback:v=>v<0?'':String(v)},grid:{display:false}};
+  ys={type:'logarithmic',min:150,max:2500,title:{display:true,text:'CO₂ (ppm, log scale)'},grid:{color:THEME.grid},
+   afterBuildTicks:a=>{a.ticks=[200,300,400,600,800,1000,1500,2000].map(value=>({value}))},ticks:{callback:v=>String(v)}};
+  tip=x=>x<.01?String(NOW.y):`${x.toFixed(2).replace(/\.?0+$/,'')} million years ago`;
+  $('t4').textContent=`CO₂ over the last ${xmax} million years, reconstructed from fossil shells, algae, leaves and soils, and today`;
+  $('hn').textContent=`${last?`In this reconstruction, CO₂ was last at or above today's level about ${Math.round(last.x)} million years ago (the study itself says about 14 million years), in a much warmer world with far less ice. `:''}66 million years ago, as the dinosaurs died out, it was around ${Math.round(P[P.length-1].md/10)*10} ppm, and about 50 million years ago it peaked at roughly ${Math.round(Math.max(...P.map(p=>p.md))/100)*100} ppm, when there was no permanent ice at either pole. The curve combines hundreds of independent estimates in steps of 500,000 years, so it cannot show fast changes: today's rise took under 200 years. The shaded band is the 95% range.`;
+ }
+ hc=new Chart($('c4'),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:true,interaction:{mode:'nearest',axis:'x',intersect:false},
+  plugins:{legend:{labels:{filter:i=>!/95% range |^Today$/.test(i.text)}},tooltip:{filter:i=>!/95% range/.test(i.dataset.label),callbacks:{title:t=>tip(t[0].parsed.x),label:c=>c.dataset.label.replace(/:.*/,'')+': '+c.parsed.y.toFixed(0)+' ppm'}}},
+  scales:{x:xs,y:ys}}});
+ $('hbox').classList.remove('hide');
+}
+document.querySelectorAll('#hv .nb').forEach(b=>b.onclick=()=>{hv=b.dataset.v;hdraw()});
+Promise.all(['co2_icecore_bereiter2015','co2_cenozoic_cenco2pip2023'].map(f=>fetch(`data/${f}.csv`).then(r=>{if(!r.ok)throw 0;return r.text()})))
+ .then(([i,c])=>{HD={ice:csvR(i),ceno:csvR(c)};hdraw()}).catch(()=>{});
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<3)return;siteExport([...[1,2,3].map(k=>[charts[k-1],'t'+k,0]),...(dc?[[dc,'t5',0]]:[]),...(hc?[[hc,'t4',0]]:[])],expName)};
+// the daily file drives the page; NOAA's monthly file (optional) adds the years before 1975 to the growth and decadal charts
+Promise.all([fetch('data/co2_daily_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}),
+  fetch('data/co2_mm_mlo.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).catch(()=>null)])
+ .then(([d,m])=>{DM=m?parseMM(m):null;if(DM&&DM.length<500)DM=null;run(d)})
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the CO₂ data. Please try again later.'});
+</script></main></body></html>

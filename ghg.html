@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Other greenhouse gases tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="All greenhouse gases: nitrous oxide, CFCs, HFCs and SF₆">
+<meta property="og:description" content="The warming effect of every long-lived greenhouse gas, nitrous oxide, and the ozone-layer gases and their replacements. NOAA Global Monitoring Laboratory data.">
+<meta property="og:url" content="https://earthindicators.org/ghg.html">
+<meta property="og:image" content="https://earthindicators.org/og/ghg.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="All greenhouse gases: total warming effect and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The warming effect of every long-lived greenhouse gas, nitrous oxide, and the ozone-layer gases and their replacements. NOAA Global Monitoring Laboratory data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Other greenhouse gases tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box" data-nav="All gases together"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div>
+ <p class="sub" id="n1" style="margin:8px 0 0"></p></div>
+<div class="box" data-nav="Nitrous oxide"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box" data-nav="Nitrous oxide, yearly rise"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<div class="box" data-nav="Ozone-layer gases"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div>
+ <p class="sub" id="n4" style="margin:8px 0 0"></p></div>
+<div class="box" data-nav="Their replacements"><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div>
+ <p class="sub" id="n5" style="margin:8px 0 0"></p></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Warming effect: NOAA's Annual Greenhouse Gas Index, the effective radiative forcing of each long-lived gas relative to 1750, in watts per square meter (W/m²), one value per year; NOAA updates it once a year, in the fall. "Ozone-layer gases" are NOAA's CFC group (CFC-11, CFC-12, CFC-113 plus carbon tetrachloride, methyl chloroform and halons); "HFCs and SF₆" are the seven most abundant HFCs plus sulfur hexafluoride. Nitrous oxide: NOAA's globally averaged monthly means and trend at marine surface sites (ppb), and NOAA's yearly increases. Gases in the bottom two charts: NOAA's yearly global means in parts per trillion (ppt); HFC-23 after 2007 is from the AGAGE network. Water vapor is not in this list: its amount follows temperature rather than driving it, see the <a href="water.html">water cycle page</a>.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],N2O_PRE=270,charts=[];
+const sg=(x,d=1)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const rows=t=>t.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l)).map(l=>l.trim().split(/\s+/).map(Number));
+const csv=t=>t.split(/\r?\n/).map(l=>l.split(','));
+let expName='greenhouse-gases.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+const grid={color:THEME.grid};
+
+function run(aggiT,molT,mmT,grT){
+ // warming effect per gas: Year,CO2,CH4,N2O,CFC*,HCFCs,HFCs*,Total,CO2-eq (ppm),AGGI (1990 = 1),% change
+ const A=csv(aggiT).map(r=>r.map(Number)).filter(r=>r[0]>1900&&r.length>=10&&r[7]>0)
+  .map(r=>({y:r[0],co2:r[1],ch4:r[2],n2o:r[3],cfc:r[4],hcfc:r[5],hfc:r[6],tot:r[7],eq:r[8],idx:r[9]}));
+ // yearly global means of each gas: header row names the gases, values are for mid-year (1979.5 ...); "nd" = not determined
+ const R=csv(molT),H=R.find(r=>r.includes('CFC-12')&&r.includes('SF6')),Y=R.filter(r=>/^(19|20)\d\d\.5$/.test(r[0]));
+ const gas=g=>{const k=H.indexOf(g);return Y.map(r=>({x:Math.floor(+r[0]),y:r[k]==='nd'||r[k]===''?null:+r[k]}))};
+ // N2O monthly: year month decimal average average_unc trend trend_unc; yearly increase: year increase unc
+ const M=rows(mmT).filter(r=>r.length>=6&&r[0]>1900&&r[3]>0).map(r=>({y:r[0],m:r[1],x:r[2],v:r[3],t:r[5]}));
+ const G=rows(grT).filter(r=>r.length>=2&&r[0]>1900).map(r=>({y:r[0],g:r[1]}));
+ if(A.length<30||!H||Y.length<30||M.length<100||G.length<10)throw new Error('data incomplete');
+
+ const L=A[A.length-1],B=A.find(r=>r.y===1990)||A[0],lab=r=>ML[r.m-1]+' '+r.y,N=M[M.length-1],Ng=G[G.length-1];
+ const up=(L.idx-1)*100,co2Share=L.co2/L.tot*100,co2Inc=(L.co2-B.co2)/(L.tot-B.tot)*100;
+ const nonCo2=L.tot-L.co2,others=L.n2o+L.cfc+L.hcfc+L.hfc;
+ const prevG=G.slice(-11,-1),avgG=prevG.reduce((s,r)=>s+r.g,0)/prevG.length,topG=G.reduce((b,r)=>r.g>b.g?r:b,G[0]);
+ const peak=s=>s.filter(p=>p.y!=null).reduce((b,p)=>p.y>b.y?p:b),last=s=>s.filter(p=>p.y!=null).pop();
+ const F12=gas('CFC-12'),F11=gas('CFC-11'),MC=gas('CH3CCl3'),H134=gas('HFC-134a'),SF=gas('SF6'),H22=gas('HCFC-22');
+ const p12=peak(F12),l12=last(F12),p11=peak(F11),l11=last(F11),pMC=peak(MC),lMC=last(MC),h0=H134.find(p=>p.y!=null),hL=last(H134),p22=peak(H22),l22=last(H22);
+ const SF0=SF.find(p=>p.y!=null),SFL=last(SF);
+
+ $('cards').innerHTML=[
+  [L.tot.toFixed(2)+' W/m²',`Warming effect of all long-lived greenhouse gases in ${L.y} (since 1750)`],
+  [sg(up,0)+'%',`Stronger than in 1990 (NOAA's greenhouse gas index: ${L.idx.toFixed(2)})`],
+  [co2Share.toFixed(0)+'%',`Share of the warming effect from CO₂; methane ${(L.ch4/L.tot*100).toFixed(0)}%, all other gases ${(others/L.tot*100).toFixed(0)}%`],
+  [N.v.toFixed(1)+' ppb',`Nitrous oxide, global monthly mean, ${lab(N)} (about ${N2O_PRE} ppb before industry)`],
+  [sg(Ng.g,2)+' ppb',`Rise in nitrous oxide in ${Ng.y}${Ng===topG?', the largest on record':''} (NOAA)`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+
+ $('t1').textContent=`Warming effect of each greenhouse gas, ${A[0].y}–${L.y} (W/m² since 1750, stacked)`;
+ $('t2').textContent=`Nitrous oxide (N₂O): global monthly mean and trend, ${M[0].y}–${N.y}`;
+ $('t3').textContent=`Yearly rise in nitrous oxide, ${G[0].y}–${Ng.y}`;
+ $('t4').textContent=`Ozone-layer gases, banned by the Montreal Protocol, ${Y[0][0].slice(0,4)}–${L.y} (ppt)`;
+ $('t5').textContent=`Their replacements: HCFCs, HFCs, and SF₆, ${Y[0][0].slice(0,4)}–${L.y} (ppt)`;
+ $('n1').textContent=`Each band is one gas; the top edge is the total. Since 1990 the total grew by ${(L.tot-B.tot).toFixed(2)} W/m², and CO₂ accounts for ${co2Inc.toFixed(0)}% of that increase. These values are the push the gases give; the planet has already warmed in response, which is why the energy imbalance measured from space is smaller (see the energy imbalance page).`;
+ $('n4').textContent=`CFC-12 peaked at ${p12.y.toFixed(0)} ppt in ${p12.x} and is now ${((1-l12.y/p12.y)*100).toFixed(0)}% lower; CFC-11 peaked at ${p11.y.toFixed(0)} ppt in ${p11.x}, now ${((1-l11.y/p11.y)*100).toFixed(0)}% lower. They fall slowly because they last 50–100 years in the air. Methyl chloroform, which breaks down in about 5 years, went from ${pMC.y.toFixed(0)} ppt (${pMC.x}) to ${lMC.y.toFixed(1)} ppt.`;
+ $('n5').textContent=`HCFC-22, the first replacement, ${l22.y<p22.y-1?`peaked at ${p22.y.toFixed(0)} ppt in ${p22.x} and is now falling as it is phased out too`:`is ${l22.y.toFixed(0)} ppt`}. HFC-134a (car air conditioners, fridges) rose from ${h0.y<1?'almost nothing':h0.y.toFixed(0)+' ppt'} in ${h0.x} to ${hL.y.toFixed(0)} ppt in ${hL.x}. HFCs don't harm the ozone layer but trap heat; the 2016 Kigali Amendment to the Montreal Protocol phases them down. SF₆, used in electrical switchgear, went from ${SF0.y.toFixed(1)} to ${SFL.y.toFixed(1)} ppt (${SF0.x}–${SFL.x}).`;
+
+ $('read').innerHTML=[
+  `In ${L.y} all long-lived greenhouse gases together added ${L.tot.toFixed(2)} W/m² of warming effect compared with 1750, ${up.toFixed(0)}% more than in 1990. CO₂ is ${co2Share.toFixed(0)}% of the total and ${co2Inc.toFixed(0)}% of the growth since 1990; the gases besides CO₂ together add ${nonCo2.toFixed(2)} W/m².`,
+  `Nitrous oxide reached ${N.v.toFixed(1)} ppb in ${lab(N)}, ${((N.t/N2O_PRE-1)*100).toFixed(0)}% above the level before industry. It rose ${Ng.g.toFixed(2)} ppb in ${Ng.y}, against an average of ${avgG.toFixed(2)} ppb a year over the previous ${prevG.length} years; the largest rise in the record is ${topG.g.toFixed(2)} ppb (${topG.y}).`,
+  `Most of the nitrous oxide humans add comes from farming: nitrogen fertilizer and manure. It stays in the air for about a century, and it is now the largest ozone-damaging emission now that the CFCs are banned (Ravishankara et al. 2009, Science; Tian et al. 2020, Nature).`,
+  `The Montreal Protocol (1987) shows that cuts work: the ozone-layer gases are falling, and their warming effect has fallen from ${peak(A.map(r=>({x:r.y,y:r.cfc}))).y.toFixed(2)} W/m² at its peak to ${L.cfc.toFixed(2)} W/m². In 2018 NOAA scientists found CFC-11 falling more slowly than it should, traced it to new, illegal production in eastern China, and after it came to light, emissions fell again (Montzka et al. 2018 and 2021, Nature).`,
+  `The replacements are growing: HFCs and SF₆ together now add ${L.hfc.toFixed(3)} W/m², up from ${B.hfc.toFixed(3)} W/m² in 1990. That is still small next to CO₂, but ton for ton these gases trap hundreds to tens of thousands of times more heat than CO₂, so the Kigali phase-down matters.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`greenhouse-gases-${L.y}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+
+ // 1. warming effect per gas, stacked (CO₂ at the bottom)
+ const S1=[['CO₂','co2','#4f81b0'],['Methane','ch4','#e6a23c'],['Nitrous oxide','n2o','#5a9e6f'],['Ozone-layer gases (CFCs)','cfc','#7b5ea7'],['HCFCs','hcfc','#c77dba'],['HFCs and SF₆','hfc','#d00000']];
+ charts.push(new Chart($('c1'),{type:'line',data:{labels:A.map(r=>String(r.y)),datasets:S1.map(([l,k,c],i)=>({label:l,data:A.map(r=>r[k]),
+   borderColor:c,backgroundColor:c+'cc',fill:i?'-1':'origin',borderWidth:1,pointRadius:0,order:S1.length-i}))},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{itemSort:(a,b)=>b.datasetIndex-a.datasetIndex,callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(3)+' W/m²',
+     footer:t=>'All gases: '+A[t[0].dataIndex].tot.toFixed(3)+' W/m²'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'W/m² since 1750'},grid}}}}));
+ // 2. N₂O monthly mean and trend
+ charts.push(freeze(new Chart($('c2'),{type:'line',data:{datasets:[
+   {label:'Trend (seasonal cycle removed)',data:M.map(r=>({x:r.x,y:r.t})),borderColor:'#d00000',borderWidth:2,pointRadius:0,order:0},
+   {label:'Monthly mean',data:M.map(r=>({x:r.x,y:r.v})),borderColor:'#7fa7cc',borderWidth:1.2,pointRadius:0,order:1}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const r=M.find(q=>q.x===t[0].parsed.x);return r?lab(r):''},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' ppb'}}},
+   scales:{x:{type:'linear',min:Math.floor(M[0].x),max:N.y+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'ppb'},grid}}}})));
+ // 3. N₂O yearly rise
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:G.map(r=>String(r.y)),datasets:[{label:'Yearly rise',data:G.map(r=>r.g),
+   backgroundColor:G.map(r=>r===Ng?'#d00000':r===topG?'#7b5ea7':'#8fa9c8')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y,2)+' ppb'}}},
+   scales:{x:{ticks:{autoSkip:true},grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ppb per year'},grid}}}}));
+ // 4 and 5. yearly global means of single gases
+ const lines=(cv,list)=>new Chart(cv,{type:'line',data:{datasets:list.map(([l,s,c],i)=>({label:l,data:s.filter(p=>p.y!=null),borderColor:c,backgroundColor:c,
+   borderWidth:2,pointRadius:0,order:i}))},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+c.parsed.y.toFixed(c.parsed.y<20?2:1)+' ppt'}}},
+   scales:{x:{type:'linear',min:+Y[0][0].slice(0,4),max:L.y+1,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ppt'},grid}}}});
+ charts.push(lines($('c4'),[['CFC-12',F12,'#7b5ea7'],['CFC-11',F11,'#4f81b0'],['Carbon tetrachloride (CCl₄)',gas('CCl4'),'#5a9e6f'],
+   ['Methyl chloroform',MC,'#e6a23c'],['CFC-113',gas('CFC-113'),'#8a8478']]));
+ charts.push(lines($('c5'),[['HCFC-22',H22,'#c77dba'],['HFC-134a',H134,'#d00000'],['HFC-125',gas('HFC-125'),'#e6a23c'],
+   ['HFC-23',gas('HFC-23'),'#4f81b0'],['HFC-143a',gas('HFC-143a'),'#5a9e6f'],['SF₆',SF,THEME.ink]]));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length<5)return;siteExport([1,2,3,4,5].map(k=>[charts[k-1],'t'+k,0]),expName)};
+Promise.all(['aggi_AGGI_Table.csv','aggi_NOAA_Annual_Mean_MoleFractions.csv','n2o_mm_gl.txt','n2o_gr_gl.txt'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(a=>run(...a))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the greenhouse gas data. Please try again later.'});
+</script></main></body></html>

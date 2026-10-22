@@ -1,0 +1,50 @@
+name: Update sea level data
+
+on:
+  schedule:
+    - cron: "30 15 * * 1"      # weekly, Mondays 15:30 UTC
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # NASA JPL global mean sea level indicator (updated weekly; needs the Earthdata login secrets)
+      - name: Download NASA-SSH global mean sea level
+        continue-on-error: true
+        env:
+          EDL_USER: ${{ secrets.EARTHDATA_USERNAME }}
+          EDL_PASS: ${{ secrets.EARTHDATA_PASSWORD }}
+        run: |
+          mkdir -p data
+          f=NASA_SSH_GMSL_INDICATOR.txt
+          printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc
+          chmod 600 ~/.netrc
+          curl -fL --retry 3 --netrc -c /tmp/edl_cookies -b /tmp/edl_cookies -o "data/$f.tmp" \
+            "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/NASA_SSH_GMSL_INDICATOR/$f"
+          rm -f ~/.netrc /tmp/edl_cookies
+          echo "--- first lines:"; head -15 "data/$f.tmp"; echo "--- last lines:"; tail -3 "data/$f.tmp"
+          [ "$(wc -l < "data/$f.tmp")" -gt 500 ] || { echo "file looks too short"; exit 1; }
+          mv "data/$f.tmp" "data/$f"
+
+      # NOAA Laboratory for Satellite Altimetry series (kept as a backup; no longer updated since early 2025)
+      - name: Download NOAA LSA global mean sea level
+        continue-on-error: true
+        run: |
+          f=slr_sla_gbl_free_all_66.csv
+          curl -fsSL --retry 3 --retry-delay 20 -o "data/$f.tmp" "https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/slr/$f"
+          [ "$(grep -c '^[12][0-9][0-9][0-9]\.' "data/$f.tmp")" -gt 1000 ] && mv "data/$f.tmp" "data/$f"
+
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.netrc data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update sea level data" && git pull --rebase && git push)

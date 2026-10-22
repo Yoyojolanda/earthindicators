@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Common climate claims, answered with the latest data | Earth Indicators</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Common climate claims, answered with the latest data">
+<meta property="og:description" content="Short answers to the climate claims people run into, with live numbers from NOAA, NASA, NSIDC and Copernicus.">
+<meta property="og:url" content="https://earthindicators.org/claims.html">
+<meta property="og:image" content="https://earthindicators.org/og/claims.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Common climate claims, answered with the latest data: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Short, calm answers to the climate claims people run into, with live numbers from NOAA, NASA, NSIDC and Copernicus.">
+<link rel="stylesheet" href="site.css">
+<script src="indicators.js"></script>
+<style>
+.lead{margin:18px 0 6px}
+.lead h1{font-size:30px;line-height:1.2;margin:0 0 10px;font-weight:750}
+.lead p{font-size:16px;margin:0 0 8px;max-width:44rem}
+.claims{max-width:50rem;margin:14px 0}
+.claim{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);scroll-margin-top:16px}
+.claim:target{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.claim summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:12px}
+.claim summary::-webkit-details-marker{display:none}
+.claim summary::after{content:"";flex:0 0 9px;height:9px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
+.claim[open] summary::after{transform:rotate(225deg) translate(-2px,-2px)}
+.claim summary:hover h3.ct{color:var(--acc)}
+.claim summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.claim h3.ct{font-size:18px;line-height:1.35;margin:0}
+.claim h3.ct q{quotes:"\201C" "\201D"}
+.claim .body{padding:0 18px 16px}
+.claim .ans{font-size:17px;font-weight:600;line-height:1.45;margin:0 0 12px}
+.claim h4{font-size:13px;color:var(--mut);margin:14px 0 4px;font-weight:600}
+.claim p,.claim li{font-size:15px;line-height:1.55}
+.claim p{margin:0 0 8px}
+.claim ul{margin:0 0 8px;padding-left:20px}
+.claim li{margin:4px 0}
+.grp{margin:0 0 6px;scroll-margin-top:16px}
+.grp>h2{font-size:21px;line-height:1.3;margin:28px 0 4px;font-weight:700}
+.grp>.gi:first-of-type{margin-top:10px}
+.grp>.gi{font-size:15px;color:var(--mut);margin:0 0 12px}
+/* tabs: one group of claims at a time on screen; all groups when printing */
+.tabs{display:flex;gap:4px;margin:18px 0 0;max-width:50rem;border-bottom:1px solid var(--edge);position:relative;z-index:1}
+.tabs button{font:inherit;font-size:14.5px;font-weight:600;color:var(--mut2);background:var(--tint);border:1px solid var(--edge);border-bottom:0;
+ border-radius:10px 10px 0 0;padding:10px 16px 9px;margin-bottom:-1px;cursor:pointer;display:flex;align-items:baseline;gap:8px;text-align:left}
+.tabs button:hover{color:var(--ink);background:var(--tint2)}
+.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);border-color:var(--edge);box-shadow:inset 0 3px 0 var(--acc)}
+.tabs .n{font-size:12px;font-weight:400;color:var(--mut3)}
+.claims{background:var(--panel);border:1px solid var(--edge);border-top:0;border-radius:0 0 12px 12px;padding:6px 16px 10px;margin-top:0;box-sizing:border-box}
+@media screen{.grp:not(.active){display:none}.grp>h2{display:none}}
+@media (max-width:700px){.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-bottom:0}
+ .tabs button{border-radius:10px;border-bottom:1px solid var(--edge);margin:0;font-size:14px;padding:9px 12px}
+ .claims{border-top:1px solid var(--edge);border-radius:12px;margin-top:8px;padding:6px 10px 8px}}
+.jump{display:none}
+.jump a{font-size:14px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:inherit;text-decoration:none}
+.jump a:hover{border-color:var(--acc);color:var(--acc)}
+.live{font-weight:600}
+.na{font-weight:normal}
+.src{font-size:13px;color:var(--mut)}
+.src a{color:var(--link)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.bar .nb{padding:4px 12px}
+.bar .stamp{font-size:12px;color:var(--mut)}
+@media (max-width:600px){.lead h1{font-size:24px}.claim summary{padding:12px 12px}.claim .body{padding:0 12px 14px}.claim h3.ct{font-size:17px}.claim .ans{font-size:16px}}
+@media (prefers-reduced-motion:reduce){.claim summary::after{transition:none}}
+@media print{.tabs{display:none}.claims{background:none;border:0;padding:0}.bar .nb{display:none}.claim{break-inside:avoid}.claim summary::after{display:none}}
+.find{max-width:50rem;margin:16px 0 0;position:relative}
+.find input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 38px 10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit}
+.find input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.find .x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;border-radius:6px}
+.find .x:hover{color:var(--acc)}
+.find .st{font-size:13px;color:var(--mut);margin:6px 2px 0;min-height:1.2em}
+@media screen{.claims.searching .grp{display:block}.claims.searching .grp>h2{display:block;font-size:15px;color:var(--mut);margin:14px 0 6px}
+ .claims.searching .grp>.gi,.claims.searching .grp.none,.claims.searching .claim.miss{display:none}}
+.tabs.searching button{opacity:.55}
+@media print{.find{display:none}}
+.motto{margin:4px 0 18px;padding:4px 0 4px 16px;border-left:4px solid var(--acc);font-size:19px;line-height:1.4;font-style:italic;color:var(--ink)}
+</style></head><body><main>
+<nav class="nav" id="nav"></nav><script src="site.js"></script>
+<header class="lead">
+<h1>Common claims, answered with the latest data</h1>
+<blockquote class="motto">Things are bad enough as they are: we don't need to exaggerate the numbers, and we can't afford to deny them.</blockquote>
+<p>Short answers to the claims people run into most. Each one shows the evidence with live numbers from this site's data pages, and the scientific source behind it. Every answer has its own link you can paste into a conversation. Tap a claim to see the answer.</p>
+<p>The arguments tend to come in a sequence: first that it isn't happening, then that it isn't us, then that it isn't bad, and finally that nothing can be done. The answers are grouped the same way, one tab per step.</p>
+<p class="sub">Numbers on this page update automatically. Each one states how recent it is.</p>
+</header>
+<div class="find" role="search">
+<input type="search" id="q" placeholder="Search the answers, e.g. glacier, sun, 1998, scam" aria-label="Search the answers" autocomplete="off" spellcheck="false">
+<button type="button" class="x" id="qx" aria-label="Clear search" hidden>×</button>
+<p class="st" id="qst" aria-live="polite"></p>
+</div>
+<div class="tabs" role="tablist" aria-label="Groups of claims" id="tabs"></div>
+<div class="claims">
+<section class="grp" id="not-happening">
+<h2>“It's not happening”</h2>
+<p class="gi">The first line of argument: the warming isn't real, or the measurements can't be trusted.</p>
+<details class="claim" id="cooling" data-also="cold snow winter freezing ice age record cold">
+<summary><h3 class="ct"><q>It's freezing here. So much for global warming.</q> Or: <q>It's cooling.</q></h3></summary>
+<div class="body">
+<p class="ans">A cold day, or even a cold winter, is weather in one place. The planet as a whole keeps warming, and cold snaps in one region often come with unusual warmth somewhere else.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Every single day since <span class="live" data-k="air.warmSince">…</span> has been warmer worldwide than the 1991–2020 average for that date: <span class="live" data-k="air.warmRun">…</span> days in a row. <a href="air.html">See the data</a></li>
+ <li>Over the last 30 years, global air temperature has risen <span class="live" data-k="air.trend">…</span> per decade.</li>
+ <li>Even the coolest of the last 10 years, <span class="live" data-k="air.cool10Y">…</span>, was warmer than <span class="live" data-k="air.cool10Beat">…</span> before <span class="live" data-k="air.win10">…</span>.</li>
+ <li>Cold records still happen, but far less often than heat records. In the US, record daily highs now outnumber record lows by about two to one.</li>
+</ul>
+<p class="src">Sources: <a href="https://skepticalscience.com/global-warming-cold-weather.htm">Skeptical Science: Cold weather and global warming</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="weather-blame" data-also="rain storm hurricane flood extreme weather attribution attribution science confirmation bias explains everything hurricanes">
+<summary><h3 class="ct"><q>It rained this weekend. Was that climate change too?</q> Or: <q>Every bit of weather gets blamed on climate change.</q></h3></summary>
+<div class="body">
+<p class="ans">A rainy weekend is weather. Climate change doesn't decide whether it rains; it changes the odds, and how hard it comes down. Scientists test extreme events one by one, and sometimes the answer is "no clear link".</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Warmer air can hold about 7% more water vapor for every degree Celsius. The planet is now about <span class="live" data-k="air.pre12">…</span> warmer than before industrialization (last 12 months), so the heaviest downpours have more water to drop. <a href="air.html">See the data</a></li>
+ <li>Think of loaded dice: every roll is still chance, but warming has added extra sixes. You can't say which six came from the extra ones, but you roll more of them.</li>
+ <li>"Attribution" studies compare the world as it is with simulated worlds without human-caused warming. Of more than 500 extreme events and trends studied, about 7 in 10 were made more likely or more severe by climate change. The rest showed no clear link, were inconclusive, or were even made less likely.</li>
+ <li>Heat waves show the strongest link. For other kinds of weather the evidence is weaker: for tornadoes, for example, the IPCC finds no clear trend.</li>
+ <li>Attribution isn't confirmation bias: each study tests a specific event against a world without the warming, and the answer can come out either way. Some studies find a large effect, some a small one, and some none at all, as for some droughts and cold spells. A method that can say "no" is testing, not assuming (<a href="https://www.worldweatherattribution.org/">World Weather Attribution</a>).</li>
+</ul>
+<p class="src">Sources: <a href="https://www.carbonbrief.org/mapped-how-climate-change-affects-extreme-weather-around-the-world/">Carbon Brief: How climate change affects extreme weather around the world</a>; <a href="https://www.worldweatherattribution.org/">World Weather Attribution</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="stopped-1998" data-also="pause hiatus no warming flat pause 15 years 16 years 18 years leaked un report ipcc no warming since">
+<summary><h3 class="ct"><q>Warming stopped in 1998.</q></h3></summary>
+<div class="body">
+<p class="ans">1998 was a spike caused by a very strong El Niño. Starting a trend line at a spike makes the next few years look flat. They weren't flat for long: every year since <span class="live" data-k="air.since">…</span> has been warmer than 1998.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Global air temperature, yearly average vs 1991–2020: 1998 was <span class="live" data-k="air.y98">…</span>; <span class="live" data-k="air.lastY">…</span> was <span class="live" data-k="air.last">…</span>. <a href="air.html">See the data</a></li>
+ <li>The 10 warmest years since <span class="live" data-k="air.first">…</span> have all come since <span class="live" data-k="air.top10">…</span>.</li>
+ <li>The ocean, which takes up most of the extra heat, never paused: in <span class="live" data-k="ohc.lastY">…</span> the upper 700 m held <span class="live" data-k="ohc.since98">…</span> more heat than in 1998 (1 ZJ = 10²¹ joules). <a href="ohc.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a>; data: Copernicus ERA5, NOAA NCEI</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="not-accelerating" data-also="accelerating acceleration speeding up faster doubling doubled warming rate not significant statistically significant no acceleration pause hausfather hansen rahmstorf foster jin pu cherry picked split year">
+<summary><h3 class="ct"><q>Warming isn't speeding up. The “acceleration” isn't even statistically significant.</q></h3></summary>
+<div class="body">
+<p class="ans">It is speeding up, and the speed-up is statistically significant: once the known short-term swings from El Niño, the sun and volcanoes are accounted for, the chance that it's a fluke is below 1 in 1,000. Warming now runs at about twice its 1970–2010 pace, and its cause, the extra heat the planet keeps each year, is measured directly and has grown just as fast.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Global air temperature, yearly averages since 1970, fitted with one unbroken line that may change slope in 2012: it rises <span class="live" data-k="air.rateBefore">…</span> per decade before 2012 and <span class="live" data-k="air.rateAfter">…</span> per decade after, <span class="live" data-k="air.rateRatio">…</span> times as fast. <a href="air.html">See the data</a></li>
+ <li>With the effects of El Niño, solar activity and volcanic eruptions included in the statistical test, the chance that the speed-up is a fluke is below 0.1%. Foster and Rahmstorf, removing those effects first, also find it significant.</li>
+ <li>Even on raw temperatures, with the El Niño spikes and dips left in, NOAA's and NASA's records already pass the standard 95% test, using the strictest method (a changepoint test). Averaged over the five datasets built from measurements, it passes too; only adding two reanalyses, which swing more from year to year, puts the average right at the line, with a hot 2026 still to be added.</li>
+ <li>The causes are measured, not guessed: the planet's energy imbalance, the extra heat it keeps each year, roughly doubled from 2005 to 2019 as measured by satellites, and it is still high. <a href="eei.html">See the data</a></li>
+ <li>Accelerated in the strict sense too: over the past 30 years, with El Niño and other short-term swings removed, the warming rate itself has risen, by about 0.14 °C per decade, every decade. Whether it is still rising today can't be read from temperatures yet: some 15 years since the change is far too short to measure that. Where it goes next depends on emissions; in a middle-of-the-road scenario the human-caused warming rate is projected to peak around now (a projection).</li>
+ <li>The sea surface shows it most plainly, because the ocean's surface varies less from year to year than the air over land. <a href="sst.html">See the data</a></li>
+</ul>
+<h4>But not every “acceleration” paper is right</h4>
+<p>How you test matters. One 2026 paper split the record at whichever year gave the biggest contrast and drew two separate lines that don't join up. Tried on 5,000 made-up records with a perfectly steady trend, that method “found” a significant speed-up 22–34% of the time, instead of the 5% it should. Scientists who point that out are not saying warming isn't speeding up: they are making sure the proof holds. Done properly, it does.</p>
+<p class="src">Sources: <a href="https://www.theclimatebrink.com/p/how-not-to-detect-warming-acceleration">Hausfather 2026, The Climate Brink</a>; <a href="https://bsky.app/profile/zekehausfather.com/post/3mycwpdlfkk2r">Hausfather on Bluesky, Oct 2026</a>; <a href="https://www.nature.com/articles/s41612-026-01561-y">Jin and Pu 2026, <i>npj Climate and Atmospheric Science</i></a>; <a href="https://doi.org/10.1029/2021GL093047">Loeb et al. 2021, Geophysical Research Letters</a>; <a href="https://tamino.wordpress.com/2026/10/19/sea-surface-temperature-the-most-obvious-acceleration">Foster (Tamino) 2026</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="records-short" data-also="thermometers 1850 short record patchy 1982 history began satellite era">
+<summary><h3 class="ct"><q>The records are too short or too patchy to mean anything.</q></h3></summary>
+<div class="body">
+<p class="ans">Thermometer records go back to the 1850s, and records built by different teams, with different methods and instruments, show the same warming. The charts on this site start later only because they use the most complete modern data.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Air temperature: the chart here starts in <span class="live" data-k="air.first">…</span> (Copernicus ERA5). Station-based records from the UK Met Office, NASA, NOAA and Berkeley Earth go back to 1850 and agree with it where they overlap. <a href="air.html">See the data</a></li>
+ <li>Sea surface temperature: the satellite-era record here starts in <span class="live" data-k="sst.first">…</span>. Measurements from ships, and later buoys, go back to the 1850s (NOAA ERSST, Met Office HadSST). <a href="sst.html">See the data</a></li>
+ <li>Ocean heat: measured to 700 m depth since <span class="live" data-k="ohc.first7">…</span>, and to 2000 m since <span class="live" data-k="ohc.first2">…</span>, when thousands of Argo floats reached every ocean. Early values are less certain, and the chart shows that uncertainty. <a href="ohc.html">See the data</a></li>
+ <li>Record length is not the only thing that matters; noise does too. Ocean heat barely changes from year to year apart from the long-term rise, so even 20 years of it shows a clear trend.</li>
+ <li>Where measurements were sparse, for example the Arctic or Africa in the 1800s, the uncertainty is calculated and published. It shrinks over time, and it is far smaller than the warming.</li>
+ <li>Satellites measuring the lower atmosphere since 1979 show warming too, including the record run by scientists known as skeptics (UAH).</li>
+</ul>
+<p class="src">Sources: <a href="https://www.metoffice.gov.uk/hadobs/hadcrut5/">Met Office: HadCRUT5</a>; <a href="https://berkeleyearth.org/">Berkeley Earth</a>; <a href="https://www.ncei.noaa.gov/products/extended-reconstructed-sst">NOAA: Extended Reconstructed SST</a>; <a href="https://argo.ucsd.edu/">Argo program</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="urban-heat" data-also="uhi city cities stations asphalt airports">
+<summary><h3 class="ct"><q>It's just cities. Thermometers got surrounded by asphalt.</q></h3></summary>
+<div class="body">
+<p class="ans">Cities are warmer than the countryside, but they are a tiny part of the planet. The warming shows up just as much where there are no cities at all: over the open ocean, at rural stations, and in the Arctic.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Oceans cover 70% of the Earth and have no cities. Sea surface temperature right now: <span class="live" data-k="sst.vd">…</span>. <a href="sst.html">See the data</a></li>
+ <li>Ocean heat down to 2000 m: <span class="live" data-k="ohc.vd">…</span>. <a href="ohc.html">See the data</a></li>
+ <li>The fastest warming on Earth is in the Arctic, where hardly anyone lives.</li>
+ <li>Berkeley Earth compared rural stations only with all stations and found the same warming trend.</li>
+ <li>Where urban growth does affect a station, the agencies adjust for it, and that adjustment lowers the warming in the record, not raises it.</li>
+</ul>
+<p class="src">Sources: <a href="https://skepticalscience.com/urban-heat-island-effect.htm">Skeptical Science: Urban heat island effect</a>; <a href="https://berkeleyearth.org/">Berkeley Earth</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="data-manipulated" data-also="fraud adjusted adjustments homogenization tampering fake data noaa nasa">
+<summary><h3 class="ct"><q>The data is manipulated.</q></h3></summary>
+<div class="body">
+<p class="ans">The indicators on this site come from different agencies, in different countries, using different instruments. They all show the same thing.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Air temperature from the EU's Copernicus service: <span class="live" data-k="air.vd">…</span>. <a href="air.html">See the data</a></li>
+ <li>Sea surface temperature from NOAA, measured by satellites, ships and buoys: <span class="live" data-k="sst.vd">…</span>. <a href="sst.html">See the data</a></li>
+ <li>Ocean heat from thousands of free-drifting floats: <span class="live" data-k="ohc.vd">…</span>. <a href="ohc.html">See the data</a></li>
+ <li>Sea level from satellite altimeters (NASA): <span class="live" data-k="sl.rise">…</span> since 1993. <a href="sea-level.html">See the data</a></li>
+ <li>Earth's energy balance from NASA satellites: gaining <span class="live" data-k="eei.l12">…</span>. <a href="eei.html">See the data</a></li>
+</ul>
+<p>Scientists do correct raw measurements, for example when weather stations move or ships changed how they measured sea temperature. Taken together, those corrections reduce the long-term warming in the global record, mostly because of the correction to old ship measurements. An independent team at Berkeley, led by a physicist who called himself a skeptic, rebuilt the record from scratch and found the same warming. For the US, where the corrections do raise the trend, see <a href="#us-adjustments">"NOAA's adjustments create the warming"</a>.</p>
+<p>This site downloads the raw data files from the agencies itself. Anyone can do the same.</p>
+<p class="src">Sources: <a href="https://www.carbonbrief.org/explainer-how-data-adjustments-affect-global-temperature-records">Carbon Brief: How data adjustments affect global temperature records</a>; <a href="https://www.carbonbrief.org/prof-richard-muller-not-adjusting-global-temperature-records-would-be-poor-science">Carbon Brief: Richard Muller on adjusting temperature records</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="us-adjustments" data-also="ushcn raw readings raw data adjusted noaa us usa united states time of observation tobs morning afternoon readings mmts sensors daytime highs maximum temperature 1930s dust bowl zombie stations estimated closed stations uscrn reference network trends same">
+<summary><h3 class="ct"><q>US thermometers show no warming. NOAA's adjustments create it.</q></h3></summary>
+<div class="body">
+<p class="ans">For US daytime highs, the adjustments do add most of the warming. That isn't hidden: NOAA publishes both versions. The real question is whether the corrections are right, and there is a network built to test exactly that.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Two known changes made the raw readings run cooler over time. Volunteer observers moved from afternoon to morning readings: an afternoon reading can count one hot day twice, so dropping it makes highs look cooler. And in the 1980s many stations switched to electronic sensors that read daytime highs lower than the old thermometers.</li>
+ <li>Both changes hit daytime highs hardest. Raw nighttime lows already show warming without any adjustment.</li>
+ <li>The test: since 2005, NOAA's Climate Reference Network has measured at over 100 carefully sited stations with three sensors each, read automatically, so it never needs these corrections. It agrees with the adjusted record, not the raw one (Hausfather et al. 2016).</li>
+ <li>Some charts group stations by their reading time in one year and show both groups flat, as if the reading time didn't matter. Stations in both groups changed later, and both got the new sensors, so the grouping tests nothing. Averaging raw degrees over a changing set of stations also mixes in geography: lose a few warm southern stations and the average drops.</li>
+ <li>The 1930s peak in US daytime highs was partly real: in the Dust Bowl years, dry soil heated up more. A trend that starts at that peak looks flatter, and one that starts elsewhere looks steeper, which is why a single start year proves little. See <a href="#stopped-1998">"warming stopped in 1998"</a>.</li>
+ <li>Filling in estimates for missing months and closed stations changes the long-term US trend only a little. NOAA's official US record has used a much larger station set (nClimDiv) since 2014.</li>
+ <li>The US is about 2% of Earth's surface. Worldwide, the corrections lower the warming. See <a href="#data-manipulated">"the data is manipulated"</a>. <a href="air.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://repository.library.noaa.gov/view/noaa/53381">Hausfather et al. 2016, Geophysical Research Letters: testing US adjustments with the Climate Reference Network</a>; <a href="https://doi.org/10.1175/2008BAMS2613.1">Menne et al. 2009, Bulletin of the American Meteorological Society: USHCN version 2</a>; <a href="https://www.carbonbrief.org/explainer-how-data-adjustments-affect-global-temperature-records">Carbon Brief: How data adjustments affect global temperature records</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="era5-model" data-also="reanalysis era5 copernicus model data not real measurements computer model temperature simulated made up not measured">
+<summary><h3 class="ct"><q>ERA5 is a model, so its temperatures can't be trusted.</q></h3></summary>
+<div class="body">
+<p class="ans">ERA5 is built from measurements: billions of them, from weather stations, ships, buoys, weather balloons, aircraft and satellites. A weather model only fills the gaps between them. And a record that uses no model at all, NASA's thermometer record, shows the same warming.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>ERA5 is a "reanalysis": it combines all those measurements into one complete picture of the atmosphere, hour by hour since 1940, using the physics of a weather model where nobody measured. Every weather forecast starts its day the same way. It is not a climate model, and it predicts nothing. See <a href="#models-unreliable">"models can't tell what humans do"</a> for climate models.</li>
+ <li>NASA's GISTEMP record uses only thermometer readings on land and at sea, and fills its gaps by spreading station values over the surrounding area. Through 2025, the two agree: warming since 1979 of 0.21 °C per decade in both, and yearly values within 0.06 °C of each other. In 44 of the 46 years since 1980, both went the same way, warmer or cooler than the year before. <a href="air.html#b10">See both records</a></li>
+ <li>They differ most before 1979, by up to 0.2 °C in a year, when there were no satellites and far fewer observations: both records are less certain there. Since 2016 ERA5 has come out a few hundredths of a degree warmer, most likely because over the ocean it uses the air temperature rather than the water temperature, and because it covers the poles in full. That is why 2024 is 1.60 °C in ERA5 and 1.55 °C in GISTEMP.</li>
+ <li>Other independent records (NOAA, the UK Met Office and University of East Anglia, Berkeley Earth, Japan's JRA) agree as well. See <a href="#data-manipulated">"the data is manipulated"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1002/qj.3803">Hersbach et al. 2020, ERA5 global reanalysis</a>; <a href="https://data.giss.nasa.gov/gistemp/">NASA GISTEMP v4</a>; <a href="https://climate.copernicus.eu/climate-reanalysis">Copernicus: what is a climate reanalysis?</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="arctic-recovered" data-also="arctic sea ice recovery polar bears">
+<summary><h3 class="ct"><q>Arctic sea ice has recovered. It hasn't gone down since 2012.</q></h3></summary>
+<div class="body">
+<p class="ans">2012 was an extreme low, so the years after it look flat by comparison. But every summer since 2007 has been lower than every summer before it, and the winter ice keeps setting records.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The <span class="live" data-k="ice.minN">…</span> lowest summer minimums in the satellite record have all come since <span class="live" data-k="ice.minSince">…</span>. The lowest is still <span class="live" data-k="ice.minLow">…</span>. <a href="sea-ice.html">See the data</a></li>
+ <li>The <span class="live" data-k="ice.minLastY">…</span> minimum was the <span class="live" data-k="ice.minLast">…</span> of <span class="live" data-k="ice.yrsN">…</span> years.</li>
+ <li>The winter maximum keeps falling: the <span class="live" data-k="ice.maxLastY">…</span> maximum was <span class="live" data-k="ice.maxLast">…</span> on record.</li>
+ <li>Extent only measures area. The ice has also become much thinner: most of the thick ice that survived several summers is gone, and the total volume of Arctic sea ice is near record lows (University of Washington, PIOMAS).</li>
+</ul>
+<p class="src">Sources: <a href="https://nsidc.org/arcticseaicenews/">NSIDC: Arctic Sea Ice News</a>; <a href="https://psc.apl.uw.edu/research/projects/arctic-sea-ice-volume-anomaly/">University of Washington: Arctic sea ice volume (PIOMAS)</a>; data: NSIDC Sea Ice Index</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="antarctic-ice" data-also="antarctica sea ice southern ocean">
+<summary><h3 class="ct"><q>Antarctic sea ice is growing.</q></h3></summary>
+<div class="body">
+<p class="ans">It grew slightly for decades, peaking in 2014. Since 2016 it has dropped sharply, with record lows in 2023.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Today: Antarctic sea ice is <span class="live" data-k="ant.an">…</span> compared with the 1981–2010 average for <span class="live" data-k="ant.date">…</span>, the <span class="live" data-k="ant.rank">…</span>. <a href="sea-ice.html">See the data</a> (choose Antarctic)</li>
+ <li><span data-k="ant.below">…</span> since 2016 had a yearly average below the 1981–2010 average. The lowest year on record is <span class="live" data-k="ant.low">…</span>.</li>
+ <li>Arctic and Antarctic together: in <span class="live" data-k="glob.lastY">…</span>, global sea ice averaged <span class="live" data-k="glob.an">…</span> compared with 1981–2010, the <span class="live" data-k="glob.rank">…</span> year since <span class="live" data-k="glob.first">…</span>. Every year since <span class="live" data-k="glob.since">…</span> has been below that average. In the last 20 years, gains around Antarctica made up for the losses in the Arctic only in 2013 and 2014, the peak years for Antarctic ice.</li>
+ <li>Warmer seas and shrinking ice go together here. Since about 2016 the upper ocean around Antarctica has been warmer than before, and researchers link the record lows to that extra heat (Purich and Doddridge 2023). The record-warm seas of 2023–2024 that made the news were mostly in the tropics and the North Atlantic, far from the ice; winds also push the ice around, so it does not follow sea temperature from one year to the next. <a href="sst.html">See sea surface temperatures</a></li>
+ <li>Sea ice is frozen seawater and varies a lot from year to year. What matters most for sea level is the ice on land, and the Antarctic ice sheet is losing mass (IPCC).</li>
+</ul>
+<p class="src">Sources: <a href="https://www.climate.gov/news-features/event-tracker/antarctic-sea-ice-reaches-early-winter-record-low-june-2023">NOAA Climate.gov: Antarctic sea ice record low</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a>; <a href="https://doi.org/10.1038/s43247-023-00961-9">Purich and Doddridge 2023, Communications Earth &amp; Environment</a>; data: NSIDC Sea Ice Index</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="glacier-growing" data-also="glacier glaciers iceberg calving petermann jakobshavn greenland growing advancing">
+<summary><h3 class="ct"><q>That glacier is bigger now than it was ten years ago. The melting story is a scam.</q></h3></summary>
+<div class="body">
+<p class="ans">The front of one glacier moving forward or breaking off says little either way. What counts is how much ice the whole ice sheet holds, and Greenland loses ice every year.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Weighed from space by the GRACE satellites, Greenland has lost about <span class="live" data-k="land.gl">…</span> of ice since 2002–03 (to <span class="live" data-k="land.date">…</span>). <a href="land-ice.html">See the data</a></li>
+ <li>Many big glaciers end in a floating ice tongue that flows out to sea, grows longer for years and then breaks off. Petermann Glacier's tongue did grow again after it lost a large piece in 2012, and in August 2026 it shed a new ice island of 76 km². So yes: the ice that broke off had flowed there since 2012. That is how calving always works, and nobody serious counts a calving as proof of warming, or a longer tongue as proof against it.</li>
+ <li>The change that matters is further back, where the glacier rests on bedrock. At Petermann, warm ocean water is melting the glacier from below there, and that line moved back nearly 4 km between 2016 and 2022 (Ciracì et al. 2023).</li>
+ <li>Jakobshavn, Greenland's fastest glacier, did briefly grow thicker in 2016–2018. The reason was a pulse of cooler ocean water from the North Atlantic, and NASA's researchers said at the time that it would be temporary.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.esa.int/ESA_Multimedia/Images/2026/08/Petermann_Glacier_calves_huge_iceberg">ESA: Petermann Glacier calves huge iceberg (2026)</a>; <a href="https://www.uottawa.ca/en/news-all/greenland-glacier-break-creates-new-ice-island">University of Ottawa: Greenland glacier break creates new ice island</a>; <a href="https://doi.org/10.1073/pnas.2220924120">Ciracì et al. 2023, PNAS</a>; <a href="https://www.jpl.nasa.gov/news/cold-water-currently-slowing-fastest-greenland-glacier/">NASA JPL: Cold water currently slowing fastest Greenland glacier</a>; data: NASA JPL GRACE/GRACE-FO</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="ice-age-1970s" data-also="1970s 1970 ice age cooling global cooling time magazine newsweek predicted">
+<summary><h3 class="ct"><q>In the 1970s scientists predicted a new ice age.</q></h3></summary>
+<div class="body">
+<p class="ans">A few did, and magazines loved it. But even then, most climate studies expected warming, and the warming came.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>A review of the scientific papers from 1965 to 1979 found 7 that predicted cooling and 42 that predicted warming; the rest made no prediction either way (Peterson et al. 2008).</li>
+ <li>The cooling worry came from soot and sulfate pollution, which does cool the planet by blocking sunlight. Clean-air laws cut that pollution, while CO₂ kept rising.</li>
+ <li>What happened next: air temperature is now about <span class="live" data-k="air.pre12">…</span> above pre-industrial (last 12 months). <a href="air.html">See the data</a></li>
+ <li>Magazine covers are not the scientific literature. The same test applies today: look at what the studies say, not the headlines. See also <a href="#predictions-fail">"the experts' predictions always fail"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1175/2008BAMS2370.1">Peterson, Connolley and Fleck 2008, Bulletin of the American Meteorological Society</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="no-consensus" data-also="consensus 97% 99% scientists disagree settled poll polls opinion debate">
+<summary><h3 class="ct"><q>There is no real consensus. If it were settled, more people would be worried.</q></h3></summary>
+<div class="body">
+<p class="ans">A poll measures how worried the public is, not what the evidence says. Among scientists who study the climate, agreement that humans are causing the warming is well over 97%.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>A review of nearly 90,000 climate studies published from 2012 to 2020 found that more than 99% agree that humans are changing the climate (Lynas et al. 2021). Earlier counts found about 97%.</li>
+ <li>Every major national science academy and the IPCC agree. No national or international scientific body disputes it.</li>
+ <li>Public concern goes up and down with news, politics and the economy. The measurements don't: CO₂ is now <span class="live" data-k="co2.now">…</span>. <a href="co2.html">See the data</a></li>
+ <li>Agreement isn't proof, and science changes when evidence does. But it shows where the evidence points today, after decades of people trying to find another explanation.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1088/1748-9326/ac2966">Lynas et al. 2021, Environmental Research Letters</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NOAA GML</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="predictions-fail" data-also="kilimanjaro growing glaciers tripled 2026 reforestation predictions failed wrong al gore kilimanjaro snow ice free arctic experts so-called experts 1960s doomsday">
+<summary><h3 class="ct"><q>The experts' predictions always fail. Kilimanjaro still has snow.</q></h3></summary>
+<div class="body">
+<p class="ans">Dramatic dates quoted by politicians and the press often miss. The scientific projections of warming have held up well.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Climate models published from the 1970s onwards mostly got the warming that followed right (Hausfather et al. 2020). Exxon's own scientists did too. <a href="models.html">See the check, projection by projection</a></li>
+ <li>Kilimanjaro: the ice cap shrank by about 85% between 1912 and 2007 (Thompson et al. 2009). An early 2000s estimate that it could be gone by about 2020 was too pessimistic about the date; it is still shrinking.</li>
+ <li>In 2026 Kilimanjaro's park authority announced 5.92 km² of "glacier coverage", nearly three times the 2000 figure, crediting reforestation. That number almost certainly includes fresh seasonal snow: the latest peer-reviewed satellite mapping found 0.98 km² of ice in 2021–22 (Hinzmann et al. 2024), the same park authorities reported 1.7 km² in 2024, and glacier ice cannot multiply like that in a few years. Fresh snow after a wet season can cover the summit for weeks without adding to the glaciers. Until a measured, published ice survey shows growth, the long shrinking trend stands.</li>
+ <li>Arctic sea ice: claims that the Arctic would be ice-free "by 2013" or "by 2016" came from a few individuals, not from the IPCC. Summer sea ice is still far below the 1980s. <a href="sea-ice.html">See the data</a></li>
+ <li>To judge the experts, look at what the scientific reports projected, not the most dramatic quote. See also <a href="#ice-age-1970s">"in the 1970s they predicted an ice age"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1029/2019GL085378">Hausfather et al. 2020, Geophysical Research Letters</a>; <a href="https://doi.org/10.1073/pnas.0906029106">Thompson et al. 2009, PNAS</a>; <a href="https://doi.org/10.1088/2752-5295/ad1fd7">Hinzmann et al. 2024, Environmental Research: Climate</a>; <a href="https://doi.org/10.5194/tc-7-419-2013">Cullen et al. 2013, The Cryosphere</a>; <a href="https://atta.travel/resource/kilimanjaro-s-ice-cover-nearly-triples-following-sustained-conservation-drive.html">2026 park announcement (via ATTA)</a>; <a href="https://www.monitor.co.ug/uganda/news/national/mount-kilimanjaro-s-ice-cap-shrinks-to-record-low-4753678">2024 park figure of 1.7 km² (The Citizen / Monitor)</a>; data: NSIDC Sea Ice Index</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+</section>
+
+<section class="grp" id="not-us">
+<h2>“It's not us”</h2>
+<p class="gi">Once the warming is accepted: it must be natural.</p>
+<details class="claim" id="hoax" data-also="scam fraud lie lies fake conspiracy religion cult agenda nonsense bullshit misinformation pure fiction propaganda school science monckton bs bullshit">
+<summary><h3 class="ct"><q>Man-made climate change is a hoax. It's science fiction, not science.</q></h3></summary>
+<div class="body">
+<p class="ans">Science fiction doesn't make predictions that come true. The heat-trapping effect of CO₂ was measured in the 1850s, the warming was predicted decades ago, and it is happening as predicted.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The physics is older than the light bulb. Eunice Foote (1856) and John Tyndall (1859) showed in the lab that CO₂ traps heat; in 1896 Svante Arrhenius calculated how much warming more CO₂ would bring.</li>
+ <li>The predictions came true. Climate models published between the 1970s and 2000s mostly got the warming that followed right (Hausfather et al. 2020). So did Exxon's own scientists, whose projections in the late 1970s and 1980s matched what then happened (Supran et al. 2023).</li>
+ <li>It is measured today, not just modeled. CO₂ at Mauna Loa is now <span class="live" data-k="co2.now">…</span>, rising <span class="live" data-k="co2.rate">…</span> a year on average over the last 10 years. <a href="co2.html">See the data</a> Satellites measure Earth taking in more energy than it sends back to space: over the last 12 months it gained <span class="live" data-k="eei.l12">…</span>. <a href="eei.html">See the data</a></li>
+ <li>The pattern points to greenhouse gases, not the sun: the lower atmosphere is warming while the upper atmosphere cools, and nights are warming faster than days. Extra sunshine would warm both layers and the days most.</li>
+ <li>Every major national science academy and the IPCC, which reviews the work of thousands of scientists from nearly 200 countries, agree that humans are causing the warming. For the usual objections, see <a href="#natural-cycles">natural cycles</a>, <a href="#data-manipulated">manipulated data</a> and <a href="#trace-gas">"just a trace gas"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1029/2019GL085378">Hausfather et al. 2020, Geophysical Research Letters</a>; <a href="https://doi.org/10.1126/science.abk0063">Supran et al. 2023, Science</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a>; data: NOAA GML, NASA CERES</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="no-experiment" data-also="experiment experimental proven proof hypothesis forecast forecasting weather forecast astronomy observation scientific method lab laboratory hitran air force military indoctrination heat trapping no data harm">
+<summary><h3 class="ct"><q>Science is proven by experiment. Climate science only makes forecasts.</q></h3></summary>
+<div class="body">
+<p class="ans">The core of it was proven in the lab in 1859 and has been tested ever since. The rest is tested the way astronomy, geology and medicine test their ideas: make a prediction, then check it against measurements.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The experiment: in 1859 John Tyndall measured in his lab that CO₂ and water vapor absorb heat radiation. Today the absorption of CO₂ is measured so precisely that it is used to design infrared sensors and heat-seeking equipment. The standard reference for it, the HITRAN database, was started in the late 1960s by the US Air Force Cambridge Research Laboratories for exactly that military work. Climate models use the same numbers.</li>
+ <li>The hypothesis: more CO₂ traps more heat. It made predictions that were then checked. Satellites see less heat escaping to space at exactly the wavelengths CO₂ absorbs (Harries et al. 2001), and instruments on the ground measured the extra heat coming down from CO₂ rising year by year (Feldman et al. 2015).</li>
+ <li>A test only greenhouse gases pass: in 1967 Syukuro Manabe predicted that more CO₂ would warm the lower atmosphere but cool the upper atmosphere. Both have since been measured. More sunshine would warm both. Manabe received the 2021 Nobel Prize in Physics for this work.</li>
+ <li>Climate projections are not weather forecasts. Weather depends on today's exact conditions and can't be predicted beyond a week or two; climate is the average, set by how much energy comes in and goes out, like predicting that summer will be warmer than winter. Projections made decades ago have matched what followed. See <a href="#models-unreliable">"models can't tell"</a> and <a href="#predictions-fail">"the predictions always fail"</a>.</li>
+ <li>No one can run a second Earth as a control, just as no one can run a second universe. Astronomy, geology and epidemiology all test hypotheses by observation. That is still the scientific method.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1038/35066553">Harries et al. 2001, Nature</a>; <a href="https://doi.org/10.1038/nature14240">Feldman et al. 2015, Nature</a>; <a href="https://hitran.org/">HITRAN database</a>; <a href="https://www.nobelprize.org/prizes/physics/2021/press-release/">Nobel Prize in Physics 2021 (Manabe, Hasselmann, Parisi)</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="natural-cycles" data-also="sun solar sunspots orbit milankovitch el nino cycle cycles pdo amo sloshing ocean cycles natural variability natural forces override">
+<summary><h3 class="ct"><q>It's just natural cycles.</q> Or: <q>It's the sun.</q></h3></summary>
+<div class="body">
+<p class="ans">Natural cycles move heat around the planet; they don't add heat to it. Satellites show Earth as a whole is gaining heat, and the sun's output has not gone up.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Satellites measure the energy arriving from the sun and the energy Earth sends back to space. Over the 12 months to <span class="live" data-k="eei.date">…</span>, Earth took in <span class="live" data-k="eei.l12">…</span> more than it lost. Averaged over the last 4 years it was <span class="live" data-k="eei.l48">…</span>, about <span class="live" data-k="eei.x">…</span> the rate of the first 4 years of the record (<span class="live" data-k="eei.early">…</span>). <a href="eei.html">See the data</a></li>
+ <li>That extra energy is piling up in the ocean: the upper 2000 m gained <span class="live" data-k="ohc.d12">…</span> of heat in the 12 months to <span class="live" data-k="ohc.date">…</span>. <a href="ohc.html">See the data</a></li>
+ <li>El Niño and La Niña push global temperature up or down by a few tenths of a degree for a year or two; the slower Pacific Decadal Oscillation does the same over years to decades. The long-term rise continues through all of them. <a href="nino.html">See El Niño</a> · <a href="pdo.html">See the PDO</a></li>
+ <li>The sun's energy reaching Earth has shown no upward trend since satellites began measuring it in 1978. And while the surface warms, the upper atmosphere cools: the pattern of heat being trapped near the ground, not of a brighter sun. <a href="sun.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://science.nasa.gov/climate-change/faq/is-the-sun-causing-global-warming/">NASA: Is the Sun causing global warming?</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="always-changed" data-also="past climate ice ages medieval warm period vikings natural geology oklahoma under water glaciers north america never static natural trends always changing 1982 baseline">
+<summary><h3 class="ct"><q>The climate has always changed.</q></h3></summary>
+<div class="body">
+<p class="ans">True, and studying those past changes is how we know this one is different: it is far faster, and its cause is us.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>CO₂ at Mauna Loa has risen an average of <span class="live" data-k="co2.rate">…</span> per year over the last 10 years. <a href="co2.html">See the data</a></li>
+ <li>At the end of the last ice age, one of the biggest natural climate shifts, CO₂ rose roughly 100 times more slowly than in the past 60 years (NOAA).</li>
+ <li>Past changes had causes: shifts in Earth's orbit, volcanoes, the sun. Scientists have checked each of them; none explains today's warming. The rise in greenhouse gases from burning fossil fuels does (IPCC).</li>
+ <li>Greenland's summit was warmer than now for long stretches 3,000–4,000 years ago, when Earth's orbit gave the Arctic more summer sunshine. That orbital push has been cooling Greenland ever since; the temperature has now turned around anyway, far faster. The popular "GISP2" chart that seems to show otherwise ends around 1855. <a href="land-ice.html#greenland-4000">See the data</a></li>
+ <li>Past climates also show how strongly temperature follows CO₂. That is a reason for concern, not comfort. <a href="co2.html#hbox">See CO₂ over 800,000 and 66 million years</a></li>
+ <li>To feel the speed: the cartoonist Randall Munroe drew the whole climb out of the last ice age, 22,000 years of global temperature, as one long timeline. The ice age took about 10,000 years to end; today's warming is the sudden swing at the very bottom. <a href="https://xkcd.com/1732/" target="_blank" rel="noopener">xkcd: Earth Temperature Timeline</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.climate.gov/news-features/understanding-climate/climate-change-atmospheric-carbon-dioxide">NOAA Climate.gov: Atmospheric carbon dioxide</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="trace-gas" data-also="0.04% 400 ppm tiny amount impact of co2 effect of co2">
+<summary><h3 class="ct"><q>CO₂ is a trace gas. It can't matter.</q></h3></summary>
+<div class="body">
+<p class="ans">Small amounts can have big effects. Nitrogen and oxygen, 99% of the air, let heat escape to space. CO₂ and the other greenhouse gases are the part that traps it.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>CO₂ is now <span class="live" data-k="co2.now">…</span>, <span class="live" data-k="co2.pct">…</span> more than the roughly 280 ppm before industrialization. <a href="co2.html">See the data</a></li>
+ <li>CO₂ lets sunlight through but absorbs the heat Earth radiates back out. This has been measured in laboratories since the 1850s.</li>
+ <li>Without any greenhouse gases, Earth would average about −18 °C instead of about +15 °C. Changing how much of them there is changes the temperature.</li>
+ <li>The extra trapping is measured directly from space: Earth is currently gaining <span class="live" data-k="eei.l12">…</span>. <a href="eei.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.climate.gov/news-features/understanding-climate/climate-change-atmospheric-carbon-dioxide">NOAA Climate.gov: Atmospheric carbon dioxide</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="saturated" data-also="saturation absorption bands logarithmic">
+<summary><h3 class="ct"><q>The CO₂ effect is saturated. Adding more does nothing.</q></h3></summary>
+<div class="body">
+<p class="ans">If it were saturated, satellites would see no change in the heat leaving Earth at the wavelengths CO₂ absorbs. They see less heat escaping there every decade, and Earth as a whole is gaining energy.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Earth is taking in <span class="live" data-k="eei.l12">…</span> more energy than it sends back to space (12 months to <span class="live" data-k="eei.date">…</span>). Averaged over the last 4 years it was <span class="live" data-k="eei.l48">…</span>, about <span class="live" data-k="eei.x">…</span> the rate of the first 4 years of the record. <a href="eei.html">See the data</a></li>
+ <li>Satellites measuring the infrared light leaving Earth find less of it escaping at CO₂'s wavelengths than in the 1970s. Instruments on the ground measure more of that heat coming back down, rising in step with CO₂.</li>
+ <li>The middle of CO₂'s absorption band is indeed "full". But the edges of the band are not, and with more CO₂ the heat escapes from higher, colder air, which sends out less of it. That is why each doubling of CO₂ adds about the same warming.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.nature.com/articles/nature14240">Feldman et al. (2015), Nature: CO₂ forcing measured at the surface</a>; <a href="https://skepticalscience.com/saturated-co2-effect.htm">Skeptical Science: Is the CO₂ effect saturated?</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="volcano" data-also="mauna loa hawaii volcanoes co2 measurement">
+<summary><h3 class="ct"><q>Mauna Loa is a volcano. Of course it measures CO₂.</q></h3></summary>
+<div class="body">
+<p class="ans">The station is built to measure clean air from far out over the Pacific, and readings touched by the volcano are flagged and left out. Stations all over the world, including the South Pole, show the same rise.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Mauna Loa now reads <span class="live" data-k="co2.now">…</span> (30-day average to <span class="live" data-k="co2.date">…</span>). <a href="co2.html">See the data</a></li>
+ <li>The station sits high on the mountain, where the air usually comes in from thousands of kilometers of open ocean. When wind brings gas from the vents, the readings jump and vary wildly; NOAA's quality checks remove those hours. That is why the daily chart on this site has gaps.</li>
+ <li>When an eruption in late 2022 cut the road to the station, measurements moved temporarily to nearby Maunakea, a dormant volcano. The record carried on without a break in its trend.</li>
+ <li>The global average comes from dozens of stations from the Arctic to the South Pole, plus satellites. They all show the same rise as Mauna Loa.</li>
+ <li>All the world's volcanoes together emit roughly 1% of the CO₂ that humans do.</li>
+</ul>
+<p class="src">Sources: <a href="https://gml.noaa.gov/ccgg/trends/">NOAA Global Monitoring Laboratory: Trends in CO₂</a>; <a href="https://skepticalscience.com/mauna-loa-volcano-co2-measurements.htm">Skeptical Science: Mauna Loa is a volcano</a>; <a href="https://skepticalscience.com/volcanoes-and-global-warming.htm">Skeptical Science: Volcanoes and CO₂</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="how-much-human" data-also="percentage attributable attribution man versus natural primary driver dominant cause extremely likely some effect override natural forces natural variability">
+<summary><h3 class="ct"><q>Scientists disagree on how much is human and how much is natural.</q> Or: <q>"Likely due to humans" doesn't mean humans are the main cause.</q></h3></summary>
+<div class="body">
+<p class="ans">The best estimate is that humans caused about all of the warming since the late 1800s: natural factors added close to nothing over that time.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The IPCC estimates that humans caused about 1.07 °C of warming by 2010–2019, out of about 1.1 °C observed. Natural factors (the sun and volcanoes) together added between −0.1 and +0.1 °C.</li>
+ <li>The older wording "extremely likely that more than half" was a floor, not the estimate. The best estimate was always close to all of it; the 2021 report calls the human influence unequivocal.</li>
+ <li>Natural ups and downs, like El Niño, move heat around for a few years; they don't add heat over decades. Satellites show Earth gaining energy: <span class="live" data-k="eei.l12">…</span> over the last 12 months. <a href="eei.html">See the data</a></li>
+ <li>See also <a href="#natural-cycles">"it's just natural cycles"</a> and <a href="#models-unreliable">"models can't tell"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a> (A.1.3); data: NASA CERES</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="models-unreliable" data-also="models model exactly computer simulations unreliable cannot determine effect of human activity natural variability">
+<summary><h3 class="ct"><q>No climate model can determine what effect humans have.</q></h3></summary>
+<div class="body">
+<p class="ans">We don't need models to know that humans are warming the planet: that comes from measurements. Models help work out how much and what happens next, and their past projections have done well.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The basics are measured: CO₂ rising, the extra heat it traps seen by satellites, the oceans gaining heat. <a href="ohc.html">See the ocean heat data</a></li>
+ <li>The fingerprint is measured too: the upper atmosphere cooling while the surface warms, and nights warming faster than days. A brighter sun would warm both layers and the days most.</li>
+ <li>Models published since the 1970s mostly projected the warming that followed (Hausfather et al. 2020), and today's models track the measurements. <a href="models.html">See the models page</a></li>
+ <li>Models do disagree on details, such as rain in a given region. "Not exact" isn't the same as "don't know".</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1029/2019GL085378">Hausfather et al. 2020, Geophysical Research Letters</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NOAA NCEI</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="little-ice-age" data-also="little ice age recovery recovering rebound coming out of maunder minimum warmer better advantageous">
+<summary><h3 class="ct"><q>It's just the recovery from the Little Ice Age.</q> Or: <q>Scientists don't even know what caused the Little Ice Age.</q></h3></summary>
+<div class="body">
+<p class="ans">Climate doesn't "recover" by itself: warming needs a source of energy. The Little Ice Age had causes, and they can't explain today's warming.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The Little Ice Age (about 1300–1850) was mostly caused by a series of large volcanic eruptions, possibly helped by a quieter sun (Miller et al. 2012). Scientists still debate the details, not the main causes.</li>
+ <li>Those causes are gone: the sun has been flat or slightly weaker since the 1950s, and recent eruptions have been small. <a href="sun.html">See the Sun</a></li>
+ <li>Today the planet is gaining energy, measured by satellites: <span class="live" data-k="eei.l12">…</span> over the last 12 months. A rebound would slow down; this warming has sped up. <a href="eei.html">See the data</a></li>
+ <li>Was a little warmth welcome after the Little Ice Age? Possibly. But we are now well past that, and the warming is still going. See <a href="#cold-deaths">"more people die of cold"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1029/2011GL050168">Miller et al. 2012, Geophysical Research Letters</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NASA CERES</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="co2-not-ours" data-also="volcano volcanoes undersea submarine plimer ocean outgassing natural co2 isotopes not proven mankind responsible single eruption pinatubo cars all human activity">
+<summary><h3 class="ct"><q>It isn't proven that the rise in CO₂ comes from us.</q> Or: <q>Undersea volcanoes emit more CO₂ than humans.</q></h3></summary>
+<div class="body">
+<p class="ans">It is proven, several ways over. And all the world's volcanoes, on land and under the sea, emit roughly 1% of what humans do.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Bookkeeping: humans emit about twice as much CO₂ each year as stays in the air. The ocean and plants take up the rest, so nature is a net sink, not the source.</li>
+ <li>Fingerprints: carbon from fossil fuels has a distinct mix of carbon isotopes, and the air's carbon is shifting towards that mix. Burning also uses oxygen, and oxygen in the air is falling as expected.</li>
+ <li>Volcanoes: all volcanoes together emit a few tenths of a billion metric tons of CO₂ a year; humans emit well over 35 billion. Big eruptions don't even show up as a bump in the Mauna Loa record. See <a href="#volcano">"Mauna Loa is a volcano"</a>.</li>
+ <li>The ocean is taking CO₂ up, not giving it off: that is why seawater is becoming more acidic. <a href="slow.html#ph-s">See the ocean pH data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.climate.gov/news-features/climate-qa/which-emits-more-carbon-dioxide-volcanoes-or-human-activities">NOAA Climate.gov: Which emits more carbon dioxide, volcanoes or human activities?</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NOAA GML, Hawaii Ocean Time-series</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="cows" data-also="cows cattle farts burps livestock methane meat beef agriculture farming">
+<summary><h3 class="ct"><q>Now they blame cow farts for climate change.</q></h3></summary>
+<div class="body">
+<p class="ans">It's mostly burps, and it's the numbers that matter: about a billion and a half cattle. Livestock produce roughly a seventh of all human-caused greenhouse gas emissions.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Cows digest grass by fermenting it, which makes methane. They burp most of it out.</li>
+ <li>Methane traps far more heat than CO₂ while it lasts: over 20 years, about 80 times as much per metric ton. It breaks down in about a decade, so cutting it cools things relatively fast. <a href="ch4.html">See the methane data</a></li>
+ <li>Livestock, including land use and feed, account for about 14.5% of human-caused emissions (FAO). Fossil fuels are still by far the biggest source.</li>
+ <li>A joke about one farm misses the scale: farm animals now far outweigh all wild mammals together.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.fao.org/3/i3437e/i3437e.pdf">FAO 2013, Tackling climate change through livestock</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NOAA GML</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="medieval-warm" data-also="medieval warm period mwp hockey stick ipcc buried hid vikings greenland roman warm period mann">
+<summary><h3 class="ct"><q>The Medieval Warm Period was warmer than today, and the IPCC buried it.</q></h3></summary>
+<div class="body">
+<p class="ans">It was a regional warm spell, not a worldwide one. The reconstructions show it; it is smaller than today's warming when you look at the whole planet.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Around 950–1250, parts of the world, especially around the North Atlantic, were warm. Other regions were cool at the same time, and warm spells in different places came centuries apart (PAGES 2k Consortium, Neukom et al. 2019).</li>
+ <li>Today's warming is the only one in 2,000 years that shows up almost everywhere at once: it covers about 98% of the planet.</li>
+ <li>The 1990 IPCC figure that showed a large medieval peak was a hand-drawn sketch based mostly on central England. It was replaced when real worldwide reconstructions became available, and dozens have since confirmed the "hockey stick" shape.</li>
+ <li>Greenland's summit was warmer for long spells in the past, for known reasons. <a href="land-ice.html#greenland-4000">See the ice-core data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1038/s41586-019-1401-2">Neukom et al. 2019, Nature</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: GISP2 ice core (Kobashi et al. 2011)</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="solar-heat" data-also="solar panels solar farms heat island warmer land surface renewables feedback loop">
+<summary><h3 class="ct"><q>Solar farms heat the land, and then that heat gets blamed on climate change.</q></h3></summary>
+<div class="body">
+<p class="ans">Solar parks can warm the ground under them by a few degrees, especially at night. But that heat stays local, and it is not what the world's temperature records measure.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The local effect is real: one study found a solar park about 3–4 °C warmer at night than nearby desert (Barron-Gafford et al. 2016). Cities, roads and farmland change local temperatures too.</li>
+ <li>Global temperature comes from thousands of land stations and from the oceans, which cover 70% of the planet. Satellites measure the lower atmosphere. All of them show the same warming. <a href="air.html">See the data</a></li>
+ <li>Solar panels cover a tiny fraction of Earth's land. And the warming started decades before there were any solar parks.</li>
+ <li>Each panel also replaces power from coal or gas, whose CO₂ warms the whole planet for centuries. That effect is far larger than the panel's local heat.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1038/srep35070">Barron-Gafford et al. 2016, Scientific Reports</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="geothermal-antarctica" data-also="geothermal undersea volcanoes volcanic heat antarctica melting from below west antarctic glaciers thwaites">
+<summary><h3 class="ct"><q>Geothermal heat and undersea volcanoes are melting Antarctica, not global warming.</q></h3></summary>
+<div class="body">
+<p class="ans">There are volcanoes under West Antarctica, and heat from below melts a little ice. But that heat is small and has been steady for thousands of years, so it can't explain melting that has sped up over a few decades.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Heat from the Earth's interior is weak at the surface: well under a watt per square meter, even in West Antarctica's warmer spots. It changes over geological time, not decades.</li>
+ <li>What has changed is the ocean. Warm deep water is reaching under the floating ice shelves and the points where glaciers rest on bedrock, melting them from below, and the glaciers behind them speed up (IPCC).</li>
+ <li>The ice loss is measured: GRACE satellites weigh Antarctica every month. <a href="land-ice.html">See the data</a></li>
+ <li>The same pattern is seen in Greenland, where there are no such volcanoes. See <a href="#glacier-growing">"that glacier is bigger now"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NASA JPL GRACE/GRACE-FO</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="hunga-tonga" data-also="hunga tonga volcano eruption water vapor stratosphere 2023 2024 record heat">
+<summary><h3 class="ct"><q>The recent record heat came from the Hunga Tonga eruption's water vapor, not from us.</q></h3></summary>
+<div class="body">
+<p class="ans">The 2022 eruption did add a lot of water vapor high up. But it also released sulfur, which cools, and studies find its net effect was a slight cooling. It doesn't explain the 2023–24 records.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The undersea eruption added about 10% to the water vapor in the stratosphere (Millán et al. 2022). Water vapor traps heat, so a warming effect was a fair question.</li>
+ <li>A study that added up all its effects (water vapor, sulfate haze, ozone) found a small net cooling, as after other large eruptions (Schoeberl, Dessler and others, 2024).</li>
+ <li>The 2023–24 heat is explained by El Niño on top of the long-term warming from greenhouse gases, with smaller help from cleaner ship fuel and a strong solar cycle. <a href="air.html">See the data</a></li>
+ <li>Earth's energy gain has been growing for two decades, long before the eruption: <span class="live" data-k="eei.l12">…</span> over the last 12 months. <a href="eei.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1029/2022GL099381">Millán et al. 2022, Geophysical Research Letters</a>; <a href="https://stories.tamu.edu/news/2024/07/26/new-study-disputes-hunga-tonga-volcanos-role-in-2023-24-global-warm-up/">Texas A&amp;M: study on Hunga Tonga's net effect (Schoeberl et al. 2024, JGR Atmospheres)</a>; data: Copernicus ERA5, NASA CERES</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+</section>
+
+<section class="grp" id="not-bad">
+<h2>“It's not bad”</h2>
+<p class="gi">Once the cause is accepted: the effects will be harmless, or even good.</p>
+<details class="claim" id="plant-food" data-also="greening crops harvest agriculture fertilizer">
+<summary><h3 class="ct"><q>CO₂ is plant food. More is good.</q></h3></summary>
+<div class="body">
+<p class="ans">Partly true: more CO₂ helps many plants grow. But the same CO₂ brings heat and drought that cut harvests, and crops grown with more CO₂ are less nutritious. It is not a free gift.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>CO₂ is now <span class="live" data-k="co2.now">…</span>, <span class="live" data-k="co2.pct">…</span> above the level before industrialization. <a href="co2.html">See the data</a></li>
+ <li>Satellites do show the planet getting greener since the 1980s, and extra CO₂ is a large part of the reason.</li>
+ <li>The benefit fades as plants run short of water, nitrogen and other nutrients. Weeds benefit too.</li>
+ <li>Wheat, rice and other staple crops grown in the CO₂ levels expected later this century contain less zinc, iron and protein. That matters for the billions of people who get most of their nutrition from these crops.</li>
+ <li>Heat waves and droughts, which warming makes more frequent, damage crops directly. A plant that grows faster but wilts in a heat wave is no better off.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.nature.com/articles/nclimate3004">Zhu et al. (2016), Nature Climate Change: Greening of the Earth</a>; <a href="https://www.nature.com/articles/nature13179">Myers et al. (2014), Nature: Rising CO₂ threatens human nutrition</a>; <a href="https://skepticalscience.com/co2-plant-food.htm">Skeptical Science: CO₂ is plant food</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="cold-deaths" data-also="deaths mortality heat waves heatwaves">
+<summary><h3 class="ct"><q>More people die of cold than of heat. A warmer world saves lives.</q></h3></summary>
+<div class="body">
+<p class="ans">It is true that more deaths are linked to cold than to heat today. But milder winters save fewer lives than hotter summers cost in most of the world, and heat deaths are badly undercounted.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>A worldwide study of 2000–2019 linked about 4.6 million deaths a year to cold and about 0.5 million to heat. It also found that cold-related deaths were falling and heat-related deaths rising as the climate warmed.</li>
+ <li>Much of the extra death in winter comes from flu and other infections that spread when people crowd indoors, not from the cold itself. Milder winters remove only part of it.</li>
+ <li>Heat deaths are often recorded as heart, lung or kidney failure rather than heat, so official counts miss many of them.</li>
+ <li>Projections for the rest of the century show the balance turning: in most regions the rise in heat deaths outweighs the fall in cold deaths, and the gap grows with every degree. A few cold countries may see a small net benefit; hot and poor regions bear most of the cost.</li>
+ <li>Deaths are only part of it: heat also cuts how much people can work outdoors and how well crops and livestock do.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.thelancet.com/journals/lanplh/article/PIIS2542-5196(21)00081-4/fulltext">Zhao et al. (2021), Lancet Planetary Health: Deaths linked to non-optimal temperatures</a>; <a href="https://www.thelancet.com/journals/lanplh/article/PIIS2542-5196(17)30156-0/fulltext">Gasparrini et al. (2017), Lancet Planetary Health: Projections of temperature-related deaths</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="adapt" data-also="species animals plants extinction evolution">
+<summary><h3 class="ct"><q>Plants and animals will adapt. They always have.</q></h3></summary>
+<div class="body">
+<p class="ans">Many are trying, mostly by moving. But this change is far faster than most past ones, and many species have nowhere to go: a mountaintop, an island or a coral reef can't move.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Air temperature over the last 12 months was about <span class="live" data-k="air.pre12">…</span> above pre-industrial. Over the last 30 years it has risen <span class="live" data-k="air.trend">…</span> per decade. <a href="air.html">See the data</a></li>
+ <li>About half of the species studied have already shifted toward the poles or up mountains, and spring events like flowering and egg-laying are coming earlier (IPCC).</li>
+ <li>The first local extinctions caused by heat have been recorded. The Bramble Cay melomys, a small rodent on a low coral island in the Torres Strait, was reported in 2016 to be most likely extinct and formally declared extinct by Australia in 2019: the first mammal known to have been wiped out by climate change, after storm surges and rising seas destroyed its habitat.</li>
+ <li>Coral reefs are expected to decline by 70–90% at 1.5 °C of warming, and by more than 99% at 2 °C (IPCC).</li>
+ <li>Past mass extinctions are linked to large, fast climate changes. Moving is also harder now: roads, farms and cities block the way.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg2/chapter/summary-for-policymakers/">IPCC AR6 Working Group II, Summary for Policymakers</a>; <a href="https://www.ipcc.ch/sr15/chapter/spm/">IPCC Special Report on 1.5 °C, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="sea-level" data-also="rising seas sea level ocean coast flooding millimeters flood floods flooding storm surge 1938 hurricane high tide coastal">
+<summary><h3 class="ct"><q>Sea level rise is tiny.</q></h3></summary>
+<div class="body">
+<p class="ans">A few millimeters a year adds up, and the rate is increasing. What people notice is not the height itself but how often water now reaches places it used to reach only in storms.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Global sea level is <span class="live" data-k="sl.rise">…</span> higher than in 1993, rising <span class="live" data-k="sl.r10">…</span> per year over the last 10 years, compared with <span class="live" data-k="sl.r0">…</span> in 1993–2002. <a href="sea-level.html">See the data</a></li>
+ <li>In the US, high-tide flooding now happens about twice as often as it did 30 years ago (NOAA).</li>
+ <li>A higher starting level means every storm surge reaches further inland.</li>
+ <li>"Past floods were worse" misses the point. Every flood is tides, storm, wind and local geography, and the old record storms were extreme events. A higher sea raises the starting point of all of them, so the same storm now floods more, and flooding at ordinary high tides has become several times more frequent along many US coasts (NOAA).</li>
+</ul>
+<h4>What about "before and after" photos?</h4>
+<p>Photos of the same shore taken decades apart are often shared as proof that the sea has not risen. A photo can't show it either way:</p>
+<ul>
+ <li>Tides move the water up and down by a meter or more, usually twice a day. That is many times more than the <span class="live" data-k="sl.rise">…</span> the sea has risen since 1993. Unless both photos were taken at exactly the same point in the tide, the comparison says nothing.</li>
+ <li>Wind, waves, air pressure and the season shift the waterline too.</li>
+ <li>The land moves. In southeastern Alaska the land is still rising after the ice age, faster than the sea, so local sea level there is falling. Along parts of the Gulf coast the land is sinking, and local sea level rises more than 10 mm a year (NOAA). One spot is not the whole ocean.</li>
+</ul>
+<p>That is why sea level is measured with tide gauges averaged over years, and with satellites that measure the whole ocean surface every few days.</p>
+<p class="src">Sources: <a href="https://www.climate.gov/news-features/understanding-climate/climate-change-global-sea-level">NOAA Climate.gov: Global sea level</a>; <a href="https://toolkit.climate.gov/high-tide-flooding">NOAA: High-tide flooding</a>; <a href="https://tidesandcurrents.noaa.gov/sltrends/faq.html">NOAA: Local sea level trends and land motion</a>; <a href="https://oceanservice.noaa.gov/facts/sealevel-global-local.html">NOAA: Global vs local sea level</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="least-cost" data-also="cost costs economy economics expensive lukewarm lomborg nordhaus carbon tax price net zero action policy">
+<summary><h3 class="ct"><q>Climate change isn't big enough to justify more than sensible, least-cost measures.</q></h3></summary>
+<div class="body">
+<p class="ans">Least cost is a fair test. But by that test the case for deep cuts is strong: the cheapest options can already halve emissions this decade, and most economic studies find that limiting warming to 2 °C costs less than the damage it avoids.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The scale: the planet is now about <span class="live" data-k="air.pre12">…</span> warmer than before industrialization (last 12 months), and has warmed <span class="live" data-k="air.trend">…</span> per decade over the last 30 years. <a href="air.html">See the data</a> On the policies in place in 2024, the UN expects about 3 °C by 2100 (UNEP Emissions Gap Report 2024).</li>
+ <li>Cheap cuts are plentiful. The IPCC found that options costing up to $100 per metric ton of CO₂ could cut global emissions to half of their 2019 level by 2030, and more than half of that potential costs under $20 a metric ton. New solar and wind power is now the cheapest electricity in most of the world.</li>
+ <li>The economists most often quoted for a slow approach have moved. William Nordhaus, whose cost-benefit model won him the Nobel prize, updated it in 2023: higher damages, a much higher cost per metric ton of CO₂, a lower best-value level of warming and a cheaper path to 2 °C (Barrage and Nordhaus).</li>
+ <li>Cost-benefit sums struggle with what can't be undone. Ice sheets that start to go keep raising sea level for centuries, and species that die out don't come back. Paying a modest premium to avoid such risks is how people treat every other big risk: it is what insurance is.</li>
+ <li>How fast to go, and with which tools, is a real political debate, and this site doesn't settle it. But the starting point that the problem is small doesn't hold.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a> (section C.12); <a href="https://www.unep.org/resources/emissions-gap-report-2024">UNEP Emissions Gap Report 2024</a>; <a href="https://www.nber.org/papers/w31112">Barrage and Nordhaus, results from the DICE-2023 model</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="wildfires" data-also="fire weather fire season longer fire seasons wildfire wildfires forest fires fire suppression forest management tinderbox smoke canada megafires natural fire cycle fewer fires burned area global burned area decreasing savanna grassland">
+<summary><h3 class="ct"><q>Wildfires are natural, or a forest management problem.</q> Or: <q>There are fewer fires than before.</q></h3></summary>
+<div class="body">
+<p class="ans">Fire is natural, and a century of putting fires out has left many forests overgrown. Both are true. Warming adds to it: hotter, drier air dries out the fuel and makes the fire season longer.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Counting fires is the wrong measure: most fires are small. What matters is the area burned and how intensely. In the US the number of fires hasn't risen since the 1980s, but the area burned each year has roughly doubled (NIFC).</li>
+ <li>In the western US, human-caused warming roughly doubled the forest area burned from 1984 to 2015 by drying out the fuel (Abatzoglou and Williams 2016).</li>
+ <li>Fire weather (hot, dry, windy days) has become more common: from 1979 to 2013 the fire weather season grew longer across a quarter of Earth's vegetated land, and about 19% longer on average worldwide (Jolly et al. 2015).</li>
+ <li>Charts of global burned area falling since 1900 mix two things. Before satellites (late 1990s) the numbers come from computer reconstructions, not measurements. And the measured decline is mostly savanna and grassland, mainly in Africa, turned into farms and pasture, where fewer fires can burn (Andela et al. 2017). Forest fires go the other way: the tree cover lost to fire is rising, and the most extreme wildfires more than doubled in frequency and intensity from 2003 to 2023 (Cunningham et al. 2024). <a href="slow.html">See the data</a></li>
+ <li>The past did have huge fires, in warm, dry spells such as the medieval period. That fits: warmth and drought make big fires more likely, then as now.</li>
+ <li>Better forest management and less warming aren't alternatives. Thinning and controlled burns reduce the fuel; cutting emissions reduces how dry it gets.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1073/pnas.1607171113">Abatzoglou and Williams 2016, PNAS</a>; <a href="https://doi.org/10.1126/science.aal4108">Andela et al. 2017, Science</a>; <a href="https://doi.org/10.1038/ncomms8537">Jolly et al. 2015, Nature Communications</a>; <a href="https://doi.org/10.1038/s41559-024-02452-2">Cunningham et al. 2024, Nature Ecology &amp; Evolution</a>; <a href="https://www.nifc.gov/fire-information/statistics/wildfires">National Interagency Fire Center: wildfire statistics</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="emissions-falling" data-also="emissions falling down 20% 2005 epa regulations industry innovation fracking natural gas">
+<summary><h3 class="ct"><q>Emissions are already falling, so regulation isn't needed.</q></h3></summary>
+<div class="body">
+<p class="ans">Falling emissions in some countries are good news, but the world's emissions are still near record highs, and CO₂ keeps building up until emissions reach about zero.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>CO₂ stays in the air for centuries, so what counts is the total. Even with lower emissions, the amount in the air keeps rising: <span class="live" data-k="co2.rate">…</span> a year on average over the last 10 years. <a href="co2.html">See the data</a></li>
+ <li>Fossil CO₂ emissions for the world as a whole have not started to fall yet. <a href="slow.html#fossil-s">See the data</a></li>
+ <li>In the US, emissions fell mainly because power plants switched from coal to gas, wind and solar, and because of efficiency. Industry innovation, markets and rules all played a part.</li>
+ <li>How to cut further is a fair political debate. That the job is done is not supported by the numbers.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.epa.gov/ghgemissions/inventory-us-greenhouse-gas-emissions-and-sinks">US EPA: Inventory of greenhouse gas emissions and sinks</a>; data: NOAA GML, Global Carbon Project</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="fewer-affected" data-also="extreme weather disasters fewer people affected deaths falling disaster deaths em-dat undrr 98% climate deaths lomborg heat deaths 2021 2022 europe">
+<summary><h3 class="ct"><q>Fewer people are affected by extreme weather than before.</q> Or: <q>Climate deaths have fallen 98% in a century.</q></h3></summary>
+<div class="body">
+<p class="ans">Fewer people die in weather disasters than a century ago, thanks to warnings, better buildings and richer countries. That is a success, not proof that the weather isn't changing.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The UN's disaster office counted more weather and climate disasters in 2000–2019 than in 1980–1999 (7,348 against 4,212), with about 4.2 billion people affected against 3.25 billion. Part of that rise is better reporting and a larger population.</li>
+ <li>Deaths from weather disasters have fallen strongly over the past century, by over 90% in the global disaster database. Warning systems, forecasts, shelters and richer countries work. Part of the drop also reflects poor records of early disasters, and heat deaths, which barely appear in those counts, are not falling.</li>
+ <li>The popular "climate deaths have fallen" bar chart ends in 2021. The next summer, heat killed an estimated 61,000 people in Europe alone (Ballester et al. 2023), more than any year it shows since the 1970s. Those deaths barely appear in the disaster database, because a heat wave doesn't kill in one place on one day.</li>
+ <li>The hazards themselves are measured directly: heat waves and heavy downpours have become more frequent and more intense over most land areas (IPCC). <a href="air.html">See the data</a></li>
+ <li>Keeping people safe gets harder and more expensive as the extremes grow: economic losses in 2000–2019 were almost twice those of 1980–1999.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.undrr.org/publication/human-cost-disasters-2000-2019">UN Office for Disaster Risk Reduction: The human cost of disasters 2000–2019</a>; <a href="https://doi.org/10.1038/s41591-023-02419-z">Ballester et al. 2023, Nature Medicine</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="two-degrees" data-also="two degrees 2 °c 1.5 °c small tiny day and night seasons nothing">
+<summary><h3 class="ct"><q>Two degrees is nothing. Temperatures change more than that between day and night.</q></h3></summary>
+<div class="body">
+<p class="ans">Two degrees on one afternoon is nothing. Two degrees added to the whole planet's average, every day and night, all year, is a lot: the last ice age was only about 6 °C colder than before industrialization.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>At the peak of the last ice age, with ice a few kilometers thick over Canada and northern Europe, the world was about 6 °C colder than in the 1800s (Tierney et al. 2020).</li>
+ <li>Land warms faster than the global average, which includes the oceans: the land has already warmed considerably more than the global figure. Now: about <span class="live" data-k="air.pre12">…</span> globally (last 12 months). <a href="air.html">See the data</a></li>
+ <li>A small shift in the average makes extremes much more common: a heat wave that came once in 50 years in a pre-industrial climate now comes about every 10 years, and at 2 °C about every 3–4 years (IPCC).</li>
+ <li>Half a degree matters: at 1.5 °C the IPCC expects 70–90% of warm-water coral reefs to decline; at 2 °C, more than 99%.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1038/s41586-020-2617-x">Tierney et al. 2020, Nature</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="dinosaurs" data-also="dinosaurs warmer past life thrived millions of years hothouse cretaceous high co2">
+<summary><h3 class="ct"><q>Life thrived when the Earth was much warmer, in the age of the dinosaurs.</q></h3></summary>
+<div class="body">
+<p class="ans">It did, after millions of years to adjust, with seas tens of meters higher and no cities or farms to lose. The problem isn't a warm world; it's getting there in a century or two.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Those warm periods came and went over millions of years. Today's warming is happening hundreds to thousands of times faster.</li>
+ <li>The times in Earth's history when CO₂ and temperature rose fast are linked to mass extinctions, including the worst of all, about 252 million years ago.</li>
+ <li>In those warm worlds there was little or no ice on land, and sea level was far higher. Hundreds of millions of people now live within a few meters of today's sea level. <a href="sea-level.html">See the data</a></li>
+ <li>Our farms, cities and water supplies were built for the stable climate of the last 10,000 years. "Life" will survive; the question is what it costs us and the species we share the planet with. See <a href="#adapt">"they will adapt"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; <a href="https://www.ipcc.ch/report/ar6/wg2/chapter/summary-for-policymakers/">IPCC AR6 Working Group II, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="climate-optimum" data-also="optimum climate optimum holocene optimum medieval optimum warmer is better beneficial warming good for humanity alarmism enjoy">
+<summary><h3 class="ct"><q>Enjoy your alarmism while humanity enjoys our climate optimum.</q></h3></summary>
+<div class="body">
+<p class="ans">"Climate optimum" is an old name for warm periods in the past, mostly in Europe. It was never a finding that warmer is better. And today is already warmer than those periods were, and still warming.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The "Holocene climatic optimum" (roughly 9,000 to 5,000 years ago) and the "medieval climate optimum" got their names a century ago from botanists and historians who found signs of warmth in Europe. Scientists now mostly call them "thermal maximum" and "Medieval Climate Anomaly", because they were neither worldwide nor good for everyone. See <a href="#medieval-warm">"the Medieval Warm Period was warmer"</a>.</li>
+ <li>The last decade was warmer than the warmest centuries of the last 10,000 years, around 6,500 years ago, which the IPCC puts at 0.2–1 °C above 1850–1900 (medium confidence). Over the last 12 months: <span class="live" data-k="air.pre12">…</span>. <a href="air.html">See the data</a></li>
+ <li>Farming, cities, coastlines and water supplies were built for the fairly stable climate of the last 10,000 years. What causes damage is leaving that range, and how fast: today's warming is many times faster than the warming at the end of the last ice age. See <a href="#dinosaurs">"life thrived when it was much warmer"</a> and <a href="#two-degrees">"two degrees is nothing"</a>.</li>
+ <li>Some places gain: longer growing seasons, fewer cold days. But in most of the world, milder winters save fewer lives than hotter summers cost (<a href="#cold-deaths">"more people die of cold"</a>), and record harvests come from better farming despite warming, not because of it (<a href="#crop-records">"crop yields keep breaking records"</a>).</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers (A.2.2)</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/chapter-2/">IPCC AR6 WG1 Chapter 2 (Holocene and medieval terms)</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="hurricanes" data-also="hurricanes cyclones typhoons storms not getting worse no trend number of hurricanes">
+<summary><h3 class="ct"><q>Hurricanes aren't getting worse.</q></h3></summary>
+<div class="body">
+<p class="ans">Partly true: the number of hurricanes each year hasn't clearly gone up. But the strongest ones have become a larger share, they drop more rain, and they intensify faster.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The IPCC finds no clear trend in the total number of tropical cyclones worldwide, and expects their number to stay similar or fall.</li>
+ <li>It does find that the share of major hurricanes (category 3–5) has likely grown over the last four decades, and that rainfall in hurricanes has increased: warmer air holds about 7% more water vapor per °C.</li>
+ <li>Rapid intensification, a storm strengthening by a category or more in a day, has become more common. It makes warnings and evacuations harder.</li>
+ <li>Higher seas make every storm surge reach further inland. <a href="sea-level.html">See the data</a> Warmer seas give storms more energy. <a href="sst.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: NOAA, NASA</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="extreme-picks" data-also="marine heatwaves ocean heatwaves extreme weather decreasing less extreme fewer extremes trend charts hurricanes tornadoes wildfires deaths cherry picking heat waves heavy rain">
+<summary><h3 class="ct"><q>Extreme weather is decreasing.</q> Usually with charts of hurricanes, tornadoes, burned area and disaster deaths.</h3></summary>
+<div class="body">
+<p class="ans">Look at which extremes are on those charts and which aren't. The ones science predicted would grow first, heat waves and heavy rain, are left out, and both have grown.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Hot extremes have become more frequent and more intense over most land areas since the 1950s; the IPCC calls this virtually certain. Heavy downpours have become more frequent and intense over most land areas with good records. <a href="air.html">See the data</a></li>
+ <li>Marine heatwaves, the ocean's version, have roughly doubled in frequency since the 1980s (IPCC, high confidence). They are rarely on those charts either. <a href="sst.html">See the data</a></li>
+ <li>Hurricane counts: science never predicted more hurricanes, but stronger, wetter and faster-strengthening ones. See <a href="#hurricanes">"hurricanes aren't getting worse"</a>.</li>
+ <li>Tornadoes: scientists don't claim warming makes more of them, and the early counts are inflated. See <a href="#tornadoes">"strong tornadoes are decreasing"</a>.</li>
+ <li>Global burned area: the decline is mostly savanna turned into farmland, and the pre-satellite part is reconstructed. Forest fires are growing. See <a href="#wildfires">"there are fewer fires"</a>.</li>
+ <li>Disaster deaths: they measure warnings, buildings and wealth, not the weather, and they miss most heat deaths. See <a href="#fewer-affected">"climate deaths have fallen"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: Copernicus ERA5</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="tornadoes" data-also="tornado tornadoes twister twisters ef2 ef3 ef4 ef5 strong violent storm prediction center tornado alley outbreaks fewer">
+<summary><h3 class="ct"><q>Strong tornadoes have been decreasing since 1950.</q></h3></summary>
+<div class="body">
+<p class="ans">The early counts are inflated: tornadoes before the mid-1970s were rated afterwards, mostly from newspaper reports, and often rated too strong. And scientists don't claim warming brings more tornadoes. This disproves a claim nobody made.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The Fujita scale was introduced in 1971. Tornadoes from 1950 to the early 1970s were rated afterwards from old records, which tended to overrate them; ratings since rely on damage surveys done on site (Verbout et al. 2006). A falling count of strong tornadoes is partly a change in how they were rated.</li>
+ <li>Tornadoes are too small for climate models to simulate directly, and the IPCC has low confidence in any trend. That is why no climate assessment predicts more of them.</li>
+ <li>What has been measured: in the US there are fewer days with tornadoes, but more tornadoes on the days that have them, so outbreaks have grown (Brooks et al. 2014). The area with the most tornadoes has also shifted east, toward the more populated Southeast (Gensini and Brooks 2018).</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1175/WAF910.1">Verbout et al. 2006, Weather and Forecasting</a>; <a href="https://doi.org/10.1126/science.1257460">Brooks et al. 2014, Science</a>; <a href="https://doi.org/10.1038/s41612-018-0048-2">Gensini and Brooks 2018, npj Climate and Atmospheric Science</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="existential" data-also="existential crisis threat extinction end of the world doom doomsday alarmism alarmist catastrophe catastrophic apocalypse define it">
+<summary><h3 class="ct"><q>Is there an existential climate crisis?</q> Or: <q>We won't go extinct, so there's no crisis.</q></h3></summary>
+<div class="body">
+<p class="ans">For humanity as a species, no: no scientific assessment predicts that we'll go extinct. For some low-lying island nations, yes: their land is at stake. For everyone else it is a damage problem, in food, heat and coasts. Not the end of the world isn't the same as not a problem.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The IPCC doesn't describe human extinction. It describes rising damage that grows with every bit of extra warming, and a growing risk of changes that can't be undone, such as ice sheet loss.</li>
+ <li>For atoll nations such as Tuvalu, Kiribati and the Marshall Islands, most land lies only a few meters above the sea. In 2023 Australia agreed to offer Tuvalu's citizens a path to move there because of rising seas. <a href="sea-level.html">See the data</a></li>
+ <li>The damage is already measured: warming has cut global farm productivity by about a fifth compared to a world without it. See <a href="#crop-records">"crop yields keep breaking records"</a>.</li>
+ <li>A problem doesn't have to be catastrophic to need action. A house fire isn't an existential threat to a city either, and we still have fire brigades.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg2/chapter/summary-for-policymakers/">IPCC AR6 Working Group II, Summary for Policymakers</a>; <a href="https://www.dfat.gov.au/geo/tuvalu/australia-tuvalu-falepili-union-treaty">Australia–Tuvalu Falepili Union treaty</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="polar-bears" data-also="polar bears thriving numbers increasing population bears">
+<summary><h3 class="ct"><q>Polar bears are thriving. There are more than ever.</q></h3></summary>
+<div class="body">
+<p class="ans">Numbers rose after hunting was limited in the 1970s. Today some populations are stable, some are falling, and many are not counted often enough to say. Their main threat, the loss of sea ice, is still growing.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Polar bears hunt seals from sea ice. When the ice melts earlier and forms later, they go hungry on land for longer.</li>
+ <li>Where populations are well studied, the southern ones are declining: in Canada's Western Hudson Bay, the count has roughly halved since the 1980s. Several others have too few surveys to show a trend (IUCN Polar Bear Specialist Group).</li>
+ <li>The 1973 international agreement that limited hunting is the main reason numbers grew after the 1960s, not a warm climate being good for them.</li>
+ <li>Arctic sea ice keeps shrinking. <a href="sea-ice.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.iucn-pbsg.org/population-status/">IUCN Polar Bear Specialist Group: population status</a>; data: NSIDC Sea Ice Index</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="crop-records" data-also="crop yields record harvests food production agriculture farmers wheat maize rice">
+<summary><h3 class="ct"><q>Crop yields keep breaking records, so warming isn't hurting.</q></h3></summary>
+<div class="body">
+<p class="ans">Yields rise because of better seeds, fertilizer and machines. Warming works against that progress: farm productivity worldwide is about a fifth lower than it would have been without it.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>World yields of maize, wheat, rice and soybeans have roughly doubled to tripled since the 1960s. <a href="slow.html#crops-s">See the data</a></li>
+ <li>One study estimated that climate change since 1961 has cut the growth of global farm productivity by about 21%, as if seven years of progress had been lost (Ortiz-Bobea et al. 2021).</li>
+ <li>Bad years show the risk: heat waves and droughts can cut harvests over large areas at once. See the dips in the second crop chart.</li>
+ <li>See also <a href="#plant-food">"CO₂ is plant food"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1038/s41558-021-01000-1">Ortiz-Bobea et al. 2021, Nature Climate Change</a>; data: FAO, FAOSTAT</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="coral-recovering" data-also="coral reefs great barrier reef record coral cover recovering bleaching">
+<summary><h3 class="ct"><q>Coral reefs are recovering. The Great Barrier Reef has record coral cover.</q></h3></summary>
+<div class="body">
+<p class="ans">Coral cover did reach record highs on parts of the Great Barrier Reef in 2022–24, mostly fast-growing corals that also die fastest. Then the 2024 mass bleaching brought the largest one-year drops on record.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Australia's marine institute (AIMS) found that from 2024 to 2025, coral cover fell from 39.8% to 30% in the northern reef, from 33.2% to 28.6% in the central reef and from 38.9% to 26.9% in the southern reef.</li>
+ <li>The main cause was heat stress from the 2024 mass bleaching, helped by cyclones and crown-of-thorns starfish. Mass bleaching events now come every few years instead of once in decades.</li>
+ <li>The fast-growing table corals that drive the quick recoveries are also the most easily killed by heat and storms, so the reef swings up and down more.</li>
+ <li>Warm-water reefs are among the systems most at risk: the IPCC expects 70–90% of them to decline at 1.5 °C, and more than 99% at 2 °C. <a href="sst.html">See sea temperatures</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.aims.gov.au/sites/default/files/2025-08/Media%20release%20AIMS%20Great%20Barrier%20Reef%20Report%206th%20August%2025.pdf">AIMS: Annual summary report on coral reef condition, August 2025</a>; <a href="https://www.ipcc.ch/report/ar6/wg2/chapter/summary-for-policymakers/">IPCC AR6 Working Group II, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="acidification-myth" data-also="ocean acidification myth alkaline ph sea water acidic shells">
+<summary><h3 class="ct"><q>Ocean acidification is a myth. The sea is alkaline.</q></h3></summary>
+<div class="body">
+<p class="ans">The sea is alkaline, and it is becoming less so. "Acidification" describes the direction of change, the way "cooling" describes coffee that is still hot.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The ocean takes up about a quarter of the CO₂ we emit. Dissolved CO₂ forms carbonic acid, so the pH falls.</li>
+ <li>Surface pH has dropped by about 0.1 since pre-industrial times. pH is logarithmic, so that means about 30% more hydrogen ions. It is measured directly, for example near Hawaiʻi since 1988. <a href="slow.html#ph-s">See the data</a></li>
+ <li>Shell-building animals, such as oysters, mussels, some plankton and corals, need carbonate ions, which become scarcer as the pH falls. Oyster hatcheries in the US Pacific Northwest have already had to treat their water.</li>
+ <li>This is the one effect of CO₂ that has nothing to do with temperature, so arguments about warming don't touch it.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 Working Group I, Summary for Policymakers</a>; data: Hawaii Ocean Time-series</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="adapt-dutch" data-also="adaptation adapt humans dutch netherlands dikes sea walls just adapt cheaper">
+<summary><h3 class="ct"><q>We'll just adapt, like the Dutch did.</q></h3></summary>
+<div class="body">
+<p class="ans">Adaptation works and is needed. But it costs money every year, works only up to limits, and isn't an option for everyone. It is a complement to cutting emissions, not a replacement.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>The Netherlands spends over a billion euros a year on its Delta Programme, with centuries of experience and one of the world's richest economies. Most low-lying countries have neither.</li>
+ <li>The IPCC finds that some hard limits to adaptation have already been reached, for some coral reefs, coastal wetlands, and polar and mountain ecosystems, and soft limits for some small farmers and coastal communities. More limits come with each extra fraction of a degree.</li>
+ <li>Sea walls don't help against heat waves, crop failures or water shortages. Each needs its own, separate adaptation.</li>
+ <li>Adaptation buys time; the size of the job depends on how much more warming there is. See also <a href="#least-cost">"only least-cost measures"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg2/chapter/summary-for-policymakers/">IPCC AR6 Working Group II, Summary for Policymakers</a>; <a href="https://english.deltaprogramma.nl/">Dutch Delta Programme</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+</section>
+
+<section class="grp" id="its-late">
+<h2>“Nothing can be done”</h2>
+<p class="gi">And finally: it's too late, someone else should go first, or the fixes don't work.</p>
+<details class="claim" id="too-late" data-also="doom doomer hopeless pointless give up 3 degrees 3 °c world near 2 degrees aerosol masking hidden warming darker earth albedo stress test on track 1.5 impossible physically impossible smart money">
+<summary><h3 class="ct"><q>It's too late, so nothing we do matters anymore.</q></h3></summary>
+<div class="body">
+<p class="ans">Some of it is too late, and no one can promise how this ends. But the physics is clear that what we do still sets how much worse it gets, and whatever warming we lock in lasts for thousands of years. That is a reason to keep going, not to stop.</p>
+<h4>What is already too late</h4>
+<ul>
+ <li>Over the last 12 months the planet was about <span class="live" data-k="air.pre12">…</span> warmer than before industrialization. The UN now accepts that passing the Paris limit of 1.5 °C can no longer be avoided; getting back below it later would need CO₂ to be removed from the air on a large scale. Exactly when the long-term average passes it depends on how you measure: see <a href="#already-15">"1.5 °C was already passed"</a>. <a href="air.html">See the data</a></li>
+ <li>Sea level will keep rising for centuries, and many coral reefs are probably lost.</li>
+ <li>Getting back to the climate of the 20th century would take thousands of years, unless CO₂ is removed from the air on a huge scale.</li>
+</ul>
+<h4>What is still open</h4>
+<ul>
+ <li>Warming roughly stops once CO₂ emissions reach net zero. The ocean would keep taking up heat, but the oceans and forests would also keep absorbing CO₂, and the two effects roughly cancel. So the temperature we end up with is close to the temperature on the day we reach net zero.</li>
+ <li>One complication: burning coal and oil also releases aerosols, tiny particles that reflect sunlight and cool the planet. As fossil fuels are cut, that cooling disappears too, and some hidden warming comes out. How much they hide is an estimate, not a measurement: about 0.4 °C, somewhere between 0.0 and 0.8 °C (IPCC). So "we already live in a near-2-degree world" takes the top of that range as fact. James Hansen, Leon Simons and colleagues argue this effect is larger than most estimates and is already speeding up warming; many other scientists think it is smaller. Even their paper finds that phasing out emissions quickly would prevent most of the long-term warming. <a href="eei.html">See the energy imbalance</a></li>
+ <li>Measured: Earth now reflects less sunlight than in the early 2000s, so it absorbs more (NASA's CERES satellites; fewer low clouds, less ice and snow, cleaner air). Whether that means warming is speeding up for good is still debated. <a href="eei.html#alb">See the data</a></li>
+ <li>That day is not set by physics. With the policies in place in 2025, warming would reach about 2.6 °C by 2100; if all announced targets were met, about 1.9 °C (Climate Action Tracker).</li>
+ <li>Thawing permafrost, wetlands, wildfires, lakes and rivers release extra greenhouse gas as the planet warms. Most projections leave this out; a 2026 study estimates it adds 20–30% to the warming since 2020. These emissions grow with every fraction of a degree, so they are a reason to stop sooner, not proof that it is hopeless.</li>
+ <li>Where we stand: CO₂ is still rising, by <span class="live" data-k="co2.rate">…</span> a year on average over the last 10 years. The rise in any single year swings with El Niño and La Niña (an El Niño year jumps), so one year says little. Real progress shows first in emissions, tracked by the <a href="https://globalcarbonbudget.org/">Global Carbon Project</a>, and only later as a slower rise in CO₂ over several years. <a href="co2.html">See the data</a></li>
+</ul>
+<h4>Even if you expect the worst</h4>
+<p>Many people who follow the science closely expect this to end badly, and some expect the world as we know it to break down. Very few of them conclude that nothing matters. Prof. Eliot Jacobson, who calls himself a doomer, ends his essay on it with kindness, generosity and service: if it lets one butterfly live one more day, it is worth doing. The physics says the stakes are far larger than one butterfly.</p>
+<p class="src">Sources: <a href="https://www.carbonbrief.org/explainer-will-global-warming-stop-as-soon-as-net-zero-emissions-are-reached/">Carbon Brief: Will warming stop at net zero?</a>; <a href="https://skepticalscience.com/stop-emissions-stop-warming.html">Skeptical Science: Stop emissions, stop warming</a>; <a href="https://climateactiontracker.org/global/historical-progress/">Climate Action Tracker: Historical progress</a>; <a href="https://www.scientificamerican.com/article/un-admits-exceeding-paris-agreements-1-5-degrees-c-warming-target-is-unavoidable/">Scientific American: UN admits exceeding 1.5 °C is unavoidable</a>; <a href="https://news.mongabay.com/2026/10/permafrost-wetland-wildfire-and-freshwater-emissions-could-amplify-climate-change-by-up-to-30-study-finds/">Mongabay: Natural emissions could amplify warming by up to 30%</a>; <a href="https://doi.org/10.1093/oxfclm/kgad008">Hansen et al. (2023): Global warming in the pipeline</a>; <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/summary-for-policymakers/">IPCC AR6 WG1 SPM (A.1.3, aerosol cooling)</a>; <a href="https://climatecasino.substack.com/p/on-being-a-doomer-2026-update">Eliot Jacobson, Climate Casino: On being a doomer (2026 update)</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="already-15" data-also="1.5 already passed exceeded crossed february 2026 2028 2033 the math says fit curve quadratic extrapolation never below 1.5 next 100 years paris limit broken">
+<summary><h3 class="ct"><q>The math says 1.5 °C was already passed in February 2026. No year in the next 100 years will be below 1.5 °C.</q></h3></summary>
+<div class="body">
+<p class="ans">Where the long-term trend crosses 1.5 °C depends on which curve you fit: the same data gives 2026, 2028 or 2033. "Around 1.5 °C now" is fair; an exact month is not. The 100-year prediction is possible, but the data doesn't show it yet.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Over the last 12 months: <span class="live" data-k="air.pre12">…</span> above 1850–1900. 2025 averaged 1.47 °C. In 2026, January to June stayed at 1.39–1.44 °C; El Niño then pushed August and September to about 1.7 °C. <a href="air.html">See the data</a></li>
+ <li>Same data, different fits (monthly ERA5, through September 2026): a straight line since 1970 crosses 1.5 °C in 2033; a curve since 1970 in 2028; a curve since 1980, the chart behind this claim, in spring 2026, and 2.0 °C in 2037. A curve keeps bending upward forever, which is why its far end is a guess.</li>
+ <li>The Paris limit refers to the average over 20 years. Whether it has been passed in that sense can only be confirmed about 10 years afterwards; single months and years go over it long before. See <a href="#two-degrees">"two degrees is nothing"</a>.</li>
+ <li>No year below 1.5 °C for 100 years: an estimate, not a measurement. If warming follows the steepest of those curves, and years keep scattering around it as they have (about ±0.1 °C), the chance of that is roughly one in two. Most of the risk lies in the next few years, so it will probably be settled by about 2031. A large volcanic eruption could bring a cool year at any time.</li>
+</ul>
+<p class="src">Sources: data: Copernicus ERA5, fits calculated by this site; <a href="https://www.ipcc.ch/sr15/chapter/chapter-1/">IPCC SR1.5 Chapter 1 (how 1.5 °C is defined)</a>; <a href="https://wmo.int/node/38645">WMO decadal update 2026</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="god-in-control" data-also="god christian faith religion bible creator lord will take care providence stewardship">
+<summary><h3 class="ct"><q>God is in control. If there's a real problem, He will take care of it.</q></h3></summary>
+<div class="body">
+<p class="ans">Many Christians see it the other way round: caring for creation is a task given to people. In the Bible, Adam is put in the garden "to work it and take care of it" (Genesis 2:15).</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Pope Francis's encyclical <i>Laudato si'</i> (2015) calls on Catholics to protect the climate as part of caring for creation and for the poor, who suffer most.</li>
+ <li>Evangelical groups in the US have long made the same case, under names like "creation care".</li>
+ <li>The old story of the flood: a man on his roof turns down a boat and a helicopter, waiting for God to save him. When he drowns and asks God why He didn't help, God says: "I sent you a boat and a helicopter." The warnings and the tools may be the help.</li>
+ <li>Faith and science needn't compete here. The measurements are the same for everyone. <a href="index.html">See the data</a></li>
+</ul>
+<p class="src">Sources: <a href="https://www.vatican.va/content/francesco/en/encyclicals/documents/papa-francesco_20150524_enciclica-laudato-si.html">Pope Francis, Laudato si' (2015)</a>; Genesis 2:15</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+<details class="claim" id="china-india" data-also="china india emit more nothing we do matters other countries developing countries">
+<summary><h3 class="ct"><q>China and India emit far more. Nothing we do matters.</q></h3></summary>
+<div class="body">
+<p class="ans">China is today's largest emitter, but per person it emits less than the US, and over history the US has emitted the most. Every country's share counts, and China is also building more clean energy than anyone.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>China emits about 30% of the world's CO₂ today, more than the US and the EU together. Per person, a Chinese resident emits less than an American, and an Indian resident a fraction of either.</li>
+ <li>Warming depends on the total CO₂ added since the 1800s. Over that time the US has emitted the most of any country, about a fifth of the total; China is second (Carbon Brief).</li>
+ <li>China installs more solar and wind power each year than the rest of the world combined, and makes most of the world's solar panels and batteries.</li>
+ <li>If everyone waits for someone else to go first, no one moves. See <a href="#only-one-percent">"my country is only 1%"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.carbonbrief.org/analysis-which-countries-are-historically-responsible-for-climate-change/">Carbon Brief: Which countries are historically responsible for climate change?</a>; data: Global Carbon Project</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="only-one-percent" data-also="one percent 1% small country only share our emissions netherlands uk australia canada">
+<summary><h3 class="ct"><q>My country is only 1% of emissions. What we do makes no difference.</q></h3></summary>
+<div class="body">
+<p class="ans">Almost every country is a small share. Taken together, the countries that each emit only a few percent produce a large part of the world total, so if they all reason this way, a large part of the problem is never touched.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Apart from the largest few emitters, every country is under a few percent of world emissions, yet those "small" emitters together add up to a large share of the total (Global Carbon Project).</li>
+ <li>Smaller, richer countries often emit much more per person than the world average.</li>
+ <li>Every country's choices also matter beyond its borders: the technology it buys, builds or sells gets cheaper for everyone. Solar panels became cheap partly because a few small countries bought them early.</li>
+ <li>Fossil CO₂ emissions for the world: <a href="slow.html#fossil-s">see the data</a>. See also <a href="#china-india">"China and India emit more"</a>.</li>
+</ul>
+<p class="src">Sources: data: Global Carbon Project; <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="renewables-grid" data-also="renewables wind solar grid reliable intermittent wind doesn't blow sun doesn't shine blackout baseload storage batteries">
+<summary><h3 class="ct"><q>Renewables can't run a modern grid. The wind doesn't always blow.</q></h3></summary>
+<div class="body">
+<p class="ans">Grids already run on high shares of wind and solar in several countries. The gaps are handled with a mix: wider grids, storage, flexible demand and some firm power.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Some grids already get a large part of their power from wind and solar: Denmark about half from wind alone; South Australia, Spain and Portugal also have very high shares.</li>
+ <li>The wind is rarely calm everywhere at once, so linking regions smooths the supply. Batteries cover hours; hydro, pumped storage and other flexible plants cover longer gaps.</li>
+ <li>Battery storage is being built very fast and has become much cheaper; it now keeps grids stable in places like California and Texas through the evening peak.</li>
+ <li>A fully clean grid is still a big engineering job, and the last few percent are the hardest. But "it can't work" is contradicted by grids that already do most of it.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a>; <a href="https://ember-energy.org/">Ember: electricity data</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="ev-worse" data-also="electric cars evs batteries mining lithium cobalt worse than petrol gasoline diesel">
+<summary><h3 class="ct"><q>Electric cars are worse than petrol cars, because of the batteries and mining.</q></h3></summary>
+<div class="body">
+<p class="ans">Making an electric car does cause more emissions, mostly from the battery. But it makes up for that within one to two years of driving, and over its life it emits far less, even on today's electricity.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Life-cycle studies count everything: mining, making the battery, the electricity, and scrapping. Over a car's life, a battery electric car in Europe causes roughly 60–70% less greenhouse gas than a petrol car; in the US, China and India it is also much lower (ICCT 2021).</li>
+ <li>As electricity gets cleaner, electric cars get cleaner too, during the car's life.</li>
+ <li>Mining for batteries has real environmental and human costs that need better rules. But a petrol car burns about its own weight in fuel every year or two, and that fuel is mined and drilled too, and burned only once.</li>
+ <li>Battery materials can be recycled; burned petrol can't.</li>
+</ul>
+<p class="src">Sources: <a href="https://theicct.org/publication/a-global-comparison-of-the-life-cycle-greenhouse-gas-emissions-of-combustion-engine-and-electric-passenger-cars/">ICCT 2021: A global comparison of the life-cycle greenhouse gas emissions of combustion engine and electric passenger cars</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="solar-payback" data-also="solar panels energy payback more energy to make than produce manufacturing">
+<summary><h3 class="ct"><q>Solar panels take more energy to make than they ever produce.</q></h3></summary>
+<div class="body">
+<p class="ans">They pay back the energy used to make them in about one to three years, depending on how sunny it is, and then keep producing for 25 to 30 years or more.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Studies of the full chain, from quartz to finished panel, put the energy payback time of modern silicon panels at around one year in sunny southern Europe and under two years in cloudier northern Europe (Fraunhofer ISE).</li>
+ <li>Over a 25–30 year life, a panel produces many times the energy that went into it.</li>
+ <li>Panels have also become far cheaper and more efficient: the cost of solar power fell by about 85–90% in the 2010s.</li>
+ <li>See also <a href="#solar-heat">"solar farms cause the heat"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ise.fraunhofer.de/en/publications/studies/photovoltaics-report.html">Fraunhofer ISE: Photovoltaics Report</a>; <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="turbines-birds" data-also="wind turbines kill birds bats eagles wildlife black blade">
+<summary><h3 class="ct"><q>Wind turbines kill birds.</q></h3></summary>
+<div class="body">
+<p class="ans">They do, and that should be kept as low as possible. But turbines kill far fewer birds than cats, windows or cars, and simple fixes help: painting one blade black cut bird deaths by about 70% in a Norwegian study. Climate change threatens far more birds.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>In the US, cats kill an estimated 1.3–4 billion birds a year and collisions with buildings up to about a billion. Wind turbines kill a few hundred thousand.</li>
+ <li>Siting matters most: keeping turbines out of migration routes and away from cliffs where birds of prey hunt.</li>
+ <li>At the Smøla wind farm in Norway, painting one of the three blades black made it easier for birds to see the rotor, and deaths fell by about 72% (May et al. 2020). Pausing turbines when large flocks pass also works.</li>
+ <li>Climate change puts about two-thirds of North American bird species at risk of extinction if warming continues (Audubon).</li>
+</ul>
+<p class="src">Sources: <a href="https://doi.org/10.1002/ece3.6592">May et al. 2020, Ecology and Evolution</a>; <a href="https://doi.org/10.1038/ncomms2380">Loss et al. 2013, Nature Communications</a>; <a href="https://www.audubon.org/climate/survivalbydegrees">Audubon: Survival by Degrees</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="tech-later" data-also="technology will fix it carbon capture direct air capture geoengineering removal innovation later">
+<summary><h3 class="ct"><q>Technology will fix it later: carbon capture, or geoengineering.</q></h3></summary>
+<div class="body">
+<p class="ans">Some CO₂ removal will be needed. But today it removes a tiny fraction of what we emit, at a high price. Not emitting a metric ton is far cheaper than taking it back out of the air.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Almost all CO₂ removal today is trees and soils. New methods, including machines that pull CO₂ from the air, remove around a million metric tons a year, against about 40 billion metric tons emitted, and machine capture costs several hundred dollars a metric ton (State of Carbon Dioxide Removal).</li>
+ <li>Every metric ton left in the air keeps warming for centuries. Waiting for a future fix means that fix has to remove all the extra CO₂ too.</li>
+ <li>Blocking sunlight (geoengineering) wouldn't stop ocean acidification, and stopping it suddenly would bring the delayed warming back within a few years.</li>
+ <li>The tools that cut emissions the most are cheap and available now: solar, wind, efficiency, electric heat and transport (IPCC). See <a href="#least-cost">"only least-cost measures"</a>.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.stateofcdr.org/">The State of Carbon Dioxide Removal</a>; <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="individual-pointless" data-also="individual action pointless personal carbon footprint bp my footprint lifestyle">
+<summary><h3 class="ct"><q>Individual action is pointless. BP invented the carbon footprint.</q></h3></summary>
+<div class="body">
+<p class="ans">Both are partly true: BP did popularize the personal "carbon footprint", and the biggest cuts come from changing energy systems, not from guilt. But people's choices add up, and they shape what companies and politicians do.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>BP's advertising campaign in the mid-2000s made the personal carbon footprint famous, shifting attention from producers to consumers.</li>
+ <li>Systems matter most: how electricity is made, how cities are built, what cars and heating are on sale. Those change through policy, investment and votes.</li>
+ <li>Choices still count, especially the big ones: how we heat and cool our homes, what we drive, how often we fly, what we eat. In rich countries they can cut a household's emissions substantially.</li>
+ <li>Early buyers of solar panels, heat pumps and electric cars helped make them cheap for everyone. And what people buy, say and vote for tells companies and politicians what is wanted.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a> (chapter 5, demand and services)</p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+<details class="claim" id="net-zero-bankrupt" data-also="net zero bankrupt cost expensive economy jobs energy bills">
+<summary><h3 class="ct"><q>Net zero will bankrupt us.</q></h3></summary>
+<div class="body">
+<p class="ans">The transition costs money up front and saves it later: wind and solar are now the cheapest new electricity in most places, and fuel costs fall away. The damage from unchecked warming costs money too.</p>
+<h4>The evidence</h4>
+<ul>
+ <li>Solar power costs about 85–90% less than in 2010, and wind and batteries have also become far cheaper. In most countries new wind and solar are cheaper than new coal or gas plants.</li>
+ <li>The costs come early (building new power plants, grids, insulation); the savings come over decades (no fuel to buy).</li>
+ <li>Most economic studies find the benefits of limiting warming to 2 °C outweigh the costs (IPCC). See <a href="#least-cost">"only least-cost measures"</a>.</li>
+ <li>How to share the costs fairly is a real political question. That doing nothing is cheaper is not what the numbers show.</li>
+</ul>
+<p class="src">Sources: <a href="https://www.ipcc.ch/report/ar6/wg3/chapter/summary-for-policymakers/">IPCC AR6 Working Group III, Summary for Policymakers</a></p>
+<div class="bar"><span class="stamp"></span><button type="button" class="nb cp">Copy link to this answer</button></div>
+</div>
+</details>
+
+</section>
+</div>
+
+<script>
+// ---- tabs: one group of claims at a time. The address (#group or #claim-id) picks the tab, so shared links keep working.
+(function(){
+ const G=[...document.querySelectorAll('.grp')],bar=document.getElementById('tabs');
+ G.forEach(g=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.id='tab-'+g.id;
+  b.setAttribute('aria-controls',g.id);g.setAttribute('role','tabpanel');g.setAttribute('aria-labelledby',b.id);
+  b.innerHTML='<span>'+g.querySelector('h2').textContent+'</span><span class="n">'+g.querySelectorAll('details.claim').length+'</span>';
+  b.onclick=()=>{show(g);history.replaceState(null,'','#'+g.id)};bar.appendChild(b)});
+ function show(g){G.forEach(x=>{const on=x===g;x.classList.toggle('active',on);const b=document.getElementById('tab-'+x.id);
+  b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1})}
+ bar.addEventListener('keydown',e=>{const i=G.findIndex(g=>g.classList.contains('active')),d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;
+  if(!d)return;const g=G[(i+d+G.length)%G.length];show(g);document.getElementById('tab-'+g.id).focus();history.replaceState(null,'','#'+g.id)});
+ function fromHash(){const el=document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  const g=el&&(el.classList.contains('grp')?el:el.closest('.grp'));show(g||G[0])}
+ fromHash();window.addEventListener('hashchange',fromHash);
+})();
+</script>
+<script>
+// ---- search: narrows the list to the answers that contain every word typed (claim, answer, evidence and the extra
+//      words in data-also, for words people use that the text doesn't). While searching, all groups show; clearing
+//      the box goes back to the tabs. Matching answers are shown collapsed. claims.html?q=word opens the page already searched. Enter opens the first match.
+(function(){
+ const box=document.getElementById('q'),x=document.getElementById('qx'),st=document.getElementById('qst'),
+  list=document.querySelector('.claims'),tabs=document.getElementById('tabs'),D=[...document.querySelectorAll('details.claim')];
+ const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/co₂/g,'co2');
+ function run(push){
+  const words=norm(box.value).split(/[\s,.;:!?"()]+/).filter(Boolean);
+  x.hidden=!box.value;list.classList.toggle('searching',!!words.length);tabs.classList.toggle('searching',!!words.length);
+  if(push){const u=new URL(location.href);if(words.length)u.searchParams.set('q',box.value);else u.searchParams.delete('q');history.replaceState(null,'',u)}
+  if(!words.length){st.textContent='';D.forEach(d=>d.classList.remove('miss'));document.querySelectorAll('.grp').forEach(g=>g.classList.remove('none'));return []}
+  D.forEach(d=>d.open=false);                       // results start collapsed: just the list of matching claims
+  const hit=D.filter(d=>{const h=norm(d.textContent+' '+(d.dataset.also||''));const m=words.every(w=>h.includes(w));d.classList.toggle('miss',!m);return m});
+  document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('none',!g.querySelector('details.claim:not(.miss)')));
+  st.textContent=hit.length?(hit.length===1?'1 answer matches':hit.length+' answers match')+(hit.length<=3?'; press Enter to open the first':''):'No answer matches. Try fewer or other words.';
+  return hit}
+ box.addEventListener('input',()=>run(true));
+ box.addEventListener('keydown',e=>{if(e.key==='Escape'){box.value='';run(true)}
+  if(e.key==='Enter'){e.preventDefault();const h=run(false);if(h.length){h[0].open=true;h[0].scrollIntoView({block:'start'});h[0].querySelector('summary').focus()}}});
+ x.onclick=()=>{box.value='';run(true);box.focus()};
+ // a link to an answer that the search is hiding ("See also …") ends the search, so the answer can open
+ window.addEventListener('hashchange',()=>{const el=document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if(el&&(el.classList.contains('miss')||el.classList.contains('none'))){box.value='';run(true)}});
+ const q=new URLSearchParams(location.search).get('q');if(q){box.value=q;run(false)}
+})();
+</script>
+<script>
+// ---- accordion: all closed, except the answer a link points to
+function openFromHash(){const id=decodeURIComponent(location.hash.slice(1)),el=id&&document.getElementById(id);
+ if(el&&el.tagName=='DETAILS'){el.open=true;requestAnimationFrame(()=>el.scrollIntoView({block:'start'}))}}
+openFromHash();window.addEventListener('hashchange',openFromHash);
+let wasOpen=[];
+window.addEventListener('beforeprint',()=>{const D=[...document.querySelectorAll('details.claim')];wasOpen=D.map(d=>d.open);D.forEach(d=>d.open=true)});
+window.addEventListener('afterprint',()=>document.querySelectorAll('details.claim').forEach((d,i)=>d.open=!!wasOpen[i]));
+
+// ---- copy-link buttons: they copy c/<id>.html, a share link with this answer's own preview card
+//      (X and others ignore the #part of a link); it forwards readers to claims.html#<id>. Made by scripts/build_claim_cards.py
+document.querySelectorAll('.claim').forEach(s=>{const b=s.querySelector('.cp');b.onclick=()=>{
+ const url=new URL('c/'+s.id+'.html',location.href).href,done=()=>{b.textContent='Link copied';setTimeout(()=>b.textContent='Copy link to this answer',2000)};
+ if(navigator.clipboard)navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url));else prompt('Copy this link:',url)}});
+
+// ---- live numbers come from indicators.js (shared with the front page and the "In short" boxes)
+EI.fill(document);
+// "Data through" line under each answer, built from the indicators that answer uses
+document.querySelectorAll('details.claim').forEach(d=>{const ids=[...new Set([...d.querySelectorAll('[data-k]')].map(e=>e.dataset.k.split('.')[0]))],st=d.querySelector('.stamp');
+ Promise.allSettled(ids.map(id=>EI.get(id).then(r=>`${EI.NAMES[id]} ${r.through}`))).then(R=>{const t=R.filter(r=>r.status=='fulfilled').map(r=>r.value);if(t.length)st.textContent='Data through: '+t.join('; ')})});
+</script></main></body></html>

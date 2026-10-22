@@ -1,0 +1,39 @@
+name: Fetch reference document
+
+# Saves the text of a reference PDF (a report the site quotes numbers from) into reference/, so the exact
+# values and wording can be checked later. Run by hand; nothing runs on a schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "PDF to fetch"
+        required: true
+      name:
+        description: "File name in reference/, without extension (e.g. planetary_health_check_2026)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and extract text
+        env:
+          URL: ${{ inputs.url }}
+          NAME: ${{ inputs.name }}
+        run: |
+          case "$NAME" in *[!A-Za-z0-9_-]*|"") echo "::error::name may only use letters, digits, - and _"; exit 1;; esac
+          sudo apt-get install -y -qq poppler-utils >/dev/null
+          curl -fsSL --retry 3 -A "Mozilla/5.0 (earthindicators.org reference fetch)" -o doc.pdf "$URL"
+          file doc.pdf | grep -q PDF || { echo "::error::not a PDF"; exit 1; }
+          { echo "Source: $URL"; echo "Fetched: $(date -u +%Y-%m-%d)"; echo; pdftotext -layout doc.pdf -; } > "reference/$NAME.txt"
+          wc -c "reference/$NAME.txt"
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add reference
+          git diff --cached --quiet || (git commit -m "Reference: ${{ inputs.name }}" && git pull --rebase && git push)

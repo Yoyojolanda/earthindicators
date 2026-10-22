@@ -1,0 +1,34 @@
+{
+ "source": "Planetary Health Check 2026, Planetary Boundaries Science Lab, Potsdam Institute for Climate Impact Research (PIK)",
+ "table": "Table 7.1 (Latest Planetary Boundaries assessments in numbers) and Table 7.2 (data coverage), full report pages 107-108; text saved in reference/planetary_health_check_2026.txt",
+ "url": "https://www.planetaryhealthcheck.org",
+ "report_url": "https://publications.pik-potsdam.de/pubman/item/item_35009/component/file_35022/PlanetaryHealthCheck2026.pdf",
+ "published": "2026-09-22",
+ "note": "ref = Holocene-like, pre-industrial or alternative baseline; pb = Planetary Boundary; hr = start of the High-Risk Zone; cur = current value (a two-number list is a range); data_to = last year of the data behind the current value (Table 7.2).",
+ "boundaries": [
+  {"id": "climate", "name": "Climate change", "status": "transgressed", "cvs": [
+   {"id": "co2", "name": "CO₂ in the air", "unit": "ppm", "ref": 280, "pb": 350, "hr": 450, "cur": 426, "data_to": 2025, "live": "co2", "link": "co2.html"},
+   {"id": "rf", "name": "Total warming push from human activity (radiative forcing)", "unit": "W/m²", "ref": 0, "pb": 1, "hr": 1.5, "cur": 3.10, "data_to": 2025, "link": "ghg.html"}]},
+  {"id": "bio", "name": "Biosphere integrity", "status": "transgressed", "cvs": [
+   {"id": "emsy", "name": "Extinction rate (genetic diversity)", "unit": "extinctions per million species-years", "ref": 1, "pb": 10, "hr": 100, "cur": [100, 1000], "data_to": 2000, "link": "slow.html#rli-s"},
+   {"id": "hanpp", "name": "Share of plant growth taken by people (functional integrity, HANPP)", "unit": "% of pre-industrial plant growth", "ref": 0, "pb": 10, "hr": 20, "cur": [21, 30], "data_to": 2010}]},
+  {"id": "land", "name": "Land system change", "status": "transgressed", "cvs": [
+   {"id": "forest", "name": "Forest left, as % of original forest cover", "unit": "%", "ref": 100, "pb": 78, "hr": 54, "cur": 64, "data_to": 2022, "link": "slow.html#trees-s"}]},
+  {"id": "water", "name": "Freshwater change", "status": "transgressed", "cvs": [
+   {"id": "blue", "name": "Blue water: land area with unusual river flow", "unit": "% of ice-free land", "ref": 10.3, "pb": 12.9, "hr": 50, "cur": 22.6, "data_to": 2019, "link": "water.html"},
+   {"id": "green", "name": "Green water: land area with unusual soil moisture", "unit": "% of ice-free land", "ref": 9.8, "pb": 12.4, "hr": 50, "cur": 22.0, "data_to": 2019, "link": "water.html"}]},
+  {"id": "flows", "name": "Nitrogen and phosphorus flows", "status": "transgressed", "cvs": [
+   {"id": "p_global", "name": "Phosphorus flowing from rivers into the ocean (global)", "unit": "million metric tons a year", "ref": 0, "pb": 11, "hr": 100, "cur": 4.4, "data_to": 2023},
+   {"id": "p_reg", "name": "Mined phosphorus put on cropland (regional)", "unit": "million metric tons a year", "ref": 0, "pb": 6.2, "hr": 11.2, "cur": 18.2, "data_to": 2023},
+   {"id": "n", "name": "Nitrogen fixed for farming (fertilizer and crops)", "unit": "million metric tons a year", "ref": 0, "pb": 62, "hr": 82, "cur": 165, "data_to": 2023}]},
+  {"id": "ocean", "name": "Ocean acidification", "status": "transgressed", "cvs": [
+   {"id": "arag", "name": "Aragonite saturation of surface seawater (what shells are built from)", "unit": "Ω", "ref": 3.57, "pb": 2.86, "hr": 2.50, "cur": 2.85, "data_to": 2024, "link": "slow.html#ph-s"}]},
+  {"id": "aerosol", "name": "Aerosol loading", "status": "safe", "cvs": [
+   {"id": "aod", "name": "Haze difference between the hemispheres (aerosol optical depth)", "unit": "AOD difference", "ref": 0.04, "pb": 0.1, "hr": 0.25, "cur": 0.07, "data_to": 2025, "link": "eei.html#aer"}],
+   "regional": {"name": "South Asia (proposed regional boundary)", "pb": 0.25, "hr": 0.5, "cur": 0.32}},
+  {"id": "ozone", "name": "Ozone layer", "status": "safe", "cvs": [
+   {"id": "o3", "name": "Ozone in the stratosphere, world average", "unit": "Dobson units", "ref": 292, "pb": 277, "hr": 263, "cur": 285.7, "data_to": 2025, "link": "ghg.html"}]},
+  {"id": "novel", "name": "Novel entities", "status": "transgressed", "cvs": [
+   {"id": "novel", "name": "Synthetic chemicals and materials released without adequate safety testing", "unit": "%", "ref": 0, "pb": 0, "hr": null, "cur": ">0", "data_to": 2024, "nonumeric": true}]}
+ ]
+}

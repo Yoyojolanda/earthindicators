@@ -1,0 +1,42 @@
+name: Update slow signals (emissions, ocean pH, AMOC, Red List Index, trees, crops, cherry blossom)
+
+# These sources publish once a year or less often, so a weekly check is plenty. Each source is handled on its own
+# by scripts/build_slow.py; a failed download keeps the previous data. data/slow_status.json records how far each
+# series reaches and the date new data last arrived.
+on:
+  schedule:
+    - cron: "20 6 * * 1"       # Mondays
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4
+      - name: Download and check
+        run: python -u scripts/build_slow.py
+      - name: CO2 history records (downloaded once; kept afterwards)
+        continue-on-error: true
+        run: python -u scripts/build_co2_history.py
+      - name: El Niño tree-ring winters, Cook and Cane 2024 (downloaded once; kept afterwards)
+        continue-on-error: true
+        run: python -u scripts/build_nino_treering.py
+      - name: Hansen's monthly temperature table (GISTEMP, 1880-1920 baseline) for the climate models page
+        continue-on-error: true
+        run: python -u scripts/build_models.py --hansen-temp
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git add reference/hansen_temp_check.txt 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Update slow signals" && git pull --rebase && git push)

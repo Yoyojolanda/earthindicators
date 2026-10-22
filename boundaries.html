@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Planetary boundaries</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Planetary boundaries: seven of nine crossed">
+<meta property="og:description" content="The nine planetary boundaries and their 13 measures, from the Planetary Health Check 2026: how far each is from the safe zone, and which ones Earth Indicators measures itself.">
+<meta property="og:url" content="https://earthindicators.org/boundaries.html">
+<meta property="og:image" content="https://earthindicators.org/og/boundaries.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Planetary boundaries: seven of nine crossed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="The nine planetary boundaries and their 13 measures, from the Planetary Health Check 2026: how far each is from the safe zone, and which ones Earth Indicators measures itself.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:500px;--ph:470px}
+.st{font-size:13px;color:var(--mut);margin:-2px 0 10px}
+h2.sec{font-size:20px;margin:28px 0 6px}
+.pbt{width:100%;border-collapse:collapse;font-size:14px}
+.pbt td,.pbt th{padding:6px 6px;border-top:1px solid var(--line,rgba(127,127,127,.25));vertical-align:top;text-align:left}
+.pbt th{font-size:12px;color:var(--mut);font-weight:600}
+.pbt td.n{white-space:nowrap;text-align:right}
+.pbt tr.bd td{font-weight:700;padding-top:14px}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:9px;padding:1px 8px;color:#fff;white-space:nowrap}
+.pill.safe{background:#2e8b57}.pill.ir{background:#e08a00}.pill.hr{background:#c8102e}
+.tag{font-size:11.5px;color:var(--mut)}
+.tag.live{color:#2e8b57;font-weight:600}
+@media (max-width:600px){.pbt .hide-s{display:none}}
+</style></head><body><main>
+<h1>Planetary boundaries</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p class="sub">Climate change is one of nine ways people are pushing the Earth system. For each, scientists have set a boundary: a level that kept the planet in the stable state of the last 10,000 years, with a margin for what is not yet known. Past the boundary lies a zone of increasing risk, and beyond that a high-risk zone. This page shows the latest assessment, the <a href="https://www.planetaryhealthcheck.org" target="_blank" rel="noopener">Planetary Health Check 2026</a>, and marks which numbers Earth Indicators measures itself.</p>
+<p id="err"></p>
+
+<section id="pb-s" class="hide">
+<div class="cards" id="pb-cards"></div>
+<div class="box" data-nav="All boundaries"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div>
+<p id="pb-sel" style="margin:8px 0 0;font-size:14px;min-height:1.4em"></p>
+<p class="sub" id="pb-key" style="margin:8px 0 0"></p></div>
+<ul id="pb-read"></ul>
+</section>
+
+<section id="tab-s" class="hide">
+<h2 class="sec">The numbers</h2>
+<p class="st">Assessed values from the Planetary Health Check 2026, Table 7.1; "measured here" means the value is updated by this site from its own data.</p>
+<div class="box" data-nav="The numbers"><table class="pbt"><thead><tr><th>Measure</th><th class="n">Now</th><th class="n hide-s">Boundary</th><th class="n hide-s">High risk from</th><th>Status</th></tr></thead><tbody id="pb-tab"></tbody></table></div>
+<p class="sub">Source: Planetary Health Check 2026, Planetary Boundaries Science Lab, Potsdam Institute for Climate Impact Research, published 22 September 2026 (<a href="https://www.planetaryhealthcheck.org" target="_blank" rel="noopener">planetaryhealthcheck.org</a>; <a href="https://publications.pik-potsdam.de/pubman/item/item_35009/component/file_35022/PlanetaryHealthCheck2026.pdf" target="_blank" rel="noopener">full report</a>), Table 7.1 (values) and Table 7.2 (data coverage). The report counts 13 control variables; phosphorus has two measures, a global one and a regional one, shown here as separate rows. How the chart is scaled: each bar runs from the pre-industrial or Holocene-like reference (0) to the boundary (1) in a straight line, then from the boundary to the start of the high-risk zone (2), then on at the same size per step beyond it; values far past that are cut off at the right edge and labelled with their real number. Measures where lower is worse (forest, aragonite, ozone) are turned around so that longer always means worse. A range (extinctions, plant growth taken by people) is drawn solid to its low end and hatched to its high end. Novel entities have no numeric measure: the boundary is zero untested release, and it is clearly crossed, so that row has no length of its own. The CO₂ bar uses the latest 12 months of NOAA's Mauna Loa record (<a href="co2.html">CO₂ page</a>) instead of the report's 426 ppm. The site's own pages measure related things in a different way, so they are linked but not swapped in: greenhouse-gas forcing on the <a href="ghg.html">other gases page</a> (the boundary counts all human forcing, including aerosols), ocean pH near Hawaiʻi and tree cover loss on the <a href="slow.html">slow signals page</a>, and sulfur dioxide on the <a href="eei.html#aer">energy imbalance page</a>.</p>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+const charts=[],f=(x,d)=>(+x).toLocaleString('en-US',{maximumFractionDigits:d??2});
+const CAP=4.2;
+const PN={'co2.html':'CO₂','ghg.html':'Other gases','slow.html':'Slow signals','water.html':'Water cycle','eei.html':'Energy imbalance'};
+const SHORT={co2:'CO₂ in the air',rf:'Warming push (forcing)',emsy:'Extinction rate',hanpp:'Plant growth taken by people',forest:'Forest left',blue:'Blue water (rivers)',green:'Green water (soil)',
+ p_global:'Phosphorus to the ocean',p_reg:'Phosphorus on cropland',n:'Nitrogen fixed for farming',arag:'Ocean acidification (aragonite)',aod:'Aerosol haze',o3:'Ozone layer',novel:'Novel entities'};
+// zone position: 0 = reference, 1 = boundary, 2 = start of high risk, then the same step size beyond (works whether higher or lower is worse)
+const pos=(c,v)=>{const s=c.pb-c.ref,d=(v-c.ref)/s;if(d<=1)return Math.max(0,d);const z=(v-c.pb)/(c.hr-c.pb);return 1+z};
+const zone=p=>p<=1?'safe':p<2?'ir':'hr',ZN={safe:'Safe',ir:'Increasing risk',hr:'High risk'};
+const GREEN='#2e8b57',RED='#c8102e';
+const mix=(a,b,t)=>{const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)),A=h(a),B=h(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')};
+const col=p=>p<=1?GREEN:p<2?mix('#f2c230','#ef7d1a',p-1):RED;
+const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
+const hatch=(hex,a=.25)=>{const k=document.createElement('canvas');k.width=k.height=8;const x=k.getContext('2d');
+ x.fillStyle=rgba(hex,a);x.fillRect(0,0,8,8);x.strokeStyle=hex;x.lineWidth=1.5;x.beginPath();x.moveTo(-2,2);x.lineTo(2,-2);x.moveTo(0,8);x.lineTo(8,0);x.moveTo(6,10);x.lineTo(10,6);x.stroke();return x.createPattern(k,'repeat')};
+// coloured zones behind the bars
+const zones={id:'zones',beforeDatasetsDraw(ch){const{ctx,chartArea:a,scales:{x}}=ch,X=v=>x.getPixelForValue(v),al=THEME.dark?.16:.12;ctx.save();
+ ctx.fillStyle=rgba(GREEN,al);ctx.fillRect(X(0),a.top,X(1)-X(0),a.bottom-a.top);
+ const g=ctx.createLinearGradient(X(1),0,X(2),0);g.addColorStop(0,rgba('#f2c230',al+.04));g.addColorStop(1,rgba('#ef7d1a',al+.04));ctx.fillStyle=g;ctx.fillRect(X(1),a.top,X(2)-X(1),a.bottom-a.top);
+ ctx.fillStyle=rgba(RED,al);ctx.fillRect(X(2),a.top,a.right-X(2),a.bottom-a.top);
+ ctx.strokeStyle=THEME.ink;ctx.lineWidth=1.5;ctx.setLineDash([5,4]);[1,2].forEach(v=>{ctx.beginPath();ctx.moveTo(X(v),a.top);ctx.lineTo(X(v),a.bottom);ctx.stroke()});
+ ctx.setLineDash([]);ctx.fillStyle=THEME.mut;ctx.font='600 12px system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';
+ // slanted up to the right (about 2 o'clock), so the labels never run into each other on a narrow screen
+ [[.5,'Safe'],[1.5,'Increasing risk'],[(2+CAP)/2,'High risk']].forEach(([v,t])=>{ctx.save();ctx.translate(X(v)-4,a.top-4);ctx.rotate(-35*Math.PI/180);ctx.fillText(t,0,0);ctx.restore()});ctx.restore()}};
+// the real value at the end of each bar
+const ends=R=>({id:'ends',afterDatasetsDraw(ch){const{ctx,scales:{x,y}}=ch;ctx.save();ctx.font='12px system-ui,sans-serif';ctx.textBaseline='middle';
+ R.forEach((r,i)=>{const py=y.getPixelForValue(i),e=Math.min(CAP,r.hi),px=x.getPixelForValue(e),txt=r.txt;
+  if(r.hi>=CAP-.6&&r.hi===r.lo){ctx.fillStyle='#fff';ctx.textAlign='right';ctx.font='700 12px system-ui,sans-serif';ctx.fillText(txt+(r.hi>CAP?' ▶':''),px-6,py)}
+  else if(r.hi>=CAP-.6){ctx.fillStyle=THEME.ink;ctx.textAlign='right';ctx.font='700 12px system-ui,sans-serif';ctx.fillText(txt+(r.hi>CAP?' ▶':''),px-6,py)}
+  else{ctx.fillStyle=THEME.ink;ctx.textAlign='left';ctx.font='12px system-ui,sans-serif';ctx.fillText(txt,px+5,py)}});ctx.restore()}});
+
+function build(P,co2){
+ const rows=[];
+ P.boundaries.forEach(b=>b.cvs.forEach(c=>{
+  let cur=c.cur,live=null;
+  if(c.live==='co2'&&co2){cur=co2.v;live=co2}
+  if(c.nonumeric){rows.push({b,c,lo:CAP,hi:CAP,z:'hr',txt:'crossed (no number)',cur,live,sort:99});return}
+  const v=[].concat(cur),lo=pos(c,v[0]),hi=pos(c,v[v.length-1]);
+  const u=c.unit==='%'||c.unit.startsWith('%')?'%':c.unit==='ppm'?' ppm':c.unit==='W/m²'?' W/m²':c.unit==='Dobson units'?' DU':'';
+  const txt=v.map(x=>f(x)).join('–')+u;
+  rows.push({b,c,lo,hi,z:zone(lo),txt,cur,live,sort:(lo+Math.min(hi,lo+3))/2})}));
+ rows.sort((a,b)=>a.sort-b.sort);
+ // one bar per boundary: the measure furthest along (the report calls a boundary crossed if any of its measures is)
+ const bars=P.boundaries.map(b=>{const m=rows.filter(r=>r.b===b);return{...m[m.length-1],all:m}}).sort((a,b)=>a.sort-b.sort);
+ const nB=P.boundaries.length,crossed=P.boundaries.filter(b=>b.status!=='safe'),cnt=k=>bars.filter(r=>r.z===k).length;
+ document.querySelectorAll('section.hide').forEach(s=>s.classList.remove('hide'));
+ $('pb-cards').innerHTML=[[`${crossed.length} of ${nB}`,'boundaries crossed (Planetary Health Check 2026)'],
+  [`${cnt('hr')}`,'in the high-risk zone (by their worst measure)'],[`${cnt('ir')}`,'in the zone of increasing risk'],
+  [`${cnt('safe')}`,`still in the safe zone: ${bars.filter(r=>r.z==='safe').map(r=>r.b.name.toLowerCase()).join(' and ')}`]]
+  .map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`The planetary boundaries: how far each boundary has gone past its safe level (Planetary Health Check 2026)`;
+ const reg=P.boundaries.find(b=>b.regional);
+ $('pb-key').innerHTML=`One bar per boundary, showing its worst measure (the report counts a boundary as crossed when any of its measures is); tap or hover for all of them. Longer bars are worse. Green: safe zone, up to the boundary. Yellow to orange: zone of increasing risk. Red: high-risk zone. A ▶ means the value is off the right edge of the chart. ${co2?`CO₂ is measured here (Mauna Loa, 12 months to ${co2.to}); the other bars are assessed values from the report.`:''} Tap or click a bar for links to the pages on this site that cover it.`;
+ const worst=rows.filter(r=>!r.c.nonumeric).reduce((a,b)=>b.hi>a.hi?b:a);
+ $('pb-read').innerHTML=[
+  `Seven of the nine boundaries are crossed: climate change, biosphere integrity, land use, freshwater, nitrogen and phosphorus, ocean acidification and novel entities. Two are still within the safe zone worldwide: the ozone layer, slowly recovering since the ozone-destroying gases were phased out (the report notes the recovery may have stalled in recent years), and aerosol haze, though the report proposes a regional boundary for South Asia${reg?`, where the haze (${reg.regional.cur}) is already past it (${reg.regional.pb})`:''}.`,
+  `Four boundaries are in the high-risk zone: nitrogen and phosphorus (fertilizer on farmland), biosphere integrity (the loss of species and of the energy left for wild nature), climate change (through the overall warming push from human activity) and novel entities. Ocean acidification crossed its boundary only recently: the 2025 Health Check was the first to assess it as crossed.`,
+  `Climate change has two measures. CO₂ in the air is in the zone of increasing risk, below the 450 ppm where high risk begins; the total warming push, which adds the other greenhouse gases and subtracts cooling haze, is already ${f(rows.find(r=>r.c.id==='rf').cur)} W/m², ${f(rows.find(r=>r.c.id==='rf').cur/1.5,1)} times the start of the high-risk zone.`,
+  `What this does and does not show: the boundaries are scientists' judgments of a safe level, with a margin for what is not known, not lines where something breaks. Crossing one raises the risk of large, possibly lasting changes. Most of the numbers come from assessments of data that are one to several years old (see the table); the extinction rate rests on records to about 2000.`,
+  `Measured here: CO₂, live. Related measures elsewhere on the site: <a href="ghg.html">greenhouse-gas forcing</a>, <a href="slow.html#ph-s">ocean pH</a>, <a href="slow.html#trees-s">tree cover loss</a>, <a href="slow.html#rli-s">extinction risk</a>, <a href="water.html">the water cycle</a> and <a href="eei.html#aer">sulfur dioxide</a>.`]
+  .map(x=>`<li>${x}</li>`).join('');
+ // the chart
+ const lab=bars.map(r=>[r.b.name,r.all.length>1?`worst of ${r.all.length}: ${SHORT[r.c.id].toLowerCase()}`:SHORT[r.c.id]]);
+ const solid=bars.map(r=>r.c.nonumeric?null:[0,Math.min(CAP,r.lo)]),ext=bars.map(r=>r.c.nonumeric?[0,CAP]:r.hi>r.lo?[Math.min(CAP,r.lo),Math.min(CAP,r.hi)]:null);
+ const ch=new Chart($('c1'),{type:'bar',plugins:[zones,ends(bars)],data:{labels:lab,datasets:[
+   {label:'Current value',data:solid,backgroundColor:bars.map(r=>col(r.lo)),borderColor:bars.map(r=>col(r.lo)),borderWidth:0,borderSkipped:false,barPercentage:.78,categoryPercentage:.9,grouped:false,order:0},
+   {label:'Range, or no number',data:ext,backgroundColor:bars.map(r=>hatch(col(Math.max(r.hi,r.lo)),.35)),borderColor:bars.map(r=>col(Math.max(r.hi,r.lo))),borderWidth:1.5,borderSkipped:false,barPercentage:.78,categoryPercentage:.9,grouped:false,order:1}]},
+  options:{indexAxis:'y',animation:false,maintainAspectRatio:false,layout:{padding:{top:62,right:8}},
+   interaction:{mode:'index',axis:'y',intersect:false},
+   onClick:(e,el)=>{if(!el.length)return;const B=bars[el[0].index];   // the chart's info box is a drawing, so the links go in a line under the chart
+    const L=[...new Map(B.all.filter(r=>r.c.link).map(r=>[r.c.link.split('#')[0],r.c.link])).values()];
+    $('pb-sel').innerHTML=`<b>${B.b.name}</b>: `+(L.length?L.map(l=>`<a href="${l}">${PN[l.split('#')[0]]||l} page →</a>`).join(' &nbsp; '):'no page on this site measures this; the numbers are in the table below.')},
+   onHover:(e,el)=>{e.native.target.style.cursor=el.length?'pointer':'default'},
+   plugins:{legend:{display:false},tooltip:{filter:i=>i.datasetIndex===(bars[i.dataIndex].c.nonumeric?1:0),callbacks:{
+    title:t=>bars[t[0].dataIndex].b.name,
+    label:t=>{const B=bars[t.dataIndex];return B.all.slice().reverse().flatMap(r=>{const c=r.c;
+     if(c.nonumeric)return[c.name+':','  crossed (high risk): the boundary is no release without adequate safety testing, and there is no single number'];
+     return [`${c.name}: ${r.txt} (${ZN[r.z].toLowerCase()})`,`  boundary ${f(c.pb)}, high risk from ${f(c.hr)}, pre-industrial ${f(c.ref)}; ${r.live?`measured here, 12 months to ${r.live.to}`:`assessed, data to ${c.data_to}`}`]})},
+     footer:t=>bars[t[0].dataIndex].all.some(r=>r.c.link)?(matchMedia('(hover:hover)').matches?'Click for a link to the page':'Tap: link below the chart'):''}}},
+   scales:{x:{min:0,max:CAP,ticks:{stepSize:1,callback:v=>v===0?'Pre-industrial':v===1?'Boundary':v===2?'High risk starts':''},grid:{display:false}},
+    y:{grid:{display:false},ticks:{autoSkip:false,font:{size:12}}}}}});
+ charts.push(ch);
+ $('pb-tab').innerHTML=P.boundaries.map(b=>`<tr class="bd"><td colspan="5">${b.name} <span class="pill ${b.status==='safe'?'safe':'hr'}">${b.status==='safe'?'within the boundary':'crossed'}</span></td></tr>`+
+  b.cvs.map(c=>{const r=rows.find(x=>x.c===c),u=c.nonumeric?'':` <span class="tag">${c.unit}</span>`;
+   return `<tr><td>${c.link?`<a href="${c.link}">${c.name}</a>`:c.name}${u}<br><span class="tag${r.live?' live':''}">${r.live?`measured here: Mauna Loa, 12 months to ${r.live.to} (report: ${c.cur} ppm)`:`assessed, data to ${c.data_to}`}</span></td>
+    <td class="n">${c.nonumeric?'above 0%':r.txt}</td><td class="n hide-s">${c.nonumeric?'0%':f(c.pb)}</td><td class="n hide-s">${c.hr==null?'not defined':f(c.hr)}</td><td><span class="pill ${r.z}">${ZN[r.z]}</span></td></tr>`}).join('')).join('')+
+  (reg?`<tr><td>${reg.regional.name}: ${reg.cvs[0].name.toLowerCase()}<br><span class="tag">assessed (proposed new boundary)</span></td><td class="n">${f(reg.regional.cur)}</td><td class="n hide-s">${f(reg.regional.pb)}</td><td class="n hide-s">${f(reg.regional.hr)}</td><td><span class="pill ir">Increasing risk</span></td></tr>`:'');
+ $('exp').disabled=false}
+
+// CO2: mean of the latest 12 monthly values from NOAA's Mauna Loa record (same file as the CO2 page)
+const co2=t=>{const M=t.split(/\r?\n/).filter(l=>l.trim()&&l[0]!=='#').map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p[3]>0),L=M.slice(-12);
+ const ml=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],e=L[L.length-1];return L.length===12?{v:Math.round(L.reduce((s,p)=>s+p[3],0)/12*10)/10,to:ml[e[1]-1]+' '+e[0]}:null};
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{if(charts.length)siteExport([[charts[0],'t1',0]],'planetary-boundaries.jpg')};
+Promise.all([get('planetary_boundaries.json').then(JSON.parse),get('co2_mm_mlo.txt').then(co2).catch(()=>null)]).then(([P,c])=>build(P,c))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the data. Please try again later.'});
+</script></main></body></html>

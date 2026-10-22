@@ -1,0 +1,47 @@
+name: Update other greenhouse gases data
+
+# For ghg.html (Other greenhouse gases):
+#   - NOAA GML global monthly nitrous oxide (N2O) and sulfur hexafluoride (SF6), and NOAA's yearly N2O increases
+#   - NOAA's Annual Greenhouse Gas Index: warming effect (radiative forcing) of each gas per year, and the yearly
+#     global means of every gas behind it (CFCs, HCFCs, HFCs, SF6). NOAA updates these once a year, in the fall.
+# Each file is downloaded to a temp file first and only replaces the stored one if it looks complete,
+# so a failed or half download never replaces good data.
+on:
+  schedule:
+    - cron: "40 15 * * 3"      # weekly (Wednesday); N2O/SF6 update monthly, the index yearly
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download NOAA GML monthly N2O and SF6
+        run: |
+          mkdir -p data
+          for f in n2o/n2o_mm_gl.txt n2o/n2o_gr_gl.txt sf6/sf6_mm_gl.txt; do
+            b=$(basename $f)
+            curl -fsSL --retry 3 --retry-delay 20 -o "data/$b.tmp" "https://gml.noaa.gov/webdata/ccgg/trends/$f"
+            n=$(grep -vc '^#' "data/$b.tmp")
+            echo "$b: $n data lines, last: $(grep -v '^#' data/$b.tmp | tail -1)"
+            [ "$n" -gt 15 ]
+            mv "data/$b.tmp" "data/$b"
+          done
+      - name: Download NOAA Annual Greenhouse Gas Index tables
+        run: |
+          for f in AGGI_Table.csv NOAA_Annual_Mean_MoleFractions.csv; do
+            curl -fsSL --retry 3 --retry-delay 20 -o "data/aggi_$f.tmp" "https://gml.noaa.gov/aggi/$f"
+            n=$(grep -c '^\(19\|20\)[0-9][0-9]' "data/aggi_$f.tmp")
+            echo "$f: $n year rows, last: $(grep '^\(19\|20\)[0-9][0-9]' data/aggi_$f.tmp | tail -1)"
+            [ "$n" -gt 40 ]
+            mv "data/aggi_$f.tmp" "data/aggi_$f"
+          done
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Update other greenhouse gases data" && git pull --rebase && git push)

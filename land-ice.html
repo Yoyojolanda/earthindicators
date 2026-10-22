@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Land ice tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Land ice: glaciers, Greenland and Antarctica">
+<meta property="og:description" content="How much ice Greenland and Antarctica are losing, weighed from space by NASA's GRACE satellites since 2002, what it means for sea level, and Greenland's summit temperature over 4,000 years from ice cores.">
+<meta property="og:url" content="https://earthindicators.org/land-ice.html">
+<meta property="og:image" content="https://earthindicators.org/og/land-ice.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Land ice: latest value and trend">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="How much ice Greenland and Antarctica are losing, weighed from space by NASA's GRACE satellites since 2002, what it means for sea level, and Greenland's summit temperature over 4,000 years from ice cores.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+</style></head><body><main>
+<h1>Land ice tracker: glaciers, Greenland and Antarctica</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">The GRACE (2002–2017) and GRACE Follow-On (since 2018) satellites measure tiny changes in Earth's gravity; less ice means slightly less pull. The values are mass changes in gigatons (1 Gt = 1 billion metric tons, about 1 km³ of water), shown here relative to the first 12 months of the record. Between the two missions there is a gap of about a year (mid-2017 to mid-2018). Sea-level equivalent: 362 Gt of ice spread over the world's oceans raises sea level by about 1 mm. Gaps: the original GRACE satellites lost battery capacity from 2011, so they were switched off for a month or two every few months to save power; the mission ended in 2017 and its successor, GRACE-FO, started delivering data in mid-2018, with a few more months missing in its first months. Lines are broken across gaps of more than about three months. Yearly change = the average of one year minus the average of the year before; for this, gaps of up to three months are filled by straight-line interpolation, and only years with at least ten months count. Glaciers (all glaciers outside the two ice sheets, mostly in mountains and the Arctic): yearly mass change per hydrological year (October to September in the north; labeled by the year it ends in), from the World Glacier Monitoring Service's gridded product on the Copernicus Climate Data Store, which combines field measurements with satellite elevation changes (<a href="https://doi.org/10.24381/cds.ba597449" target="_blank" rel="noopener">doi:10.24381/cds.ba597449</a>). Its uncertainty is shown in the tooltip. In the sea-level chart, glaciers are added up from 2002–03 onwards and the ice sheets are read off at the end of each September, so all three start at about the same time. GRACE measures the whole of Greenland and Antarctica, including the separate glaciers around their edges, so in that chart those glaciers count with Greenland and Antarctica, and the glacier bar shows only the other glaciers; otherwise they would be counted twice. Data: NASA JPL GRACE/GRACE-FO mascon time series, release 06.3 version 04: Greenland (<a href="https://doi.org/10.5067/TEMSC-GT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-GT634</a>) and Antarctica (<a href="https://doi.org/10.5067/TEMSC-AT634" target="_blank" rel="noopener">doi:10.5067/TEMSC-AT634</a>).</p>
+</div>
+<div id="gl" class="hide">
+<h2 id="greenland-4000" data-nav="Greenland ice core" style="font-size:20px;margin:32px 0 6px">Greenland's summit over 4,000 years</h2>
+<div class="cards" id="gl-cards"></div>
+<div class="box" data-nav="Summit since 2000 BCE"><h2 id="t5"></h2><div class="wrap"><canvas id="c5"></canvas></div></div>
+<ul id="gl-read"></ul>
+<div class="box" data-nav="The chart that ends in 1855"><h2 id="t6"></h2><div class="wrap s"><canvas id="c6"></canvas></div></div>
+<ul id="gl-read2"></ul>
+<p class="sub">Summit is the highest point of the Greenland ice sheet, about 3,200 m up; the GISP2 ice core was drilled 30 km to its west. Temperatures here are far below zero all year. Blue line: snow temperature at the drill site reconstructed by Kobashi et al. (2011) from argon and nitrogen isotopes in the air bubbles trapped in the ice; these respond to temperature changes at the surface, and the method gives one value a year, smoothed over a decade or more. Shaded: its 1-sigma uncertainty. The record ends in 1950. Red: measured since 1940, ERA5 yearly mean air temperature 2 m above the snow in the 2-degree grid cell that contains Summit (dots: single years; line: 10-year average). Air and snow temperature are not the same, and ERA5's grid cell is a little lower and warmer than the summit, so the red series is shifted to the ice-core scale: by <span id="gl-off"></span> °C, so that its 2001–2010 average equals the −29.9 °C that Kobashi et al. give for the drill site for that decade. Only the ups and downs of ERA5 are used, not its level. Over the years where both exist (1940–1950) the two differ by <span id="gl-ov"></span> °C on average; ERA5's early decades over the middle of the ice sheet are less certain, because there were hardly any measurements to feed it. Second chart: the oxygen-isotope temperature record of Alley (2000) from the same core, as published; its ages count back from 1950, and the youngest value is about 95 years before 1950. Data: Kobashi, T., et al., 2011, <i>High variability of Greenland surface temperature over the past 4000 years estimated from trapped air in an ice core</i>, Geophys. Res. Lett. 38, L21501 (<a href="https://doi.org/10.1029/2011GL049444" target="_blank" rel="noopener">doi:10.1029/2011GL049444</a>); Alley, R.B., 2000, <i>The Younger Dryas cold interval as viewed from central Greenland</i>, Quat. Sci. Rev. 19, 213–226 (<a href="https://doi.org/10.1016/S0277-3791(99)00062-1" target="_blank" rel="noopener">doi:10.1016/S0277-3791(99)00062-1</a>); both via NOAA's World Data Service for Paleoclimatology (<a href="https://www.ncei.noaa.gov/access/paleo-search/study/12887" target="_blank" rel="noopener">Kobashi</a>, <a href="https://www.ncei.noaa.gov/pub/data/paleo/icecore/greenland/summit/gisp2/isotopes/gisp2_temp_accum_alley2000.txt" target="_blank" rel="noopener">Alley</a>). ERA5: Copernicus Climate Change Service, monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7" target="_blank" rel="noopener">doi:10.24381/cds.f17050d7</a>), yearly averages calculated by this site.</p>
+</div>
+<p id="gl-err"></p>
+<h2 id="thwaites" data-nav="Thwaites Glacier" style="font-size:20px;margin:32px 0 6px">Thwaites Glacier: a retreat already in motion</h2>
+<ul>
+<li><b>What is measured:</b> Thwaites and its neighbor Pine Island Glacier, both in West Antarctica, are the largest source of Antarctica's ice loss. Sediment cores from under their floating ice shelves show both started retreating from the seabed ridges they rested on in the 1940s–50s, after a strong spell of warm ocean water.</li>
+<li><b>The test (model experiment, not a forecast):</b> a 2026 study switched off all ocean melting under both glaciers in three different ice-sheet models and let them run for 150 years. That is colder than any real ocean could ever be, since even freezing seawater melts ice at depth.</li>
+<li><b>Result:</b> Pine Island thickened and moved back toward its pre-1940s position. Thwaites kept losing ice for the whole 150 years, though more and more slowly. So part of Thwaites' ice loss is a delayed response to that past disturbance, and cooling the ocean could not undo it within centuries.</li>
+<li><b>What it does not say:</b> the study gives no date or speed for a collapse of West Antarctica. The often-quoted "about 5 m of sea-level rise" is the ice in the whole West Antarctic ice sheet, not something this study projects.</li>
+</ul>
+<p class="sub">Source: Williams, C.R., Trevers, M., Sun, S., Holland, P.R., Bett, D.T., Arthern, R.J. &amp; Bradley, A.T., 2026, <i>Mass loss from Thwaites Glacier continues even without ocean melting</i>, Geophys. Res. Lett. 53, e2026GL122843 (<a href="https://doi.org/10.1029/2026GL122843" target="_blank" rel="noopener">doi:10.1029/2026GL122843</a>; open access). The models (WAVI, BISICLES and Úa) start from the glaciers' state around 2015 and run with ocean melting set to zero.</p>
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[],GT_MM=362;
+const grid={color:THEME.grid},mean=a=>a.reduce((s,x)=>s+x,0)/a.length,fmt=n=>Math.round(n).toLocaleString('en-US').replace('-','−');
+const lab=x=>{const y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y};
+const slope=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+const COL={g:'#1f6fb5',a:'#7b5ea7',t:'#d00000'},iceCharts=[];
+let expName='land-ice.jpg';
+function freeze(ch){const y=ch.scales.y;ch.options.scales.y.min=y.min;ch.options.scales.y.max=y.max;ch.update();return ch}
+// JPL file: header lines (HDR ...), then rows: decimal year, mass anomaly (Gt), 1-sigma uncertainty (Gt)
+const parse=t=>{const R=t.split(/\r?\n/).map(l=>l.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&p[0]>2000&&p[0]<2200&&isFinite(p[1]));
+ const z=mean(R.slice(0,12).map(p=>p[1]));return R.map(p=>({x:p[0],y:p[1]-z,u:p[2]}))};
+// yearly averages: put the values on a monthly grid and fill short gaps (up to 3 months, from the satellites'
+// battery-saving pauses) by straight-line interpolation, so those years still count; the long 2017-18 gap is not filled
+function yearly(S){const mi=x=>Math.floor(x)*12+Math.min(11,Math.floor((x-Math.floor(x))*12)),V={};S.forEach(p=>V[mi(p.x)]=p.y);
+ const K=Object.keys(V).map(Number).sort((a,b)=>a-b);
+ for(let k=1;k<K.length;k++){const a=K[k-1],b=K[k];if(b-a>1&&b-a<=4)for(let i=a+1;i<b;i++)V[i]=V[a]+(V[b]-V[a])*(i-a)/(b-a)}
+ const by={};Object.keys(V).map(Number).forEach(i=>(by[Math.floor(i/12)]=by[Math.floor(i/12)]||[]).push(V[i]));
+ const Y={};Object.keys(by).forEach(y=>{if(by[y].length>=10)Y[y]=mean(by[y])});
+ return Object.keys(Y).map(Number).filter(y=>Y[y-1]!=null).map(y=>({y,d:Y[y]-Y[y-1]}))}
+function run(gT,aT,wT){
+ const G=parse(gT),A=parse(aT);if(G.length<150||A.length<150)throw new Error('data incomplete');
+ // glaciers: one row per hydrological year (labeled by the year it ends in), Gt and uncertainty
+ const W=wT.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],h:p[1].replace('-','–'),d:+p[2],u:+p[3],gp:+p[4]||0,ap:+p[5]||0})),WL=W[W.length-1];
+ const wRec=W.reduce((b,r)=>r.d<b.d?r:b,W[0]),wAv=(a,b)=>mean(W.filter(r=>r.y>=a&&r.y<=b).map(r=>r.d));
+ // ice sheet mass at a given time: straight line between the nearest months (also across the 2017-18 gap)
+ const at=(S,x)=>{if(x<S[0].x||x>S[S.length-1].x)return null;let i=S.findIndex(p=>p.x>=x);if(S[i].x===x||i===0)return S[i].y;const a=S[i-1],b=S[i];return a.y+(b.y-a.y)*(x-a.x)/(b.x-a.x)};
+ // sea-level rise since 2002-03 per source, at the end of each September (end of the glaciers' hydrological year).
+ // Glaciers around Greenland and Antarctica are left out of the glacier bar: GRACE's ice-sheet totals already include them.
+ const SL=[];let cw=0;W.filter(r=>r.y>=2003).forEach(r=>{cw+=r.d-r.gp-r.ap;const g=at(G,r.y+.71),a=at(A,r.y+.71);if(g!=null&&a!=null)SL.push({y:r.y,w:-cw/GT_MM,g:-g/GT_MM,a:-a/GT_MM})});
+ const SLL=SL[SL.length-1];
+ // combined: months present in both (matched to the nearest 0.02 year)
+ const T=G.map(p=>{const q=A.find(r=>Math.abs(r.x-p.x)<.02);return q?{x:p.x,y:p.y+q.y}:null}).filter(Boolean);
+ const gL=G[G.length-1],aL=A[A.length-1],tL=T[T.length-1],last=lab(Math.max(gL.x,aL.x));
+ const gr=slope(G),ar=slope(A),tr=slope(T),g10=slope(G.filter(p=>p.x>gL.x-10)),a10=slope(A.filter(p=>p.x>aL.x-10));
+ const GY=yearly(G),AY=yearly(A),yrs=[...new Set([...GY,...AY].map(r=>r.y))].sort((a,b)=>a-b);
+ const worst=GY.reduce((b,r)=>r.d<b.d?r:b,GY[0]);
+ $('cards').innerHTML=[
+  [fmt(gL.y)+' Gt',`Greenland ice mass change since 2002–03, to ${lab(gL.x)}`],
+  [fmt(aL.y)+' Gt',`Antarctica ice mass change since 2002–03, to ${lab(aL.x)}`],
+  [fmt(WL.d)+' Gt',`World glaciers, hydrological year ${WL.h} (record: ${fmt(wRec.d)} Gt in ${wRec.h})`],
+  [(SLL.w+SLL.g+SLL.a).toFixed(1)+' mm',`added to global sea level by glaciers, Greenland and Antarctica together, October 2002 to September ${SLL.y}`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t1').textContent=`Ice sheet mass change since 2002–03, Greenland and Antarctica, to ${last}`;
+ $('t2').textContent=`Sea-level rise from land ice since 2002–03, by source, to September ${SLL.y}`;
+ $('t3').textContent=`Yearly change in ice sheet mass, ${yrs[0]}–${yrs[yrs.length-1]}`;
+ $('t4').textContent=`World glaciers: mass change per hydrological year, ${W[0].h}–${WL.h}`;
+ $('read').innerHTML=[
+  `Since 2002–03 Greenland has lost about ${fmt(-gL.y)} gigatons of ice and Antarctica about ${fmt(-aL.y)} (to ${lab(gL.x)}). On average that is ${fmt(-gr)} Gt a year for Greenland and ${fmt(-ar)} Gt a year for Antarctica; over the last 10 years, ${fmt(-g10)} and ${fmt(-a10)}.`,
+  `The world's glaciers lost ${fmt(-WL.d)} Gt in the hydrological year ${WL.h}. The largest loss on record was ${fmt(-wRec.d)} Gt in ${wRec.h}. Over the last ten years they lost on average ${fmt(-wAv(WL.y-9,WL.y))} Gt a year; in the first ten years of the record (${W[0].h} to ${W.find(r=>r.y===1985).h}) they ${wAv(1976,1985)<-25?'lost '+fmt(-wAv(1976,1985))+' Gt a year':'were roughly in balance ('+(wAv(1976,1985)>=0?'+':'−')+fmt(Math.abs(wAv(1976,1985)))+' Gt a year)'}.`,
+  `From October 2002 to September ${SLL.y}, land ice added about ${(SLL.w+SLL.g+SLL.a).toFixed(1)} mm to global sea level: ${SLL.w.toFixed(1)} mm from glaciers, ${SLL.g.toFixed(1)} from Greenland and ${SLL.a.toFixed(1)} from Antarctica (each including the glaciers around it). ${SLL.w>SLL.g&&SLL.w>SLL.a?'Glaciers hold far less ice than the ice sheets but react quickly to warming, so for now they add the most. ':''}The expansion of warming seawater adds more; see the sea level page for the total.`,
+  `A gigaton is a billion metric tons: about a cubic kilometer of water. Greenland's yearly loss would cover a country the size of the Netherlands (about 41,500 km²) in roughly ${(-gr/41.5).toFixed(0)} meters of water.`,
+  worst?`Melt varies a lot from year to year with summer weather. The largest drop in Greenland's yearly average in this record was from ${worst.y-1} to ${worst.y}: ${fmt(-worst.d)} Gt. Changes into and out of 2017–2019 cannot be calculated because of the gap between the two missions.`:'',
+  `Ice sheets react slowly but keep going: once warmed, they can lose mass for centuries, and the sea-level rise they cause is effectively permanent on human timescales.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ expName=`land-ice-${lab(Math.max(gL.x,aL.x)).replace(' ','-')}.jpg`;
+ $('out').classList.remove('hide');
+ charts.splice(0).forEach(c=>c.destroy());
+ // breaks the line across the gap between the two missions
+ const gap=S=>{const o=[];S.forEach((p,i)=>{if(i&&p.x-S[i-1].x>.25)o.push({x:(p.x+S[i-1].x)/2,y:null});o.push({x:p.x,y:p.y})});return o};
+ const tip={callbacks:{title:t=>lab(t[0].parsed.x)}};
+ charts.push(freeze(new Chart($('c1'),{type:'line',data:{datasets:[
+   {label:'Greenland',data:gap(G),borderColor:COL.g,borderWidth:2,pointRadius:0},
+   {label:'Antarctica',data:gap(A),borderColor:COL.a,borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,spanGaps:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{...tip,callbacks:{...tip.callbacks,label:c=>c.dataset.label+': '+fmt(c.parsed.y)+' Gt'}}},
+   scales:{x:{type:'linear',min:2002,max:Math.ceil(gL.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Gigatons vs 2002–03'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}})));
+ charts.push(new Chart($('c2'),{type:'bar',data:{labels:SL.map(r=>String(r.y)),datasets:[
+   {label:'Other glaciers',data:SL.map(r=>r.w),backgroundColor:'#5a9e6f'},
+   {label:'Greenland',data:SL.map(r=>r.g),backgroundColor:COL.g},
+   {label:'Antarctica',data:SL.map(r=>r.a),backgroundColor:COL.a}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>'October 2002 to September '+t[0].label,label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(1)+' mm',
+    footer:t=>'Total: +'+t.reduce((s,c)=>s+c.parsed.y,0).toFixed(1)+' mm'}}},
+   scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,title:{display:true,text:'mm of sea-level rise'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ const pick=(R,y)=>{const r=R.find(q=>q.y===y);return r?r.d:null};
+ charts.push(new Chart($('c3'),{type:'bar',data:{labels:yrs.map(String),datasets:[
+   {label:'Greenland',data:yrs.map(y=>pick(GY,y)),backgroundColor:COL.g},
+   {label:'Antarctica',data:yrs.map(y=>pick(AY,y)),backgroundColor:COL.a}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'no data':(c.parsed.y>0?'+':'−')+fmt(Math.abs(c.parsed.y))+' Gt')}}},
+   scales:{x:{grid:{display:false}},y:{title:{display:true,text:'Gigatons per year'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ charts.push(new Chart($('c4'),{type:'bar',data:{labels:W.map(r=>String(r.y)),datasets:[{label:'World glaciers',data:W.map(r=>r.d),backgroundColor:W.map(r=>r===wRec?'#d00000':'#5a9e6f')}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>'Hydrological year '+W[t[0].dataIndex].h,
+   label:c=>{const r=W[c.dataIndex];return (r.d>0?'+':'−')+fmt(Math.abs(r.d))+' ± '+fmt(r.u)+' Gt ('+(r.d>0?'−':'+')+(Math.abs(r.d)/GT_MM).toFixed(2)+' mm sea level)'}}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'Gigatons per year'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ $('exp').disabled=false}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>[...charts,...iceCharts].forEach(c=>c.resize())));
+$('exp').onclick=()=>{const L=[...charts.map((c,k)=>[c,'t'+(k+1),0]),...iceCharts.map((c,k)=>[c,'t'+(k+5),0])];if(L.length)siteExport(L,expName)};
+Promise.all(['grace_greenland.txt','grace_antarctica.txt','glaciers_global.csv'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([g,a,w])=>run(g,a,w))
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the land ice data. Please try again later.'});
+
+// ---- Greenland's summit over 4,000 years: Kobashi et al. 2011 ice-core snow temperature (to 1950) plus ERA5 since 1940,
+//      shifted so its 2001-2010 average equals the -29.9 degC that Kobashi et al. give for the drill site for that decade
+const ICE_ANCHOR=-29.9,yr=y=>y<0?(-y)+' BCE':String(y),c1=v=>(v<0?'−':'')+Math.abs(v).toFixed(1);
+function ice(kT,aT,eT){
+ const rows=t=>t.trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
+ const K=rows(kT).filter(p=>+p[0]<=1950&&p[2]!=='').map(p=>({x:+p[0],y:+p[1],s:+p[2]}));
+ const A=rows(aT).map(p=>({x:+p[1],y:+p[2]})).sort((a,b)=>a.x-b.x);
+ const E0=rows(eT).map(p=>({x:+p[0],y:+p[1]}));
+ if(K.length<3900||A.length<300||E0.length<60)throw new Error('ice-core data incomplete');
+ const off=ICE_ANCHOR-mean(E0.filter(p=>p.x>=2001&&p.x<=2010).map(p=>p.y)),E=E0.map(p=>({x:p.x,y:p.y+off}));
+ const E10=E.slice(9).map((p,i)=>({x:p.x,y:mean(E.slice(i,i+10).map(q=>q.y))}));   // 10-year average, labeled by its last year
+ const EL=E[E.length-1],cur=E10[E10.length-1].y,y0=EL.x-9;
+ const kv={};K.forEach(p=>kv[p.x]=p.y);
+ const dec=K.filter(p=>p.x+9<=1950).map(p=>({x:p.x,y:mean([...Array(10)].map((_,i)=>kv[p.x+i]))}));   // every 10-year window in the ice core
+ const warm=dec.filter(d=>d.y>=cur),pct=100*warm.length/dec.length,old=warm.filter(d=>d.x<-1000).length/Math.max(1,warm.length);
+ const since=warm.length?warm[warm.length-1].x+9:null;           // end of the last ice-core decade at least as warm as now
+ const c1800=mean(K.filter(p=>p.x>=1800&&p.x<=1899).map(p=>p.y)),cold=dec.reduce((b,d)=>d.y<b.y?d:b,dec[0]);
+ const longT=slope(K.filter(p=>p.x<=1850))*1000,E30=E.filter(p=>p.x>EL.x-30),nowT=slope(E30)*10;
+ const ov=mean(E.filter(p=>p.x<=1950).map(p=>Math.abs(p.y-kv[p.x])));
+ $('gl-off').textContent=c1(off);$('gl-ov').textContent=ov.toFixed(1);
+ $('gl-cards').innerHTML=[
+  [c1(cur)+' °C',`average at Summit, ${y0}–${EL.x}, on the ice-core scale`],
+  ['+'+(cur-c1800).toFixed(1)+' °C',`warmer than the 1800s average in the ice core (${c1(c1800)} °C)`],
+  [since?yr(since)+(since>=0&&since<1500?' CE':''):'none',since?'last time a 10-year period in the ice core was as warm as the last ten years':'no 10-year period in the ice core was as warm'],
+  [Math.round(pct)+'%',`of all 10-year periods in the last 4,000 years were as warm or warmer; ${Math.round(old*100)}% of those before 1000 BCE`]
+ ].map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+ $('t5').textContent=`Greenland summit temperature, 2000 BCE to ${EL.x}: ice core and measurements`;
+ $('t6').textContent=`The widely shared GISP2 chart: Alley (2000), which ends in ${yr(A[A.length-1].x)}`;
+ $('gl-read').innerHTML=[
+  `Was Greenland warmer in the past? At its summit, yes: ${Math.round(pct)}% of all 10-year periods in the ice core were as warm as or warmer than ${y0}–${EL.x}, ${Math.round(old*100)}% of them more than 3,000 years ago. Shorter warm spells around Roman and medieval times reached about the same level.`,
+  `The reason is Earth's orbit. The tilt and wobble of Earth's axis slowly shift how much summer sunshine reaches the Arctic; 4,000 years ago it was more than today, and it has been falling ever since. The ice core shows the result: a slow cooling of about ${c1(-longT)} °C per thousand years, ending in the Little Ice Age (coldest 10 years: ${yr(cold.x)}–${yr(cold.x+9)}, ${c1(cold.y)} °C).`,
+  `The orbit still points towards cooling, but the temperature turned around. The last ten years were ${(cur-c1800).toFixed(1)} °C warmer than the 1800s${since?` and the warmest since about ${yr(since)}${since>=0&&since<1500?' CE':''}`:''}. Over the last 30 years the summit warmed by ${nowT.toFixed(1)} °C per decade: about ${Math.round(nowT*100/-longT)} times faster than the orbital cooling, and in the opposite direction.`,
+  `Single years swing by a degree or more (red dots); the ice core is smoothed over a decade or more, so this page compares 10-year averages with it, not one record year.`,
+  `This is one spot in the middle of Greenland. The Arctic swings far more than the world as a whole, so a warm spell here says little about the globe; for the world, see <a href="air.html">air temperature</a>.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('gl-read2').innerHTML=[
+  `This is the record behind the "Greenland ice core" chart that circulates on social media, often with the Minoan, Roman and medieval warm periods labeled and "now" placed at the right-hand edge. Its last value is from about ${yr(A[A.length-1].x)}: its ages count back from 1950, not from today, and the youngest part of the core is not in the published series. So the curve contains none of the warming of the last 170 years (the shaded part).`,
+  `Some versions add a dot for "current temperature" from a weather station. That mixes two scales: the isotope record and the 2 m air temperature are not directly comparable, and depending on the period and the station chosen the dot can land almost anywhere. The first chart avoids this by matching the measured series to the ice-core scale over a decade both describe.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('gl').classList.remove('hide');
+ iceCharts.splice(0).forEach(c=>c.destroy());
+ // each chart gets its own x axis settings (zooming changes them), with round-year ticks that follow the zoom
+ const XMAX=Math.ceil((EL.x+5)/10)*10,STEPS=[1,2,5,10,20,25,50,100,200,250,500,1000];
+ const xs=()=>({type:'linear',min:-2000,max:XMAX,ticks:{autoSkip:false,maxRotation:0,callback:v=>v===0?'0':yr(v)},
+  afterBuildTicks:ax=>{const st=STEPS.find(s=>(ax.max-ax.min)/s<=(innerWidth<600?5:9))||1000,t=[];for(let v=Math.ceil(ax.min/st)*st;v<=ax.max;v+=st)t.push({value:v});ax.ticks=t},
+  grid:{display:false}});
+ const tipT={title:t=>yr(Math.round(t[0].parsed.x))};
+ iceCharts.push(new Chart($('c5'),{type:'line',data:{datasets:[
+   {label:'Uncertainty (1σ)',data:K.map(p=>({x:p.x,y:p.y+p.s})),borderWidth:0,pointRadius:0,backgroundColor:THEME.band1,fill:'+1',order:9},
+   {label:'_lo',data:K.map(p=>({x:p.x,y:p.y-p.s})),borderWidth:0,pointRadius:0,fill:false,order:9},
+   {label:'Ice core (Kobashi et al. 2011)',data:K,borderColor:THEME.deep2,borderWidth:1.2,pointRadius:0},
+   {label:'Measured, single years (ERA5)',data:E,showLine:false,pointRadius:2,pointBackgroundColor:'rgba(208,0,0,.45)',borderColor:'rgba(208,0,0,.45)'},
+   {label:'Measured, 10-year average',data:E10,borderColor:COL.t,borderWidth:3,pointRadius:0},
+   {label:`Level of the last 10 years (${c1(cur)} °C)`,data:[{x:-2000,y:cur},{x:XMAX,y:cur}],borderColor:COL.t,borderWidth:1,borderDash:[5,4],pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{filter:i=>!i.text.startsWith('_')}},tooltip:{filter:c=>c.datasetIndex>=2&&c.datasetIndex<=4,callbacks:{...tipT,label:c=>c.dataset.label+': '+c1(c.parsed.y)+' °C'}}},
+   scales:{x:xs(),y:{title:{display:true,text:'°C (snow temperature at the drill site)'}}}}}));
+ const gap={id:'gap',beforeDatasetsDraw(ch){const {ctx,chartArea:a,scales:{x}}=ch,x0=Math.max(a.left,x.getPixelForValue(A[A.length-1].x));if(x0>=a.right)return;ctx.save();   // kept inside the plot when zoomed
+  ctx.fillStyle=THEME.dark?'rgba(255,90,80,.16)':'rgba(208,0,0,.09)';ctx.fillRect(x0,a.top,a.right-x0,a.bottom-a.top);
+  if(a.right-x0>60){ctx.fillStyle=THEME.mut;ctx.font='12px system-ui,sans-serif';ctx.textAlign='right';ctx.fillText('not in this',a.right-4,a.top+14);ctx.fillText('record',a.right-4,a.top+29)}ctx.restore()}};
+ iceCharts.push(new Chart($('c6'),{type:'line',data:{datasets:[{label:'Alley (2000), oxygen isotopes',data:A,borderColor:THEME.ink,borderWidth:1.5,pointRadius:0}]},plugins:[gap],
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{display:false},tooltip:{callbacks:{...tipT,label:c=>c1(c.parsed.y)+' °C'}}},
+   scales:{x:xs(),y:{title:{display:true,text:'°C (as published)'}}}}}));
+ $('exp').disabled=false}
+Promise.all(['gisp2_kobashi2011.csv','gisp2_alley2000.csv','greenland_summit_era5.csv'].map(f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()}))).then(([k,a,e])=>ice(k,a,e))
+ .catch(e=>{console.error(e);$('gl-err').textContent='Could not load the ice-core data. Please try again later.'});
+</script></main></body></html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Slow signals</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Slow signals: indicators measured once a year or less often">
+<meta property="og:description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
+<meta property="og:url" content="https://earthindicators.org/slow.html">
+<meta property="og:image" content="https://earthindicators.org/og/slow.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Slow signals: latest yearly numbers for fossil CO₂ emissions, ocean acidity, the Atlantic overturning, extinction risk, tree cover loss and Kyoto's cherry blossom">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:340px;--hs:280px;--ph:240px;--phs:200px}
+.st{font-size:13px;color:var(--mut);margin:-2px 0 10px}
+.st b{color:var(--fg,inherit);font-weight:600}
+h2.sec{font-size:20px;margin:28px 0 6px}
+</style></head><body><main>
+<h1>Slow signals</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p class="sub">Some of the most important changes can only be measured slowly: emissions are added up from national energy statistics, seawater is sampled from research ships, instruments on the sea floor are read out when a ship recovers them, species are reassessed one group at a time, and harvests, forests and blossoms can only be counted once a year. The indicators on this page are updated once a year or less often, so their latest value is often a year or two old. That is how these measurements work, not a sign that the page has stopped updating. Each section says how far the data reach, how often new data are published, and when new data last arrived here. The sources are checked every week.</p>
+<p id="err"></p>
+
+<section id="fossil-s" class="hide">
+<h2 class="sec">Fossil CO₂ emissions</h2>
+<p class="st" id="fossil-st"></p>
+<div class="cards" id="fossil-cards"></div>
+<div class="box"><h2 id="t3"></h2><div class="wrap"><canvas id="c3"></canvas></div></div>
+<ul id="fossil-read"></ul>
+<p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of metric tons of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. News reports of the Global Carbon Budget usually quote a slightly lower figure: that headline number subtracts the CO₂ that cement and concrete slowly reabsorb from the air over their lifetime, roughly 0.8 billion metric tons a year. This page shows emissions before that subtraction, so both numbers are correct; they measure slightly different things. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, published on <a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a> and Zenodo (the version used is named in the line above the chart).</p>
+</section>
+
+<section id="ph-s" class="hide">
+<h2 class="sec">Ocean acidification</h2>
+<p class="st" id="ph-st"></p>
+<div class="cards" id="ph-cards"></div>
+<div class="box"><h2 id="t4"></h2><div class="wrap s"><canvas id="c4"></canvas></div></div>
+<ul id="ph-read"></ul>
+<p class="sub">The ocean takes up about a quarter of the CO₂ we emit. Dissolved CO₂ forms carbonic acid, so seawater slowly becomes less alkaline: its pH falls. The lower the pH, the more acidic the water. Seawater is still alkaline (above pH 7); "acidification" describes the direction of change. pH is a logarithmic scale, so a small step is a big change: a drop of 0.1 means about 26% more hydrogen ions, the particles that make water acidic. Shown: surface water (0–30 m) at Station ALOHA, 100 km north of Oʻahu, sampled by research ship about once a month since 1988. Dots: pH calculated from the measured carbon and alkalinity of each sample (the full record); measured directly where available. Line: the straight-line trend. Data: Hawaii Ocean Time-series, University of Hawaiʻi (Dore et al. 2009, updated), <a href="https://hahana.soest.hawaii.edu/hot/" target="_blank" rel="noopener">hahana.soest.hawaii.edu/hot</a>.</p>
+</section>
+
+<section id="amoc-s" class="hide">
+<h2 class="sec">Atlantic overturning circulation (AMOC)</h2>
+<p class="st" id="amoc-st"></p>
+<div class="cards" id="amoc-cards"></div>
+<div class="box"><h2 id="t1"></h2><div class="wrap"><canvas id="c1"></canvas></div></div>
+<ul id="amoc-read"></ul>
+<p class="sub">The AMOC carries warm surface water north in the Atlantic and cold deep water back south; it keeps northwestern Europe milder than other places at the same latitude and affects rainfall patterns on both sides of the Atlantic. The RAPID array measures it at 26.5°N with moorings across the whole Atlantic, from Florida to Africa, combined with a cable measuring the Florida Current and satellite winds. Strength is in sverdrups (1 Sv = 1 million cubic meters of water per second). Shown: monthly means and the 12-month average. Data: RAPID-MOCHA-WBTS AMOC monitoring project (NOC, University of Miami, NOAA), <a href="https://rapid.ac.uk/" target="_blank" rel="noopener">rapid.ac.uk</a>.</p>
+</section>
+
+<section id="rli-s" class="hide">
+<h2 class="sec">Extinction risk: the Red List Index</h2>
+<p class="st" id="rli-st"></p>
+<div class="cards" id="rli-cards"></div>
+<div class="box"><h2 id="t2"></h2><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<ul id="rli-read"></ul>
+<p class="sub">The Red List Index follows how the extinction risk of whole groups of species changes over time, based on the IUCN Red List. It runs from 1 (every species in the groups is of Least Concern) to 0 (all extinct). It only counts genuine changes in status, not changes caused by better knowledge, so a falling line means species really are moving closer to extinction. It is based on the groups that have been fully assessed more than once, such as mammals, birds, amphibians, corals and cycads. Data: IUCN and BirdLife International, via the UN Sustainable Development Goals database (indicator 15.5.1, <a href="https://unstats.un.org/sdgs/dataportal" target="_blank" rel="noopener">unstats.un.org/sdgs/dataportal</a>).</p>
+</section>
+
+<section id="trees-s" class="hide">
+<h2 class="sec">Tree cover loss</h2>
+<p class="st" id="trees-st"></p>
+<div class="cards" id="trees-cards"></div>
+<div class="box"><h2 id="t5"></h2><div class="wrap"><canvas id="c5"></canvas></div></div>
+<ul id="trees-read"></ul>
+<p class="sub">Area where tree cover was removed or destroyed each year, mapped from Landsat satellite images at 30 m detail, in millions of hectares (1 hectare is 100 × 100 m, about one and a half soccer pitches; a million hectares is 10,000 km²). This is gross loss: it counts every stand of trees that disappears, including wood plantations that are harvested and will regrow, and trees burned in wildfires, which may recover. It is not the same as permanent deforestation, but it shows how much tree cover is being lost, where and why. The part caused by wildfires is shown separately. From 2011 the satellite mapping method was improved, so earlier and later years are not fully comparable. Data: University of Maryland (Hansen et al.) and Global Forest Watch, "tree cover loss by dominant driver", via <a href="https://ourworldindata.org/grapher/tree-cover-loss" target="_blank" rel="noopener">Our World in Data</a>.</p>
+</section>
+
+<section id="crops-s" class="hide">
+<h2 class="sec">Crop yields</h2>
+<p class="st" id="crops-st"></p>
+<div class="cards" id="crops-cards"></div>
+<div class="box"><h2 id="t6"></h2><div class="wrap s"><canvas id="c6"></canvas></div></div>
+<div class="box"><h2 id="t7"></h2><div class="wrap s"><canvas id="c7"></canvas></div></div>
+<ul id="crops-read"></ul>
+<p class="sub">Average harvest per hectare worldwide for the four crops that provide most of the world's calories and protein, in metric tons per hectare (1 hectare is 100 × 100 m, about one and a half soccer pitches). The second chart shows each year compared with its own trend (the average of the three years before and after it), so the long upward climb is taken out and good and bad harvest years stand out. Data: FAO, FAOSTAT, crops and livestock products (<a href="https://www.fao.org/faostat/en/#data/QCL" target="_blank" rel="noopener">fao.org/faostat</a>).</p>
+</section>
+
+<section id="blossom-s" class="hide">
+<h2 class="sec">Cherry blossom in Kyoto, since 812</h2>
+<p class="st" id="blossom-st"></p>
+<div class="cards" id="blossom-cards"></div>
+<div class="box"><h2 id="t8"></h2><div class="wrap"><canvas id="c8"></canvas></div></div>
+<ul id="blossom-read"></ul>
+<p class="sub">The day the mountain cherry trees in Kyoto were in full bloom, one of the longest records of nature's calendar anywhere. Early dates come from court diaries, chronicles and poems describing cherry blossom viewing parties; since the late 19th century from newspapers and observations. Many years before 1400 are missing. The line is the 50-year average (shown where at least 20 years in that window have a date). Kyoto is also a large city, which has warmed more than its surroundings, so part of the recent shift comes from the city itself; the rest follows the wider warming of spring in Japan. Data: compiled by Yasuyuki Aono (Aono and Kazui 2008; Aono and Saito 2010), kept up to date by the <a href="https://github.com/GMU-CherryBlossomCompetition/peak-bloom-prediction" target="_blank" rel="noopener">cherry blossom prediction competition</a> at George Mason University.</p>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],charts=[],C={};
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,mlab=m=>ML[+m.slice(5,7)-1]+' '+m.slice(0,4);
+const day=d=>{if(!d)return 'an unknown date';const [y,m,dd]=d.split('-');return (+dd)+' '+ML[m-1]+' '+y};
+const cards=(id,c)=>$(id).innerHTML=c.map(([a,b])=>`<div class="card"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+const csv=t=>t.trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
+const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+const ready=(k,ch)=>{C[k]=ch;charts.push(ch);$('exp').disabled=false};
+const slope=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+const pc=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1)+'%';
+
+function fossil(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1000,c:+p[2]/1000,o:+p[3]/1000,g:+p[4]/1000,m:+p[5]/1000,f:((+p[6]||0)+(+p[7]||0))/1000}));if(Y.length<200)throw 0;
+ const L=Y[Y.length-1],P=Y[Y.length-2],y90=Y.find(r=>r.y===1990),cum=Y.reduce((s,r)=>s+r.t,0),Z=Y.filter(r=>r.y>=1850);
+ const peak=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),r10=(Math.pow(L.t/Y.find(r=>r.y===L.y-10).t,1/10)-1)*100;
+ $('fossil-st').innerHTML=`<b>Data through ${L.y}</b> (version ${S.version||'?'}, <a href="${S.source}" target="_blank" rel="noopener">dataset</a>). The Global Carbon Project publishes once a year, in October or November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
+ cards('fossil-cards',[[L.t.toFixed(1)+' Gt',`CO₂ from fossil fuels and cement in ${L.y} (billion metric tons)`],[pc((L.t-P.t)/P.t*100),`change from ${P.y}`],
+  [pc((L.t-y90.t)/y90.t*100),`change since 1990`],[Math.round(cum).toLocaleString('en-US')+' Gt',`emitted in total since ${Y[0].y}`]]);
+ $('t3').textContent=`Fossil CO₂ emissions by source, 1850–${L.y} (billion metric tons of CO₂ a year)`;
+ $('fossil-read').innerHTML=[
+  `In ${L.y} the world emitted ${L.t.toFixed(1)} billion metric tons of CO₂ from fossil fuels and cement, ${L.t>=P.t?'more than':'less than'} in ${P.y}${peak===L?', a new record':`; the record is ${peak.t.toFixed(1)} billion metric tons in ${peak.y}`}. Over the last ten years emissions ${r10>=0?'grew':'fell'} by about ${Math.abs(r10).toFixed(1)}% a year on average: ${r10>=1?'still rising':r10>=0?'growing slowly, but not yet falling':'falling'}.`,
+  `About half of each year's emissions stays in the air; the rest is taken up by the ocean and by plants on land. CO₂ in the air keeps rising as long as emissions continue, and global warming stops only when net CO₂ emissions reach zero.`,
+  (()=>{const F=[['coal',L.c],['oil',L.o],['gas',L.g]].sort((a,b)=>b[1]-a[1]),q=v=>(v/L.t*100).toFixed(0)+'%';return `By source in ${L.y}: ${F[0][0]} ${q(F[0][1])}, ${F[1][0]} ${q(F[1][1])}, ${F[2][0]} ${q(F[2][1])}; cement, flaring and other sources make up the rest.`})()
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('fossil-s').classList.remove('hide');
+ const ds=[['Coal','c','#55524c'],['Oil','o','#9a7650'],['Gas','g','#4f81b0'],['Cement','m','#b9ad9c'],['Flaring and other','f','#d0a43a']].map(([l,k,c],i)=>({label:l,data:Z.map(r=>r[k]),backgroundColor:c,borderColor:c,borderWidth:0,pointRadius:0,fill:i?'-1':'origin'}));
+ // a stacked area, not 175 thin bars: bars that narrow leave hairline gaps that show as bands
+ ready('f',new Chart($('c3'),{type:'line',data:{labels:Z.map(r=>String(r.y)),datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' Gt',footer:t=>'Total: '+Z[t[0].dataIndex].t.toFixed(1)+' Gt'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Billion metric tons CO₂'},grid:{color:THEME.grid}}}}}))}
+
+function ph(t,S){
+ const D=csv(t).map(p=>{const [y,m,d]=p[0].split('-').map(Number);return{d:p[0],x:y+(m-1+(d-.5)/31)/12,c:p[1]===''?null:+p[1],m:p[2]===''?null:+p[2]}});if(D.length<200)throw 0;
+ const Pc=D.filter(r=>r.c!=null).map(r=>({x:r.x,y:r.c})),Pm=D.filter(r=>r.m!=null).map(r=>({x:r.x,y:r.m})),b=slope(Pc),my=mean(Pc.map(p=>p.y)),mx=mean(Pc.map(p=>p.x));
+ const fit=x=>my+b*(x-mx),x0=Pc[0].x,x1=Pc[Pc.length-1].x,dpH=fit(x1)-fit(x0),hplus=(Math.pow(10,-dpH)-1)*100;
+ const L=D[D.length-1],lab=d=>ML[+d.slice(5,7)-1]+' '+d.slice(0,4),last12=mean(Pc.filter(p=>p.x>x1-1).map(p=>p.y));
+ $('ph-st').innerHTML=`<b>Data through ${lab(L.d)}.</b> A research ship samples Station ALOHA about once a month; the processed results are published in batches, usually a year or more later. New data last arrived here on ${day(S.new_data)}.`;
+ cards('ph-cards',[[last12.toFixed(3),`average surface pH, 12 months to ${lab(L.d)}`],[((b<0?'−':'+')+Math.abs(b*10).toFixed(3)),`trend per decade (pH units)`],
+  ['+'+hplus.toFixed(0)+'%',`more hydrogen ions (acidity) than in ${Math.floor(x0)}, from the trend`]]);
+ $('t4').textContent=`Surface seawater pH at Station ALOHA, Hawaiʻi, ${Math.floor(x0)}–${L.d.slice(0,4)}`;
+ $('ph-read').innerHTML=[
+  `Surface pH at Station ALOHA has fallen by about ${Math.abs(dpH).toFixed(3)} since ${Math.floor(x0)}; a lower pH means more acidic water (${((b<0?'−':'+')+Math.abs(b*10).toFixed(3))} per decade). Because pH is a logarithmic scale, that means about ${hplus.toFixed(0)}% more hydrogen ions: the water is that much more acidic.`,
+  `The decline follows the rising CO₂ in the air, measured at Mauna Loa in the same island chain (see the <a href="co2.html">CO₂ page</a>): the ocean takes up CO₂ from the air, and the more there is in the air, the more dissolves.`,
+  `More acidic water makes it harder for corals, shellfish, sea snails and some plankton to build their shells and skeletons from calcium carbonate, which affects the food webs and fisheries that depend on them.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('ph-s').classList.remove('hide');
+ ready('p',new Chart($('c4'),{type:'scatter',data:{datasets:[
+   {label:'Calculated from carbon and alkalinity',data:Pc,backgroundColor:'#4f81b0',borderColor:'#4f81b0',pointRadius:2},
+   {label:'Measured directly',data:Pm,backgroundColor:'#d06a4e',borderColor:'#d06a4e',pointRadius:2},
+   {type:'line',label:'Trend',data:[{x:x0,y:fit(x0)},{x:x1,y:fit(x1)}],borderColor:THEME.clim,backgroundColor:THEME.clim,borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,
+   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(3)}}},
+   scales:{x:{type:'linear',min:Math.floor(x0),max:Math.ceil(x1),ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'pH (total scale)'},grid:{color:THEME.grid}}}}}))}
+
+
+function amoc(t,S){
+ const M=csv(t).map(p=>({m:p[0],x:+p[0].slice(0,4)+(+p[0].slice(5,7)-.5)/12,v:+p[1]}));if(M.length<200)throw 0;
+ const R=M.map((r,i)=>i<11||M[i-11].x<r.x-1.01?null:{x:r.x,y:mean(M.slice(i-11,i+1).map(q=>q.v)),m:r.m}).filter(Boolean);
+ const L=M[M.length-1],RL=R[R.length-1],all=mean(M.map(r=>r.v)),low=R.reduce((b,r)=>r.y<b.y?r:b,R[0]);
+ const f4=mean(M.filter(r=>r.x<M[0].x+4).map(r=>r.v)),l4=mean(M.filter(r=>r.x>L.x-4).map(r=>r.v));
+ $('amoc-st').innerHTML=`<b>Data through ${mlab(L.m)}.</b> New data are published every one to two years, after a research ship recovers the moorings and the measurements are processed. New data last arrived here on ${day(S.new_data)}.`;
+ cards('amoc-cards',[[RL.y.toFixed(1)+' Sv',`12-month average to ${mlab(L.m)}`],[all.toFixed(1)+' Sv',`average of the whole record, ${mlab(M[0].m)}–${mlab(L.m)}`],
+  [l4.toFixed(1)+' Sv',`last 4 years, vs ${f4.toFixed(1)} Sv in the first 4 years`],[low.y.toFixed(1)+' Sv',`weakest 12-month average, to ${mlab(low.m)}`]]);
+ $('t1').textContent=`Atlantic overturning at 26.5°N, ${M[0].m.slice(0,4)}–${L.m.slice(0,4)}: monthly and 12-month average`;
+ $('amoc-read').innerHTML=[
+  `Over the 12 months to ${mlab(L.m)} the overturning averaged ${RL.y.toFixed(1)} Sv; over the whole record since ${M[0].m.slice(0,4)}, ${all.toFixed(1)} Sv. In the last four years of data it averaged ${l4.toFixed(1)} Sv, against ${f4.toFixed(1)} Sv in the first four.`,
+  `In everyday terms: ${RL.y.toFixed(1)} Sv is about ${(Math.round(RL.y*1e6/2500/100)*100).toLocaleString('en-US')} Olympic swimming pools of water every second, or some ${Math.round(RL.y/1.2)} times the flow of all the world's rivers together: what all those rivers deliver to the sea in a year, the AMOC moves in about ${Math.round(38000e9/(RL.y*1e6)/86400)} days.`,
+  `It varies a lot from month to month and year to year: the weakest 12 months on record ended in ${mlab(low.m)}, at ${low.y.toFixed(1)} Sv. With about two decades of direct measurements, a long-term weakening cannot yet be told apart from natural ups and downs with confidence.`,
+  `Climate models project that the AMOC will weaken during this century as the North Atlantic warms and receives more fresh water from melting ice and rainfall. Whether and when it could pass a tipping point and collapse is an open question in research; that is why these continuous measurements matter.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('amoc-s').classList.remove('hide');
+ ready('a',new Chart($('c1'),{data:{datasets:[
+   {type:'line',label:'12-month average',data:R,borderColor:THEME.clim,borderWidth:2,pointRadius:0,order:1},
+   {type:'line',label:'Monthly',data:M.map(r=>({x:r.x,y:r.v})),borderColor:'#7fa6c9',backgroundColor:'#7fa6c9',borderWidth:1,pointRadius:0,order:2}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' Sv'}}},
+   scales:{x:{type:'linear',min:2004,max:Math.ceil(L.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'Sverdrup (million m³/s)'},grid:{color:THEME.grid}}}}}))}
+
+function rli(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],v:+p[1],lo:p[2]===''?null:+p[2],hi:p[3]===''?null:+p[3]}));if(Y.length<20)throw 0;
+ const F=Y[0],L=Y[Y.length-1],pct=(L.v-F.v)/F.v*100,d10=Y.find(r=>r.y===L.y-10);
+ $('rli-st').innerHTML=`<b>Data through ${L.y}.</b> Updated once a year, after the year's Red List reassessments; the UN database usually carries the new value some months later. New data last arrived here on ${day(S.new_data)}.`;
+ cards('rli-cards',[[L.v.toFixed(3),`Red List Index, ${L.y}`],[F.v.toFixed(3),`in ${F.y}, when the series starts`],[(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',`change ${F.y}–${L.y}`]]);
+ $('t2').textContent=`Red List Index, world, ${F.y}–${L.y} (1 = no species threatened, 0 = all extinct)`;
+ $('rli-read').innerHTML=[
+  `The world's Red List Index fell from ${F.v.toFixed(3)} in ${F.y} to ${L.v.toFixed(3)} in ${L.y}, a ${Math.abs(pct).toFixed(0)}% ${pct<0?'decline':'change'}${d10?`; over the last ten years it went from ${d10.v.toFixed(3)} to ${L.v.toFixed(3)}`:''}. ${pct<0?'Species in the assessed groups are, on balance, moving closer to extinction, and the decline has not stopped.':''}`,
+  `Climate change is one of several drivers, alongside habitat loss, overexploitation, pollution and invasive species. For some groups it is already the main one: corals, for example, are threatened above all by marine heatwaves.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('rli-s').classList.remove('hide');
+ const band=Y.every(r=>r.lo!=null&&r.hi!=null);
+ ready('r',new Chart($('c2'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:[
+   ...(band?[{label:'Upper bound',data:Y.map(r=>r.hi),borderWidth:0,pointRadius:0,fill:false},
+             {label:'Lower bound',data:Y.map(r=>r.lo),borderWidth:0,pointRadius:0,fill:'-1',backgroundColor:'rgba(208,106,78,.18)'}]:[]),
+   {label:'Red List Index',data:Y.map(r=>r.v),borderColor:'#d06a4e',backgroundColor:'#d06a4e',borderWidth:2,pointRadius:0}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{labels:{filter:i=>!/bound/.test(i.text)}},tooltip:{filter:i=>!/bound/.test(i.dataset.label),callbacks:{label:c=>'Red List Index: '+c.parsed.y.toFixed(3)+(band?` (range ${Y[c.dataIndex].lo.toFixed(3)}–${Y[c.dataIndex].hi.toFixed(3)})`:'')}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{grid:{color:THEME.grid}}}}}))}
+
+['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
+$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0],[C.t,'t5',0],[C.c,'t6',0],[C.d,'t7',0],[C.b,'t8',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
+function trees(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1e6,f:p[2]===''||p[2]==null?null:+p[2]/1e6}));if(Y.length<15)throw 0;
+ const L=Y[Y.length-1],max=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),sum=Y.reduce((a,r)=>a+r.t,0),hasF=Y.every(r=>r.f!=null);
+ $('trees-st').innerHTML=`<b>Data through ${L.y}.</b> Released once a year, in spring, for the year before; mapping the whole world from satellite images takes several months. New data last arrived here on ${day(S.new_data)}.`;
+ cards('trees-cards',[[L.t.toFixed(1)+' Mha',`tree cover lost in ${L.y} (million hectares)`],[max.t.toFixed(1)+' Mha',`largest year, ${max.y}`],
+  [Math.round(sum)+' Mha',`lost ${Y[0].y}–${L.y}, about ${(sum*1e4/9.83e6*100).toFixed(0)}% of the area of the United States`]]);
+ $('t5').textContent=`Tree cover loss, world, ${Y[0].y}–${L.y} (million hectares a year)`;
+ const f10=hasF?mean(Y.slice(0,10).map(r=>r.f/r.t))*100:0;
+ $('trees-read').innerHTML=[
+  `In ${L.y} the world lost ${L.t.toFixed(1)} million hectares of tree cover${max===L?', the most on record':`; the largest year was ${max.y}, with ${max.t.toFixed(1)} million`}.`,
+  hasF?`Wildfires caused ${(L.f/L.t*100).toFixed(0)}% of the loss in ${L.y}, against ${f10.toFixed(0)}% on average in ${Y[0].y}–${Y[9].y}. Hotter, drier weather makes fires more frequent and more intense, and burned forest releases its carbon, which adds to warming: a feedback.`:'',
+  `The rest is mostly clearing for farmland, logging, shifting cultivation (small plots cleared, farmed for a few years and left to regrow) and mining. Forests take up a large share of our CO₂ emissions; clearing them both releases carbon and removes part of that sink.`
+ ].filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+ $('trees-s').classList.remove('hide');
+ const ds=hasF?[{label:'Wildfire',data:Y.map(r=>r.f),backgroundColor:'#d06a4e'},{label:'Other causes',data:Y.map(r=>r.t-r.f),backgroundColor:'#5a9e6f'}]
+              :[{label:'Tree cover loss',data:Y.map(r=>r.t),backgroundColor:'#5a9e6f'}];
+ ready('t',new Chart($('c5'),{type:'bar',data:{labels:Y.map(r=>String(r.y)),datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' Mha',footer:t=>'Total: '+Y[t[0].dataIndex].t.toFixed(1)+' Mha'}}},
+   scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,title:{display:true,text:'Million hectares'},grid:{color:THEME.grid}}}}}))}
+
+function crops(t,S){
+ const K=[['maize','Maize','#d0a43a'],['wheat','Wheat','#9a7650'],['rice','Rice','#5a9e6f'],['soybeans','Soybeans','#4f81b0']];
+ const Y=csv(t).map(p=>({y:+p[0],maize:+p[1]||null,wheat:+p[2]||null,rice:+p[3]||null,soybeans:+p[4]||null}));if(Y.length<50)throw 0;
+ const F=Y[0],L=Y[Y.length-1];
+ // each year against its own trend: a straight line through the three years before and the three after (not the year
+ // itself), so the steady climb is taken out; at the ends the line uses the years on one side only
+ const dev=k=>Y.map((r,i)=>{const w=Y.slice(Math.max(0,i-3),i+4).filter(q=>q!==r&&q[k]!=null).map(q=>({x:q.y,y:q[k]}));if(w.length<4||r[k]==null)return null;
+  const b=slope(w),e=mean(w.map(p=>p.y))+b*(r.y-mean(w.map(p=>p.x)));return (r[k]/e-1)*100});
+ const D=Object.fromEntries(K.map(([k])=>[k,dev(k)]));
+ const worst=K.map(([k,n])=>{let b=0;D[k].forEach((v,i)=>{if(v!=null&&v<D[k][b])b=i});return[n,Y[b].y,D[k][b]]});
+ $('crops-st').innerHTML=`<b>Data through ${L.y}.</b> FAO publishes once a year, around December, after national statistics offices have reported their harvests. New data last arrived here on ${day(S.new_data)}.`;
+ cards('crops-cards',K.map(([k,n])=>[L[k].toFixed(1)+' t/ha',`${n} in ${L.y}, ${(L[k]/F[k]).toFixed(1)}× ${F.y}`]));
+ $('t6').textContent=`World average yields, ${F.y}–${L.y} (metric tons per hectare)`;
+ $('t7').textContent=`Good and bad harvest years: each year compared with its own trend (%)`;
+ $('crops-read').innerHTML=[
+  `Yields have risen steadily: maize ${(L.maize/F.maize).toFixed(1)}×, wheat ${(L.wheat/F.wheat).toFixed(1)}×, rice ${(L.rice/F.rice).toFixed(1)}× and soybeans ${(L.soybeans/F.soybeans).toFixed(1)}× since ${F.y}, thanks to better varieties, fertiliser, irrigation and machinery. A changing climate does not show as a falling line here; it shows in two other ways.`,
+  `Bad years: heat waves and droughts cut harvests over large areas at once. The worst years against the trend: ${worst.map(([n,y,v])=>`${n.toLowerCase()} ${y} (${pc(v)})`).join(', ')}. The second chart shows these dips.`,
+  `Lost growth: researchers estimate that climate change has already slowed the growth of global farm productivity by about a fifth since 1961 compared with a world without warming (Ortiz-Bobea et al. 2021). Yields keep rising, but less than they would have.`,
+  `"CO₂ is plant food" is partly true: more CO₂ helps wheat, rice and soybeans grow, maize much less. But the same CO₂ brings the heat, drought and floods that take part of those gains away, and crops grown in high CO₂ contain somewhat less protein, zinc and iron. See <a href="claims.html#plant-food">the claim answered</a>.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('crops-s').classList.remove('hide');
+ ready('c',new Chart($('c6'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:K.map(([k,n,c])=>({label:n,data:Y.map(r=>r[k]),borderColor:c,backgroundColor:c,borderWidth:2,pointRadius:0}))},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' t/ha'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:0,title:{display:true,text:'Metric tons per hectare'},grid:{color:THEME.grid}}}}}));
+ ready('d',new Chart($('c7'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:K.map(([k,n,c])=>({label:n,data:D[k],borderColor:c,backgroundColor:c,borderWidth:1.5,pointRadius:1.5}))},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y>=0?'+':'−')+Math.abs(c.parsed.y).toFixed(1)+'%'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'% above or below trend'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}))}
+
+function blossom(t,S){
+ const B=csv(t).map(p=>({y:+p[0],d:p[1],n:+p[2]}));if(B.length<500)throw 0;
+ const dl=n=>{const d=new Date(Date.UTC(2001,0,n));return d.getUTCDate()+' '+ML[d.getUTCMonth()]};   // day of year as a date (non-leap year)
+ const L=B[B.length-1],by=Object.fromEntries(B.map(r=>[r.y,r.n])),M=[];
+ for(let y=B[0].y+25;y<=L.y;y++){const w=[];for(let k=y-49;k<=y;k++)if(by[k]!=null)w.push(by[k]);if(w.length>=20)M.push({x:y,y:mean(w)})}
+ const old=B.filter(r=>r.y<1850),o=mean(old.map(r=>r.n)),r10=B.slice(-10),n10=mean(r10.map(r=>r.n)),early=[...B].sort((a,b)=>a.n-b.n).slice(0,5);
+ const fd=d=>{const [y,m,dd]=d.split('-');return (+dd)+' '+ML[m-1]+' '+(+y)};
+ $('blossom-st').innerHTML=`<b>Data through ${L.y}.</b> One date a year, in spring; added after each year's peak bloom. New data last arrived here on ${day(S.new_data)}.`;
+ cards('blossom-cards',[[fd(L.d).replace(/ \d+$/,''),`full bloom in ${L.y}`],[dl(Math.round(n10)),`average of the last 10 years`],[dl(Math.round(o)),`average before 1850 (${old.length} years with a date)`],[Math.round(o-n10)+' days',`earlier now than before 1850`]]);
+ $('t8').textContent=`Full bloom of the cherry trees in Kyoto, ${B[0].y}–${L.y}`;
+ $('blossom-read').innerHTML=[
+  `In ${L.y} the cherry trees in Kyoto were in full bloom on ${fd(L.d)}. Over the last ten years the average was ${dl(Math.round(n10))}; before 1850 it was around ${dl(Math.round(o))}, about ${Math.round(o-n10)} days later.`,
+  `For more than a thousand years the date moved back and forth by a week or so around mid-April, with later dates in colder periods such as the early 19th century. Since about 1900 it has moved steadily earlier, faster than at any time in the record. The five earliest years: ${early.map(r=>`${r.y} (${fd(r.d).replace(/ \d+$/,'')})`).join(', ')}.`,
+  `Cherry trees bloom after a warm enough spell following winter, so the date follows the temperature of February and March. Earlier blooming is one of the most visible ways warming reaches daily life, and it matters well beyond Japan: plants, insects and the birds that feed on them do not all shift by the same amount.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('blossom-s').classList.remove('hide');
+ ready('b',new Chart($('c8'),{data:{datasets:[
+   {type:'line',label:'50-year average',data:M,borderColor:'#c2185b',backgroundColor:'#c2185b',borderWidth:2.2,pointRadius:0,order:1,spanGaps:false},
+   {type:'scatter',label:'Year with a date',data:B.map(r=>({x:r.y,y:r.n})),backgroundColor:'#e9a3bf',borderColor:'#e9a3bf',pointRadius:1.8,order:2}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,
+   plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+dl(Math.round(c.parsed.y))}}},
+   scales:{x:{type:'linear',min:800,max:L.y+5,ticks:{stepSize:100,callback:v=>String(v)},grid:{display:false}},y:{reverse:false,ticks:{callback:v=>dl(v)},title:{display:true,text:'Date of full bloom'},grid:{color:THEME.grid}}}}}))}
+
+const PARTS=[['fossil emissions','fossil_co2_global.csv',fossil,'fossil'],['ocean pH','hot_surface_ph.csv',ph,'ph'],
+ ['Atlantic overturning','amoc_rapid_monthly.csv',amoc,'amoc'],['Red List Index','redlist_index_world.csv',rli,'rli'],
+ ['tree cover loss','tree_cover_loss_world.csv',trees,'trees'],['crop yields','fao_crop_yields_world.csv',crops,'crops'],['cherry blossom','kyoto_cherry_blossom.csv',blossom,'blossom']];
+get('slow_status.json').then(JSON.parse).catch(()=>({})).then(S=>Promise.allSettled(PARTS.map(([n,f,fn,k])=>get(f).then(t=>fn(t,S[k]||{})))))
+ .then(r=>{const bad=PARTS.filter((p,i)=>r[i].status==='rejected');r.forEach((x,i)=>x.status==='rejected'&&console.error(PARTS[i][0],x.reason));
+  if(bad.length)$('err').textContent='Could not load: '+bad.map(p=>p[0]).join(', ')+'. Please try again later.'})
+ .catch(e=>{console.error(e);$('err').textContent='Could not load the data. Please try again later.'});
+</script></main></body></html>

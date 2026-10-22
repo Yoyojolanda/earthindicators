@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+"""Daily 2 m air temperature for regions (and the world), computed here from Copernicus ERA5.
+
+Same source and method as data/era5_t2_global_day.json (scripts/build_era5.py): the CDS dataset
+"ERA5 post-processed daily statistics" (daily mean of all 24 hourly values, UTC), averaged over each
+region with cos(latitude) weights. Regions as defined by Climate Reanalyzer:
+
+  nh         Northern Hemisphere   0 to 90 N
+  sh         Southern Hemisphere   0 to 90 S
+  arctic     Arctic                66.5 to 90 N
+  antarctic  Antarctic             66.5 to 90 S
+  tropics    Tropics               23.5 S to 23.5 N
+  world      World                 (only used to check this calculation against Copernicus's published series)
+
+Each run adds the newest days and, at the same time, spends its time budget filling in history, going back
+towards 1940. Several months are requested from Copernicus at once (ERA5_PARALLEL, default 8), because almost all
+of the time is spent waiting in the CDS queue. Months can come back in any order; each is saved only once every
+newer month is in, so the cache never has gaps. Progress is saved after every month, so the backfill continues
+over many runs. Every request sent to Copernicus is recorded with its ID in data/era5_open_requests.json (committed
+with the data). The next run reattaches to those requests instead of sending them again, so each month has at most
+one request in Copernicus's queue and keeps its place in line from one run to the next.
+
+Outputs
+  data/era5_t2_regions_daily.csv   cache: date + one column per region
+  data/era5_t2_<region>_day.json   [{"name":"<year>","data":[366 values]}, ..., {"name":"1991-2020",...}]
+                                   (written once the region's history covers 1991-2020)
+  data/era5_overlap_check.txt      this site's world average minus Copernicus's published one, every overlapping day
+
+Needs ~/.cdsapirc (url + key).
+"""
+import csv, hashlib, json, os, shutil, sys, tempfile, threading, time, zipfile
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from datetime import date, timedelta
+
+import numpy as np
+
+DATASET = "derived-era5-single-levels-daily-statistics"
+REGIONS = {"nh": (0, 90), "sh": (-90, 0), "arctic": (66.5, 90), "antarctic": (-90, -66.5),
+           "tropics": (-23.5, 23.5), "world": (-90, 90)}
+PUBLISH = ["nh", "sh", "arctic", "antarctic", "tropics"]
+CACHE = "data/era5_t2_regions_daily.csv"
+GLOBAL_CACHE = "data/era5_t2_global_daily.csv"       # Copernicus's published series, kept by build_era5.py
+OVERLAP = "data/era5_overlap_check.txt"
+FIRST = date(1940, 1, 1)
+CLIM = (1991, 2020)
+LAG, REFETCH = 5, 10
+BUDGET = float(os.environ.get("ERA5_BUDGET_MIN", "270")) * 60   # stop sending new requests after this many seconds
+GRACE = 20 * 60                                                   # then wait at most this long for open ones
+PARALLEL = int(os.environ.get("ERA5_PARALLEL", "8"))              # history months requested at the same time
+PROCESS = threading.Lock()
+OPEN_FILE = "data/era5_open_requests.json"   # {key: {"id": request id, "label": "2019-01", "sent": "2026-10-06T13:15"}}
+OPEN, OPEN_LOCK = {}, threading.Lock()
+POLL = float(os.environ.get("ERA5_POLL_S", "60"))                 # seconds between status checks of a waiting request
+
+
+def open_load():
+    if os.path.exists(OPEN_FILE):
+        OPEN.update(json.load(open(OPEN_FILE)))
+    old = time.strftime("%Y-%m-%dT%H:%M", time.gmtime(time.time() - 3 * 86400))
+    for k in [k for k, v in OPEN.items() if v.get("sent", "") < old]:    # forget requests older than 3 days
+        del OPEN[k]
+
+
+def open_set(key, value=None):
+    with OPEN_LOCK:
+        if value is None:
+            OPEN.pop(key, None)
+        else:
+            OPEN[key] = value
+        with open(OPEN_FILE + ".tmp", "w") as fh:
+            json.dump(OPEN, fh, indent=1, sort_keys=True)
+        os.replace(OPEN_FILE + ".tmp", OPEN_FILE)
+
+
+def make_client():
+    """Copernicus's datastores client, with the url and key from ~/.cdsapirc (written by the workflow)."""
+    from ecmwf.datastores import Client
+    cfg = {}
+    for line in open(os.path.expanduser("~/.cdsapirc")):
+        if ":" in line:
+            k, v = line.split(":", 1); cfg[k.strip()] = v.strip()
+    return Client(url=cfg["url"], key=cfg["key"], progress=False)
+
+
+def load_cache():
+    rows = {}
+    if os.path.exists(CACHE):
+        with open(CACHE) as fh:
+            for r in csv.DictReader(fh):
+                rows[date.fromisoformat(r["date"])] = {k: float(r[k]) for k in REGIONS if r.get(k)}
+    return rows
+
+
+def save_cache(rows):
+    with open(CACHE + ".tmp", "w", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n"); w.writerow(["date", *REGIONS])
+        for d in sorted(rows):
+            w.writerow([d.isoformat(), *[f"{rows[d][k]:.4f}" if k in rows[d] else "" for k in REGIONS]])
+    os.replace(CACHE + ".tmp", CACHE)
+
+
+def open_nc(path):
+    import xarray as xr
+    if zipfile.is_zipfile(path):
+        z = zipfile.ZipFile(path)
+        name = [n for n in z.namelist() if n.endswith(".nc")][0]
+        with open(path + ".nc", "wb") as fh:
+            fh.write(z.read(name))
+        path = path + ".nc"
+    return xr.open_dataset(path)
+
+
+def region_means(ds):
+    """{date: {region: area-weighted mean in degC}}"""
+    var = [v for v in ds.data_vars if ds[v].ndim == 3][0]
+    da = ds[var]
+    tdim = next(d for d in da.dims if d in ("valid_time", "time", "date"))
+    latn = next(d for d in da.dims if d.startswith("lat"))
+    lonn = next(d for d in da.dims if d.startswith("lon"))
+    lat = ds[latn]
+    w = np.cos(np.deg2rad(lat))
+    kelvin = float(da.isel({tdim: 0}).mean()) > 150
+    out = {}
+    for name, (s, n) in REGIONS.items():
+        sub = da.where((lat >= s) & (lat <= n), drop=True)
+        m = sub.weighted(w.where((lat >= s) & (lat <= n), drop=True)).mean((latn, lonn))
+        for t, v in zip(m[tdim].values.astype("datetime64[D]"), m.values):
+            if np.isfinite(v):
+                out.setdefault(t.astype(object), {})[name] = float(v) - (273.15 if kelvin else 0.0)
+    return out
+
+
+def fetch_month(client, days):
+    """Regional means for a list of days within one month; drops the newest days if they are not available yet.
+    Reattaches to a request a previous run left open for exactly the same days, instead of sending a new one."""
+    days = sorted(days)
+    y, mth = days[0].year, days[0].month
+    while days:
+        req = {"product_type": "reanalysis", "variable": ["2m_temperature"],
+               "year": f"{y}", "month": [f"{mth:02d}"], "day": [f"{d.day:02d}" for d in days],
+               "daily_statistic": "daily_mean", "time_zone": "utc+00:00", "frequency": "1_hourly"}
+        key = hashlib.sha1(json.dumps(req, sort_keys=True).encode()).hexdigest()[:16]
+        label = f"{y}-{mth:02d}" + ("" if days[0].day == 1 and len(days) >= 28 else f" ({days[0].day}-{days[-1].day})")
+        for attempt in range(3):
+            tmp = tempfile.mkdtemp()     # a month is ~100+ MB: always delete it again, or the runner's disk fills up
+            try:
+                remote, rid = None, OPEN.get(key, {}).get("id")
+                if rid:
+                    try:
+                        remote = client.get_remote(rid)
+                        if remote.status in ("failed", "rejected", "dismissed"):
+                            remote = None
+                        else:
+                            print(f"    {label}: reattached to request {rid[:8]} ({remote.status})", flush=True)
+                    except Exception:
+                        remote = None
+                    if remote is None:
+                        open_set(key)
+                if remote is None:
+                    remote = client.submit(DATASET, req)
+                    open_set(key, {"id": remote.request_id, "label": label, "sent": time.strftime("%Y-%m-%dT%H:%M", time.gmtime())})
+                while True:
+                    st = remote.status
+                    if st == "successful":
+                        break
+                    if st in ("failed", "rejected", "dismissed"):
+                        open_set(key); raise RuntimeError(f"request {st}")
+                    time.sleep(POLL)
+                path = os.path.join(tmp, "t2m")
+                client.download_results(remote.request_id, path)
+                open_set(key)
+                with PROCESS:            # download in parallel, average one month at a time (each needs ~1 GB of memory)
+                    ds = open_nc(path)
+                    try:
+                        return region_means(ds)
+                    finally:
+                        ds.close()
+            except Exception as e:
+                msg = str(e)
+                print(f"    {label}: request failed ({msg[:200]})", flush=True)
+                if any(k in msg.lower() for k in ("not available", "no data", "invalid", "none of the data")):
+                    break
+                time.sleep(30 * (attempt + 1))
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+        print(f"    retrying without {days[-1]}", flush=True)
+        days = days[:-1]
+    return {}
+
+
+def month_days(y, m, until):
+    d, out = date(y, m, 1), []
+    while d.month == m and d <= until:
+        out.append(d); d += timedelta(1)
+    return out
+
+
+def write_jsons(rows):
+    for r in PUBLISH:
+        series = {d: v[r] for d, v in rows.items() if r in v}
+        years = sorted({d.year for d in series})
+        clim_years = [y for y in range(CLIM[0], CLIM[1] + 1) if y in years and sum(1 for d in series if d.year == y) >= 360]
+        if len(clim_years) < CLIM[1] - CLIM[0] + 1:
+            print(f"  {r}: history covers {years[0] if years else '-'}-{years[-1] if years else '-'}; not published until 1991-2020 is complete", flush=True)
+            continue
+        arr = {y: np.full(366, np.nan) for y in years}
+        for d, v in series.items():
+            arr[d.year][d.timetuple().tm_yday - 1] = v
+        naive = np.nanmean(np.array([arr[y] for y in clim_years]), axis=0)
+        clim = np.mean([np.roll(naive, k) for k in range(-2, 3)], axis=0)   # 5-day smoothing, as for the world series
+        f = lambda a: [None if not np.isfinite(x) else round(float(x), 3) for x in a]
+        out = [{"name": str(y), "data": f(arr[y])} for y in years]
+        out.append({"name": f"{CLIM[0]}-{CLIM[1]}", "data": f(clim)})
+        with open(f"data/era5_t2_{r}_day.json", "w") as fh:
+            json.dump(out, fh, separators=(",", ":"))
+        print(f"  wrote data/era5_t2_{r}_day.json ({years[0]}-{years[-1]})", flush=True)
+
+
+def overlap_check(rows):
+    """Compare this site's own world average with Copernicus's published series on every overlapping day."""
+    if not os.path.exists(GLOBAL_CACHE):
+        return
+    pub = {}
+    with open(GLOBAL_CACHE) as fh:
+        for r in csv.DictReader(fh):
+            if r["source"] == "c3s":
+                pub[date.fromisoformat(r["date"])] = float(r["temp"])
+    diffs = np.array([rows[d]["world"] - pub[d] for d in sorted(pub) if d in rows and "world" in rows[d]])
+    if len(diffs) == 0:
+        return
+    days = sorted(d for d in pub if d in rows and "world" in rows[d])
+    msg = (f"This site's ERA5 world average minus the series published by Copernicus, {len(diffs)} overlapping days "
+           f"({days[0]} to {days[-1]}): mean {diffs.mean():+.4f} degC, standard deviation {diffs.std():.4f} degC, "
+           f"largest difference {np.abs(diffs).max():.4f} degC.")
+    with open(OVERLAP, "w") as fh:
+        fh.write(msg + "\n")
+    print("  " + msg, flush=True)
+
+
+def main():
+    t0 = time.time()
+    os.makedirs("data", exist_ok=True)
+    rows = load_cache()
+    client = make_client()               # one client is shared by all threads (it only makes independent HTTP calls)
+    open_load()
+    if OPEN:
+        print(f"{len(OPEN)} requests left open by earlier runs: " + ", ".join(sorted(v['label'] for v in OPEN.values())), flush=True)
+    last_ok = date.today() - timedelta(LAG)
+
+    lock = threading.Lock()                # the newest-days thread and the history loop both write the cache
+    def save(got):
+        with lock:
+            rows.update(got); save_cache(rows)
+
+    # history targets are fixed now, from the oldest day in the cache; the newest days don't affect them
+    targets = history_targets(rows) if rows else []     # very first run: newest days only
+    if rows and not targets:
+        print("history complete back to 1940", flush=True)
+
+    # 1. newest days (plus the last few again: preliminary data can be revised), in a background thread,
+    #    so the history requests below can join the Copernicus queue at the same time instead of waiting
+    start = (max(rows) - timedelta(REFETCH)) if rows else last_ok - timedelta(40)
+    months = {}
+    for k in range((last_ok - start).days + 1):
+        d = start + timedelta(k); months.setdefault((d.year, d.month), []).append(d)
+    def newest():
+        for (y, m), days in sorted(months.items()):
+            print(f"new: requested {y}-{m:02d} ({len(days)} days)", flush=True)
+            got = fetch_month(client, days); save(got)
+            print(f"  received new {y}-{m:02d}: {len(got)} days", flush=True)
+    th = threading.Thread(target=newest, daemon=True); th.start()
+
+    # 2. history, newest month first, several requests at once while the time budget lasts
+    def work(days):
+        return fetch_month(client, days)
+    used = lambda: f"{(time.time() - t0) / 60:.0f} min used"
+    ex = ThreadPoolExecutor(PARALLEL)
+    open_, results, nxt, keep, failed = {}, {}, 0, 0, False
+    while True:
+        while not failed and nxt < len(targets) and len(open_) < PARALLEL and time.time() - t0 < BUDGET:
+            open_[ex.submit(work, targets[nxt])] = nxt
+            print(f"history: requested {targets[nxt][0]:%Y-%m} ({used()}, {len(open_)} open)", flush=True)
+            nxt += 1
+        if not open_:
+            break
+        finished, _ = wait(open_, timeout=max(1, BUDGET + GRACE - (time.time() - t0)), return_when=FIRST_COMPLETED)
+        if not finished:
+            print(f"  time is up; {len(open_)} requests left open at Copernicus; the next run reattaches to them", flush=True)
+            break
+        for f in finished:
+            i = open_.pop(f)
+            try:
+                got = f.result()
+            except Exception as e:
+                print(f"  {targets[i][0]:%Y-%m} failed: {e}", flush=True); got = {}
+            results[i] = got
+            print(f"  received {targets[i][0]:%Y-%m}: {len(got)} days ({used()})", flush=True)
+        while keep in results:           # save in order, newest first, so the cache never has a gap
+            got = results.pop(keep)
+            if not got:
+                print(f"  no data for {targets[keep][0]:%Y-%m}; nothing older is saved this run", flush=True)
+                failed = True; break
+            save(got); keep += 1
+        if failed:
+            break
+    ex.shutdown(wait=False, cancel_futures=True)
+    print(f"history: saved {keep} months this run", flush=True)
+
+    th.join(timeout=max(0, BUDGET + GRACE - (time.time() - t0)))
+    if th.is_alive():
+        print("  newest days not finished in time; the next run tries again", flush=True)
+    with lock:
+        print(f"cache: {min(rows)} to {max(rows)}", flush=True)
+        write_jsons(rows)
+        overlap_check(rows)
+    sys.stdout.flush()
+    os._exit(0)                          # don't wait for threads still blocked on open CDS requests
+
+
+def history_targets(rows):
+    """Months still to fetch, newest first: the rest of a partly filled oldest month, then every month back to 1940."""
+    first = min(rows)
+    out = []
+    missing = [d for d in month_days(first.year, first.month, first) if d not in rows]
+    if missing:
+        out.append(missing)
+    d = date(first.year, first.month, 1) - timedelta(1)
+    while d >= FIRST:
+        out.append(month_days(d.year, d.month, d))
+        d = date(d.year, d.month, 1) - timedelta(1)
+    return out
+
+
+if __name__ == "__main__":
+    main()
