@@ -46,7 +46,7 @@
 <p class="sub" id="avgnote" style="margin:8px 0 0"></p></div>
 <div class="box" id="b7" hidden data-nav="Warming level over time"><h2 id="t7"></h2><div class="wrap"><canvas id="c7"></canvas></div><p class="sub" id="n7" style="margin:8px 0 0"></p><div id="m7"></div></div>
 <div class="box" id="b9" hidden data-nav="Warming speeding up"><h2 id="t9"></h2><div class="wrap"><canvas id="c9"></canvas></div><p class="sub" id="n9" style="margin:8px 0 0"></p></div>
-<div class="box" id="b10" hidden data-nav="Second record: NASA"><h2 id="t10"></h2><div class="wrap s"><canvas id="c10"></canvas></div><div id="r10" style="font-size:14px;margin:10px 0 0"></div><p class="sub" id="n10" style="margin:8px 0 0"></p></div>
+<div class="box" id="b10" hidden data-nav="Five records"><h2 id="t10"></h2><div class="seg" id="v10">Show: <button class="nb on" type="button" data-v="y">Yearly</button><button class="nb" type="button" data-v="m">Monthly, since 1979</button></div><div class="wrap s"><canvas id="c10"></canvas></div><div id="r10" style="font-size:14px;margin:10px 0 0"></div><p class="sub" id="n10" style="margin:8px 0 0"></p></div>
 <div class="box" id="b5" hidden><h2 id="t5"></h2><div class="wrap s"><canvas id="c5"></canvas></div><p class="sub" id="n5" style="margin:8px 0 0"></p></div>
 <div class="box" id="b6" hidden><h2 id="t6"></h2>
 <div class="seg" id="mmode"><button class="nb on" type="button" data-m="trend">Warming since 1979</button><button class="nb" type="button" data-m="year">One year vs 1951–1980</button>
@@ -144,7 +144,7 @@ function run(raw){
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds.push({label:y,data:A[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds.push({label:String(cur),data:a.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
  if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
- c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+ c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin,yearLines(prior,A)],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>/^\d{4}$/.test(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min','90th percentile','10th percentile',String(cur),...Object.keys(HI)].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:pi?'°C above 1850–1900':'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  const bc=prior.map(y=>HI[y]||'#8fa9c4');
@@ -163,7 +163,7 @@ function run(raw){
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds3.push({label:y,data:P[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds3.push({label:String(cur),data:cd.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
  const shown=['1991–2020 mean',String(cur),...Object.keys(HI)];
- c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+ c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs,yearLines(prior,P,v=>v.toFixed(2)+' °C')],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min',...shown].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  // averages over different periods, all ending on the latest day, vs pre-industrial
@@ -305,41 +305,62 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
 })();
 </script>
 <script>
-// ---- a second record: NASA GISTEMP (monthly, thermometer-based) next to ERA5, both as yearly means on one baseline,
-//      and the race between 2026 and 2024 in each. Both are put on the same footing: each month minus that record's own
-//      1991–2020 mean for the month, plus Copernicus's 0.88 °C to express it against 1850–1900.
+// ---- five records of world temperature: ERA5 (Copernicus, reanalysis) and four records built from thermometers on land
+//      and at sea (NASA GISTEMP, NOAAGlobalTemp, HadCRUT5, Berkeley Earth), as yearly or monthly values, and the race
+//      for the warmest year in each. All are put on one footing: each month minus that record's own 1991–2020 mean for
+//      the month, plus Copernicus's 0.88 °C to express it against 1850–1900.
 (function(){
  const NOW=new Date().getUTCFullYear(),dim=(y,m)=>new Date(Date.UTC(y,m,0)).getUTCDate();
  const series=(rows)=>{   // rows: [{y,m,v}] -> {yearly means (complete years), months of the current year, anomalies}
   const cl=Array(13).fill(0).map((_,m)=>{const a=rows.filter(r=>r.m===m&&r.y>=1991&&r.y<=2020);return a.length?a.reduce((s,r)=>s+r.v,0)/a.length:null});
   const A=rows.map(r=>({...r,a:r.v-cl[r.m]+0.88})),Y={};A.forEach(r=>{const o=(Y[r.y]??={s:0,d:0,n:0,ms:[]});const d=dim(r.y,r.m);o.s+=r.a*d;o.d+=d;o.n++;o.ms.push(r)});
-  return{Y,full:Object.keys(Y).map(Number).filter(y=>Y[y].n===12).sort((a,b)=>a-b),mean:y=>Y[y].s/Y[y].d}};
+  return{A,Y,full:Object.keys(Y).map(Number).filter(y=>Y[y].n===12).sort((a,b)=>a-b),mean:y=>Y[y].s/Y[y].d,last:A[A.length-1]}};
  const get=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
- Promise.all([get('era5_t2_regions_monthly.csv'),get('models_hansen_temp.csv')]).then(([e,g])=>{
+ const ML3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],f=v=>v.toFixed(2),D=THEME.dark;
+ Promise.all([get('era5_t2_regions_monthly.csv'),get('temp_records_monthly.csv')]).then(([e,t])=>{
   const L=e.trim().split('\n'),w=L[0].split(',').indexOf('world');
-  const E=series(L.slice(1).map(l=>{const p=l.split(',');return{y:+p[0].slice(0,4),m:+p[0].slice(5,7),v:+p[w]}}).filter(r=>!isNaN(r.v)));
-  const G=series(g.split('\n').map(l=>l.trim().split(',')).filter(p=>/^\d{4}-\d{2}$/.test(p[0])).map(p=>({y:+p[0].slice(0,4),m:+p[0].slice(5,7),v:+p[1]})));
-  const ML3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],f=v=>v.toFixed(2);
-  const race=(S,name)=>{const o=S.Y[NOW];if(!o||o.n>=12)return'';const prev=S.full.map(y=>[y,S.mean(y)]),top=prev.reduce((a,b)=>b[1]>a[1]?b:a),so=o.s/o.d,
-    left=Array.from({length:12-o.n},(_,k)=>dim(NOW,o.n+1+k)).reduce((s,d)=>s+d,0),need=(top[1]*(o.d+left)-o.s)/left,mx=Math.max(...Object.values(S.Y).flatMap(x=>x.ms.map(r=>r.a))),
-    lm=o.ms[o.ms.length-1];
-   return `<p style="margin:0 0 6px"><b>${name}:</b> ${NOW} so far (Jan–${ML3[o.n-1]}) ${f(so)} °C; the warmest year, ${top[0]}, ${f(top[1])} °C. To beat it, the rest of ${NOW} must average about <b>${f(need)} °C</b> (latest month, ${ML3[lm.m-1]}: ${f(lm.a)} °C; warmest month on record: ${f(mx)} °C).</p>`};
-  const ye=E.full,yg=G.full.filter(y=>y>=ye[0]);
-  document.getElementById('t10').textContent=`Two independent records: yearly world temperature, ERA5 (Copernicus) and GISTEMP (NASA) (°C above 1850–1900)`;
-  const cE='#d00000',cG=THEME.dark?'#7fb3e8':'#1f6fb5',pts=(S,ys)=>ys.map(y=>({x:y,y:S.mean(y)})),cur=S=>S.Y[NOW]&&S.Y[NOW].n<12?[{x:NOW,y:S.Y[NOW].s/S.Y[NOW].d}]:[];
-  window.c10=new Chart(document.getElementById('c10'),{type:'line',data:{datasets:[
-    {label:'ERA5 (Copernicus)',data:pts(E,ye),borderColor:cE,backgroundColor:cE,borderWidth:2.2,pointRadius:0,order:0},
-    {label:'GISTEMP (NASA)',data:pts(G,yg),borderColor:cG,backgroundColor:cG,borderWidth:2.2,pointRadius:0,order:1},
-    {label:`ERA5, ${NOW} so far`,data:cur(E),showLine:false,pointRadius:5,pointStyle:'circle',borderColor:cE,backgroundColor:'transparent',borderWidth:2,order:0},
-    {label:`GISTEMP, ${NOW} so far`,data:cur(G),showLine:false,pointRadius:5,pointStyle:'rectRot',borderColor:cG,backgroundColor:'transparent',borderWidth:2,order:1}]},
-   options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
-    plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+f(c.parsed.y)+' °C'}}},
-    scales:{x:{type:'linear',min:ye[0],max:NOW+1,ticks:{stepSize:10,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}});
-  const d=yg.filter(y=>ye.includes(y)&&y>=1979).map(y=>Math.abs(E.mean(y)-G.mean(y))),md=Math.max(...d);
-  document.getElementById('r10').innerHTML=`<p style="margin:0 0 6px"><b>Will ${NOW} be the warmest year?</b> Each record on its own:</p>`+race(E,'ERA5')+race(G,'GISTEMP');
-  document.getElementById('n10').innerHTML=`ERA5 (a "reanalysis") combines billions of measurements from weather stations, ships, buoys, weather balloons, aircraft and satellites into one complete picture of the atmosphere, hour by hour; where there are no measurements, it fills the gaps using the physics of a weather model, the same way every weather forecast starts its day. It is not a climate model and predicts nothing. GISTEMP uses thermometer readings on land and at sea only, and fills the gaps between stations (as in the Arctic) by spreading their values over the surrounding area. They agree closely: since 1979 the yearly values differ by at most ${f(md)} °C. A year that is close to a record in one can still miss it in the other, so a "warmest year" can depend on which record is used. Both are shown here on one footing: each month minus that record's own 1991–2020 average for the month, plus 0.88 °C (Copernicus's estimate of 1991–2020 against 1850–1900). James Hansen quotes GISTEMP against 1880–1920; for recent years that comes out within a few hundredths of a degree of the values here, with the same ranking. The open symbols are the current year so far. Data: Copernicus ERA5 monthly averages; NASA GISTEMP v4 (<a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">data.giss.nasa.gov</a>), published around the middle of the following month.`;
+  const R=[{k:'era5',name:'ERA5 (Copernicus)',short:'ERA5',c:'#d00000',pt:'circle',
+    S:series(L.slice(1).map(l=>{const p=l.split(',');return{y:+p[0].slice(0,4),m:+p[0].slice(5,7),v:+p[w]}}).filter(r=>!isNaN(r.v)))}];
+  const T=t.trim().split(/\r?\n/),H=T[0].split(','),rows=T.slice(1).map(l=>l.split(','));
+  [['gistemp','GISTEMP (NASA)','NASA',D?'#7fb3e8':'#1f6fb5','rectRot'],['noaa','NOAAGlobalTemp (NOAA)','NOAA',D?'#6fd3c4':'#178a7c','triangle'],
+   ['hadcrut','HadCRUT5 (Met Office)','HadCRUT',D?'#c3a8f0':'#7b5ea7','rect'],['berkeley','Berkeley Earth','Berkeley',D?'#f2b25c':'#c9740f','circle']].forEach(([k,name,short,c,pt])=>{
+   const i=H.indexOf(k);if(i<0)return;
+   const r=rows.filter(p=>p[i]!==''&&p[i]!=null).map(p=>({y:+p[0].slice(0,4),m:+p[0].slice(5,7),v:+p[i]}));
+   if(r.length>360)R.push({k,name,short,c,pt,S:series(r)})});
+  const y0=Math.min(...R.map(r=>r.S.full[0]));
+  // the race for the warmest year, record by record
+  const race=r=>{const S=r.S,o=S.Y[NOW];if(!o||o.n>=12)return'';const top=S.full.map(y=>[y,S.mean(y)]).reduce((a,b)=>b[1]>a[1]?b:a),so=o.s/o.d,
+    left=Array.from({length:12-o.n},(_,k)=>dim(NOW,o.n+1+k)).reduce((s,d)=>s+d,0),need=(top[1]*(o.d+left)-o.s)/left,lm=o.ms[o.ms.length-1];
+   return `<tr><td><span style="color:${r.c}">■</span> ${r.short}</td><td>Jan–${ML3[o.n-1]}</td><td>${f(so)}</td><td>${top[0]}, ${f(top[1])}</td><td><b>${f(need)}</b></td><td>${ML3[lm.m-1]}: ${f(lm.a)}</td></tr>`};
+  const tb=R.map(race).join('');
+  document.getElementById('r10').innerHTML=tb?`<p style="margin:0 0 6px"><b>Will ${NOW} be the warmest year?</b> Each record on its own (°C above 1850–1900):</p><div style="overflow-x:auto"><table class="rt"><thead><tr><th>Record</th><th>${NOW} so far</th><th>Average</th><th>Warmest year</th><th>Rest of ${NOW} must average</th><th>Latest month</th></tr></thead><tbody>${tb}</tbody></table></div>`:'';
+  // how well they agree: the largest gap between the five in any year since 1979
+  const both=R[0].S.full.filter(y=>y>=1979&&R.every(r=>r.S.Y[y]&&r.S.Y[y].n===12));
+  const gap=both.map(y=>{const v=R.map(r=>r.S.mean(y));return[y,Math.max(...v)-Math.min(...v)]}),mg=gap.reduce((a,b)=>b[1]>a[1]?b:a,[0,0]);
+  const ranks=y=>R.filter(r=>r.S.full.length).map(r=>r.S.full.reduce((a,b)=>r.S.mean(b)>r.S.mean(a)?b:a));
+  const warm=[...new Set(ranks())];
+  document.getElementById('t10').textContent=`Five records of world temperature: ERA5 (Copernicus), and four built from thermometers on land and at sea (NASA, NOAA, Met Office, Berkeley Earth) (°C above 1850–1900)`;
+  // "data through": the latest month in each record, grouped
+  const th={};R.forEach(r=>{const l=r.S.last,k=ML3[l.m-1]+' '+l.y;(th[k]??=[]).push(r.short)});
+  document.getElementById('b10').dataset.through=Object.entries(th).sort((a,b)=>b[0].slice(-4)-a[0].slice(-4)||ML3.indexOf(b[0].slice(0,3))-ML3.indexOf(a[0].slice(0,3))).map(([k,v])=>k+' ('+v.join(', ')+')').join('; ');
+  const yearly=()=>R.flatMap((r,i)=>[
+    {label:r.name,data:r.S.full.map(y=>({x:y,y:r.S.mean(y)})),borderColor:r.c,backgroundColor:r.c,borderWidth:i?1.6:2.4,pointRadius:0,order:i},
+    {label:`${r.short}, ${NOW} so far`,data:r.S.Y[NOW]&&r.S.Y[NOW].n<12?[{x:NOW,y:r.S.Y[NOW].s/r.S.Y[NOW].d}]:[],showLine:false,pointRadius:5,pointStyle:r.pt,borderColor:r.c,backgroundColor:'transparent',borderWidth:2,order:i}]);
+  const monthly=()=>R.map((r,i)=>({label:r.name,data:r.S.A.filter(a=>a.y>=1979).map(a=>({x:a.y+(a.m-.5)/12,y:a.a})),borderColor:r.c,backgroundColor:r.c,borderWidth:i?1.1:2.2,pointRadius:0,order:i?i:9}));   // ERA5 thicker and underneath, so the other four stay visible on it
+  let mode='y';
+  let ch10=null;   // (window.c10 is also the canvas element itself, by its id, until the chart replaces it)
+  const draw=()=>{if(ch10)ch10.destroy();
+   window.c10=ch10=new Chart(document.getElementById('c10'),{type:'line',data:{datasets:mode==='y'?yearly():monthly()},
+    options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+     plugins:{legend:{labels:{filter:i=>!/so far$/.test(i.text)}},tooltip:{mode:'index',axis:'x',intersect:false,itemSort:(a,b)=>b.parsed.y-a.parsed.y,
+      callbacks:{title:t=>{const x=t[0].parsed.x;return mode==='y'?String(x):ML3[Math.floor((x%1)*12)]+' '+Math.floor(x)},label:c=>c.dataset.label+': '+f(c.parsed.y)+' °C'}}},
+     scales:{x:{type:'linear',min:mode==='y'?y0:1979,max:NOW+1,ticks:{stepSize:mode==='y'?10:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C above 1850–1900'},grid:{color:THEME.grid}}}}})};
+  document.getElementById('v10').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b||b.dataset.v===mode)return;
+   mode=b.dataset.v;document.querySelectorAll('#v10 .nb').forEach(x=>x.classList.toggle('on',x===b));draw()});
+  draw();
+  document.getElementById('n10').innerHTML=`Five teams measure the world's temperature in different ways. ERA5 (a "reanalysis") combines billions of measurements from weather stations, ships, buoys, weather balloons, aircraft and satellites into one complete picture of the atmosphere, hour by hour; where there are no measurements, it fills the gaps using the physics of a weather model, the same way every weather forecast starts its day. It is not a climate model and predicts nothing. The other four use thermometer readings on land and at sea only. They share much of the same raw data (the world's weather stations and ship and buoy records), but each team checks it, corrects it and fills the gaps between stations (as in the Arctic) with its own method: NASA by spreading station values over the surrounding area, NOAA and HadCRUT5 with statistical patterns, Berkeley Earth with its own statistical method and, since 2025, a finer grid. They agree closely: since 1979 the five yearly values are never more than ${f(mg[1])} °C apart (the widest gap was in ${mg[0]}). ${warm.length===1?`All five have ${warm[0]} as the warmest complete year.`:`Their warmest complete year: ${R.map(r=>r.short+' '+r.S.full.reduce((a,b)=>r.S.mean(b)>r.S.mean(a)?b:a)).join(', ')}.`} A year that is close to a record in one can still miss it in another, so a "warmest year" can depend on which record is used. All five are shown here on one footing: each month minus that record's own 1991–2020 average for the month, plus 0.88 °C (Copernicus's estimate of 1991–2020 against 1850–1900); each team's own estimate of pre-industrial warming differs a little from this. James Hansen quotes GISTEMP against 1880–1920; for recent years that comes out within a few hundredths of a degree of the values here, with the same ranking. In the yearly view the open symbols are the current year so far. The thermometer records publish each month around the middle of the following month. Data: Copernicus ERA5 monthly averages; NASA GISTEMP v4 (<a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">data.giss.nasa.gov</a>); NOAA NCEI NOAAGlobalTemp v6.1 (<a href="https://www.ncei.noaa.gov/products/land-based-station/noaa-global-temp" target="_blank" rel="noopener">ncei.noaa.gov</a>); Met Office Hadley Centre and UEA Climatic Research Unit HadCRUT5 (<a href="https://www.metoffice.gov.uk/hadobs/hadcrut5/" target="_blank" rel="noopener">metoffice.gov.uk</a>); Berkeley Earth, high-resolution global series (preliminary, not yet peer reviewed; <a href="https://berkeleyearth.org/data/" target="_blank" rel="noopener">berkeleyearth.org</a>).`;
   document.getElementById('b10').hidden=false;
- }).catch(e=>console.error('second record:',e));
+ }).catch(e=>console.error('five records:',e));
 })();
 </script>
 <script>

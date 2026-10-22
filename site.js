@@ -16,16 +16,66 @@
   }
   // ---- prior-year bands (range of prior years, middle 80%): the key above a chart turns each band on and off, like
   //      the legend does for lines. The choice is kept on the chart's box, so it survives a redraw (region switches).
-  window.bandOn = (ch, k) => { const b = ch && ch.canvas && ch.canvas.closest('.box'); return !(b && b.dataset['band' + k] === 'off'); };
+  //      Key 3 is "Every year": each prior year as its own thin line, off until the reader turns it on.
+  const boxOn = (b, k) => !b ? k != 3 : k == 3 ? b.dataset.band3 === 'on' : b.dataset['band' + k] !== 'off';
+  window.bandOn = (ch, k) => boxOn(ch && ch.canvas && ch.canvas.closest('.box'), k);
   document.addEventListener('click', e => {
     const t = e.target.closest('.bandkey [data-band]'); if (!t) return;
-    const box = t.closest('.box'), k = t.dataset.band, off = box.dataset['band' + k] !== 'off';
-    box.dataset['band' + k] = off ? 'off' : 'on'; t.classList.toggle('off', off); t.setAttribute('aria-pressed', !off);
+    const box = t.closest('.box'), k = t.dataset.band, on = !boxOn(box, k);
+    box.dataset['band' + k] = on ? 'on' : 'off'; t.classList.toggle('off', !on); t.setAttribute('aria-pressed', on);
     const cv = box.querySelector('canvas'), ch = cv && window.Chart && Chart.getChart(cv); if (ch) ch.update();
   });
+  // every year as a line, colored from blue (oldest) through purple to orange (newest), under the highlighted years
+  // and the current year. Pointing at a line (tapping on a phone) makes it stand out and names its year.
+  // Pages add it to a band chart's plugins: yearLines([1982, 1983, ...], [values of 1982, values of 1983, ...]).
+  const yearColor = (f, a) => 'hsla(' + (210 + 190 * f) % 360 + ',' + (THEME.dark ? 70 : 60) + '%,' + (THEME.dark ? 66 : 48) + '%,' + a + ')';
+  window.yearColor = yearColor;
+  window.yearLines = (years, rows, fmt) => ({ id: 'yearLines',
+    // the pointed-at year is named at the bottom of the chart's own tooltip
+    beforeInit(ch) { ch.$years = { years, rows };   // for the CSV download
+      const t = ((ch.config.options.plugins ??= {}).tooltip ??= {}), cb = (t.callbacks ??= {}), f0 = cb.footer;
+      cb.footer = items => { const h = bandOn(ch, 3) && ch.$yl; if (!h) return f0 ? f0(items) : '';
+        const v = rows[h.k][h.i]; return 'Highlighted line: ' + years[h.k] + ', ' + (fmt ? fmt(v) : (v >= 0 ? '+' : '') + v.toFixed(2) + ' °C'); }; },
+    beforeEvent(ch, { event: e }) {
+      if (!bandOn(ch, 3)) { ch.$yl = null; return; }
+      const was = ch.$yl;
+      if (e.type === 'mouseout') ch.$yl = null;
+      else if (e.x != null) {
+        const { x, y } = ch.scales, i = Math.round(x.getValueForPixel(e.x));
+        let best = null, d = 8;   // within 8 px of a line
+        rows.forEach((r, k) => { const v = r[i]; if (v == null) return; const dd = Math.abs(y.getPixelForValue(v) - e.y); if (dd < d) { d = dd; best = { k, i } } });
+        ch.$yl = best;
+      }
+      if (JSON.stringify(was) !== JSON.stringify(ch.$yl)) ch.$ylDirty = true;
+    },
+    afterEvent(ch, args) { if (ch.$ylDirty) { ch.$ylDirty = false; args.changed = true; } },
+    beforeDatasetsDraw(ch) {
+      if (!bandOn(ch, 3)) return;
+      const { ctx, scales: { x, y }, chartArea: A } = ch, n = years.length, h = ch.$yl;
+      ctx.save(); ctx.beginPath(); ctx.rect(A.left, A.top, A.right - A.left, A.bottom - A.top); ctx.clip();
+      const line = (r, c, w) => { ctx.beginPath(); let on = false;
+        r.forEach((v, i) => { if (v == null) { on = false; return; } const px = x.getPixelForValue(i), py = y.getPixelForValue(v); on ? ctx.lineTo(px, py) : ctx.moveTo(px, py); on = true; });
+        ctx.strokeStyle = c; ctx.lineWidth = w; ctx.stroke(); };
+      rows.forEach((r, k) => { if (!h || h.k !== k) line(r, yearColor(n > 1 ? k / (n - 1) : 1, h ? .25 : THEME.dark ? .75 : .6), 1); });
+      if (h) line(rows[h.k], THEME.ink, 2);
+      ctx.restore();
+    } });
+  // the "Every year" switch is added to every band key (the band keys themselves are written in each page)
+  const addYearKey = () => document.querySelectorAll('.bandkey').forEach(k => {
+    if (k.querySelector('[data-band="3"]')) return;
+    k.insertAdjacentHTML('beforeend', ' &nbsp; <button type="button" class="bk off" data-band="3" aria-pressed="false" title="Show every prior year as its own line">' +
+      '<span style="display:inline-block;width:22px;height:10px;background:linear-gradient(90deg,' + yearColor(0, 1) + ',' + yearColor(.5, 1) + ',' + yearColor(1, 1) + ')"></span> Every year (older → newer)</button>');
+  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addYearKey); else Promise.resolve().then(addYearKey);   // after THEME (below) exists
+  // ---- embedded chart (another site shows one chart in an iframe): <page>?embed=<canvas id>[&theme=light|dark]
+  //      shows only that chart, with a link back here; no menus, footer or other sections. Built by the "Embed" button.
+  const QS = new URLSearchParams(location.search), EMBED = QS.get('embed');
+  if (EMBED) document.documentElement.classList.add('embed');
   // ---- theme: 'light', 'dark', or automatic (follows the device). The choice is stored in this browser only.
+  //      An embedded chart uses the theme in its link (default: automatic), whatever was chosen on this site.
   const THEMES = ['auto', 'light', 'dark'];
-  const stored = (() => { try { return localStorage.getItem('ei-theme') || 'auto'; } catch (e) { return 'auto'; } })();
+  const stored = EMBED ? (['light', 'dark'].includes(QS.get('theme')) ? QS.get('theme') : 'auto')
+    : (() => { try { return localStorage.getItem('ei-theme') || 'auto'; } catch (e) { return 'auto'; } })();
   const dark = stored === 'dark' || (stored === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   if (stored !== 'auto') document.documentElement.dataset.theme = stored; else delete document.documentElement.dataset.theme;
   // A reader who picks light gets light: "only light" is the standard opt-out from a browser's own forced dark mode
@@ -89,7 +139,7 @@
   const here = location.pathname.split('/').pop() || 'index.html';
   const main = document.querySelector('main');
   const nav = document.getElementById('nav');            // old button row: now only a holder for the export button
-  if (main && !document.querySelector('.site-head')) {
+  if (main && !EMBED && !document.querySelector('.site-head')) {
     const link = ([href, label], cls) => '<a href="' + href + '"' + (cls ? ' class="' + cls + '"' : '') +
       (href === here ? ' aria-current="page"' : '') + '>' + label + '</a>';
     const ind = PAGES.filter(p => !['index.html', 'claims.html'].includes(p[0]));
@@ -253,11 +303,13 @@
     const s = document.createElement('script');
     s.async = true; s.src = 'https://gc.zgo.at/count.js';
     s.dataset.goatcounter = 'https://earthindicators.goatcounter.com/count';
+    if (EMBED) s.dataset.goatcounterSettings = '{"no_onload":true}';   // an embed is counted below, not as a page view
     s.onload = ok; document.head.appendChild(s);
   });
   // events on the claims page: which answers are opened, copied, and reached through a shared link
   const gcEvent = (path, title) => gcReady.then(() => window.goatcounter && window.goatcounter.count &&
     window.goatcounter.count({ path, title, event: true }));
+  if (EMBED) gcEvent('embed/' + here.replace('.html', '') + '-' + EMBED, document.referrer ? new URL(document.referrer).hostname : 'embed');
   if (here === 'claims.html') {
     const title = id => { const h = document.querySelector('#' + CSS.escape(id) + ' summary'); return h ? h.textContent.trim() : id; };
     const hookClaims = () => {
@@ -297,7 +349,7 @@
       '<a href="' + GH + '">Source code on GitHub</a></div>' +
       '<div class="ind"><h2>Indicators</h2>' + ind.map(a).join('') + '</div></nav>';
   };
-  const addFoot = () => { if (main && !document.querySelector('.site-foot')) main.insertAdjacentHTML('beforeend', '<footer class="site-foot">' + footNav() + '<p>© ' + years + ' Earth Indicators. Text and charts are licensed under ' +
+  const addFoot = () => { if (main && !EMBED && !document.querySelector('.site-foot')) main.insertAdjacentHTML('beforeend', '<footer class="site-foot">' + footNav() + '<p>© ' + years + ' Earth Indicators. Text and charts are licensed under ' +
       '<a href="https://creativecommons.org/licenses/by/4.0/" rel="license">CC BY 4.0</a>: share and adapt them freely, with credit to Earth Indicators and a link to this site. ' +
       'The logo and drawings are not included in that license. Drawings by Jolanda: a dying dandelion, for what is happening to our planet, and in the logo its seeds blowing in the wind, held in a heart, for life, love and care.</p>' +
       '<p>The data comes from NOAA, NASA, NSIDC and the Copernicus Climate Change Service and stays under their terms. <a href="methods.html">How the numbers are made</a> lists the exact datasets, processing steps and checks for every chart; all code is <a href="' + GH + '">public on GitHub</a>. <a href="https://earthindicators.goatcounter.com">Visitor statistics</a> are public, counted without cookies.</p></footer>'); };
@@ -305,7 +357,7 @@
 
   // ---- export button: pages put #exp inside the nav; move it to its own row under the nav so it reads as an action, not a page link
   const exp = document.getElementById('exp');
-  if (exp && nav) {
+  if (exp && nav && !EMBED) {
     const bar = document.createElement('div'); bar.className = 'tools';
     nav.after(bar); bar.appendChild(exp);
     exp.className = 'act';
@@ -316,9 +368,9 @@
   // ---- "Data and method" line on data pages: exact dataset, what this site does, links to the full method, code and data.
   //      Full details per indicator live in methods.html (anchor = page name without .html).
   const HOW = {
-    'air.html': ['Copernicus ERA5 daily 2 m temperature (<a href="https://doi.org/10.24381/cds.4991cf48">doi:10.24381/cds.4991cf48</a>). Second record: NASA GISTEMP v4 monthly land-ocean index.',
-      'World history is Copernicus\'s published series; newer days and the regions are averaged here from the ERA5 grid with the same method, and checked against Copernicus. GISTEMP is shown on the same baseline as ERA5 (each record\'s own 1991–2020 monthly means, plus 0.88 °C).',
-      ['scripts/build_era5.py', 'scripts/build_era5_regions.py', 'scripts/build_models.py'], ['data/era5_t2_global_daily.csv', 'data/models_hansen_temp.csv']],
+    'air.html': ['Copernicus ERA5 daily 2 m temperature (<a href="https://doi.org/10.24381/cds.4991cf48">doi:10.24381/cds.4991cf48</a>). Four more records, monthly: NASA GISTEMP v4, NOAA NOAAGlobalTemp v6.1, Met Office HadCRUT5 and Berkeley Earth.',
+      'World history is Copernicus\'s published series; newer days and the regions are averaged here from the ERA5 grid with the same method, and checked against Copernicus. The other four records are shown on the same baseline as ERA5 (each record\'s own 1991–2020 monthly means, plus 0.88 °C).',
+      ['scripts/build_era5.py', 'scripts/build_era5_regions.py', 'scripts/build_temp_records.py'], ['data/era5_t2_global_daily.csv', 'data/temp_records_monthly.csv']],
     'nino.html': ['NOAA OISST v2.1 daily sea surface temperature (<a href="https://doi.org/10.25921/RE9P-PT57">doi:10.25921/RE9P-PT57</a>). Hurricanes: NOAA NCEI IBTrACS v04r01 (<a href="https://doi.org/10.25921/82ty-9e16">doi:10.25921/82ty-9e16</a>).',
       'Averaged here over 5°S–5°N, 170°W–120°W (area-weighted) and checked against Climate Reanalyzer\'s independent series. Hurricane energy (ACE) is added up here from every 6-hourly storm position and checked against published season totals.',
       ['scripts/build_nino34.py', 'scripts/build_ace.py'], ['data/nino34_daily_sst.csv', 'data/ace_daily.csv']],
@@ -356,7 +408,7 @@
       'Published projections, verdicts and budgets are shown unchanged; measured warming rates, yearly ERA5 means and the CMIP6 percentiles across models are calculated here.', ['models.html', 'scripts/build_models.py', 'scripts/build_fu2026_march_sie.py'], ['data/models_old.json', 'data/models_march_sie_fu2026.csv', 'data/models_cmip6.csv', 'data/models_outlook.json', 'data/models_hansen_temp.csv', 'data/models_whatittakes.json']],
   };
   const how = HOW[here];
-  if (how && nav) {
+  if (how && nav && !EMBED) {
     const [src, what, code, file] = how, name = f => f.split('/').pop();
     const box = document.createElement('section'); box.className = 'how';
     box.innerHTML = '<h2>Data and method</h2><p><b>Source:</b> ' + src + ' ' + what + '</p><p class="links">' +
@@ -369,11 +421,12 @@
   // ---- "In short" box on data pages. The text lives in inshort.js, the live numbers in indicators.js.
   const page = location.pathname.split('/').pop() || 'index.html';
   const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
-  if (nav && !['index.html', 'claims.html'].includes(page)) {
+  let eiP = null; const eiLoad = () => window.EI ? Promise.resolve() : (eiP ||= load('indicators.js'));   // loaded once, shared
+  if (nav && !EMBED && !['index.html', 'claims.html'].includes(page)) {
     load('inshort.js').then(() => {
       const it = window.IN_SHORT && window.IN_SHORT[page];
       if (!it) return;
-      return (window.EI ? Promise.resolve() : load('indicators.js')).then(() => {
+      return eiLoad().then(() => {
         const box = document.createElement('section'); box.className = 'inshort';
         const live = t => t.replace(/\{(\w+\.\w+)\}/g, '<span class="live" data-k="$1">…</span>');
         box.innerHTML = '<h2>In short</h2>' + it.text.map(t => '<p>' + live(t) + '</p>').join('') +
@@ -392,7 +445,7 @@
 
   // ---- back-to-top button, appears after scrolling down a bit
   const top = document.createElement('button');
-  top.type = 'button'; top.id = 'totop'; top.textContent = '↑';
+  top.type = 'button'; top.id = 'totop'; top.textContent = '↑'; if (EMBED) top.hidden = true;
   top.title = 'Back to top'; top.setAttribute('aria-label', 'Back to top');
   document.body.appendChild(top);
   // its outline fills up (clockwise) with how far down the page the reader is
@@ -535,7 +588,7 @@
   }
   const n2 = () => picks.list().length;
   window.addEventListener('storage', e => { if (e.key === PK) picks.refresh(); });   // picked in another tab
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tray); else tray();
+  if (!EMBED) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tray); else tray(); }
 
   // ---- one share link per chart, like the claims page: every box with a chart gets a "Copy link to this chart"
   //      button. The link goes to s/<page>-<canvas id>.html, a small page with that chart's own preview image
@@ -559,6 +612,116 @@
   let variants = new Set();
   if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page))
     fetch('s/variants.json').then(r => r.ok ? r.json() : []).then(l => { variants = new Set(l); }).catch(() => {});
+  // ---- "Data through" stamp under a chart: how recent its data is and where it comes from, from the same shared
+  //      numbers as the In short boxes (indicators.js). Charts not listed get no stamp: static records, yearly
+  //      charts whose title already says the last year, maps that name their own date, and charts with a switch
+  //      between records with different dates. A page can also set data-through on a chart's box itself.
+  const STAMP = {
+    'air.html': { c1: 'air', c2: 'air', c3: 'air', c4: 'air' },
+    'sst.html': { c1: 'sst', c2: 'sst', c3: 'sst' },
+    'nino.html': { c1: 'nino', c2: 'nino', c3: 'nino' },
+    'ohc.html': { c1: 'ohc' },
+    'sea-level.html': { c1: 'sl', c2: 'sl' },
+    'sea-ice.html': { c1: 'ice', c2: 'ant', c3: 'ice', c4: 'ice', c7: 'ice' },
+    'land-ice.html': { c1: 'land' },
+    'co2.html': { c1: 'co2', c2: 'co2', c3: 'co2', c5: 'co2' },
+    'ch4.html': { c1: 'ch4', c3: 'ch4', c4: 'ch4' },
+    'ghg.html': { c1: 'ghg', c4: 'ghg', c5: 'ghg' },
+    'eei.html': { c1: 'eei', c2: 'eei', c5: 'eei' },
+    'water.html': { c1: 'wv', c2: 'wv', c4: 'wv' },
+    'sun.html': { c1: 'sun', c3: 'sun' },
+    'pdo.html': { c1: 'pdo', c2: 'pdo', c3: 'pdo' },
+    'slow.html': { c1: 'amoc', c2: 'rli', c3: 'fossil', c4: 'ph', c5: 'trees', c8: 'blossom' },
+  };
+  function stampFor(box, cv, bar) {
+    const id = (STAMP[page] || {})[cv.id];
+    let s = null;
+    const show = t => { if (!t && !s) return; if (!s) { s = document.createElement('span'); s.className = 'cstamp'; bar.prepend(s); }
+      s.textContent = t ? 'Data through ' + t : ''; };
+    if (box.dataset.through) show(box.dataset.through);
+    new MutationObserver(() => show(box.dataset.through)).observe(box, { attributes: true, attributeFilter: ['data-through'] });
+    if (id) eiLoad().then(() => EI.get(id)).then(r => { if (!box.dataset.through) show(r.through + ' · ' + r.src); }).catch(() => {});
+  }
+
+  // ---- "Embed" panel under a chart: the iframe code, with the chart's switches as set now and a choice of theme
+  function embedPanel(box, cv, bar, eb) {
+    let p = box.querySelector('.embedp');
+    if (p) { p.remove(); eb.setAttribute('aria-expanded', 'false'); return; }
+    p = document.createElement('div'); p.className = 'embedp';
+    p.innerHTML = '<p>Paste this code into a web page to show this chart there. It updates by itself whenever the data here does, ' +
+      'and links back to this page. Free to use with credit (CC BY 4.0), which the chart carries.</p>' +
+      '<div class="views">Theme: <button type="button" class="nb on" data-t="">Reader\'s device</button><button type="button" class="nb" data-t="light">Light</button><button type="button" class="nb" data-t="dark">Dark</button></div>' +
+      '<textarea readonly rows="3" aria-label="Embed code"></textarea><div class="cbar"><button type="button" class="nb ecopy">Copy code</button></div>';
+    let theme = '';
+    const code = () => { const c = segCode(box), d = segDefault ? segDefault.get(box) : c;
+      const src = location.origin + '/' + page + '?embed=' + encodeURIComponent(cv.id) + (theme ? '&theme=' + theme : '') + (c && c !== d && !/-1/.test(c) ? '#~' + c : '');
+      const h = Math.min(900, Math.max(320, Math.round(box.querySelector('.wrap') ? box.offsetHeight + 24 : 480)));
+      const t = ((box.querySelector('h2') || {}).textContent || '').replace(/"/g, '&quot;');
+      return '<iframe src="' + src + '" title="Earth Indicators: ' + t + '" width="100%" height="' + h + '" style="border:0;max-width:1000px" loading="lazy"></iframe>'; };
+    const ta = p.querySelector('textarea'), upd = () => { ta.value = code(); };
+    p.querySelector('.views').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return;
+      theme = b.dataset.t; p.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b)); upd(); });
+    p.querySelector('.ecopy').onclick = e => { const b = e.target; upd();
+      const done = () => { b.textContent = 'Code copied'; setTimeout(() => b.textContent = 'Copy code', 2000); };
+      if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); }); else ta.select();
+      gcEvent('chart-embed/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem); };
+    ta.addEventListener('focus', () => ta.select());
+    // the code follows the switches while the panel is open (the chart's own, and page-wide ones like the region)
+    const follow = e => { if (!p.isConnected) return document.removeEventListener('click', follow, true);
+      if (e.target.closest('.seg') && !p.contains(e.target)) setTimeout(upd, 0); };
+    document.addEventListener('click', follow, true);
+    upd(); bar.after(p); eb.setAttribute('aria-expanded', 'true');
+  }
+  // embed mode: everything on the page but the one chart is hidden; its switches are set as in the link
+  function embedOnly(code) {
+    const cv = document.getElementById(EMBED), box = cv && cv.closest('.box');
+    if (!box) { document.querySelector('main').innerHTML = '<p style="padding:16px">This chart is no longer on <a href="' + location.origin + '/' + page + '" target="_blank" rel="noopener">Earth Indicators</a>.</p>'; return; }
+    for (let el = box; el && el.tagName !== 'MAIN'; el = el.parentElement)
+      [...el.parentElement.children].forEach(c => { if (c !== el && !['SCRIPT', 'STYLE'].includes(c.tagName)) c.style.display = 'none'; });
+    for (let el = box.parentElement; el && el.tagName !== 'MAIN'; el = el.parentElement) { el.hidden = false; el.classList.remove('hide'); }
+    if (code && /^[0-9.]+$/.test(code)) { let n = 0;
+      const go = () => { const h = box.querySelector('h2'); if (h && h.textContent) applySegs(box, code); else if (++n < 60) setTimeout(go, 250); };
+      window.addEventListener('load', go); }
+  }
+
+  // ---- a chart's numbers as CSV: one row per point on the x axis, one column per series the chart shows (lines hidden
+  //      in the legend are left out; band edges are in while their band is on; with "Every year" on, every year too).
+  //      A few lines starting with # say what the file is; spreadsheet programs show them as the first rows.
+  function chartCSV(ch, box) {
+    const q = v => { const s = String(v ?? ''); return /[",\n#]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const num = v => v == null || (typeof v === 'number' && !isFinite(v)) ? '' : typeof v === 'number' ? String(+v.toPrecision(7)) :
+      Array.isArray(v) ? v.map(num).join(' to ') : v;
+    const labels = ch.data.labels || [], xs = [], rows = new Map(), cols = [];
+    const row = x => { const k = String(x); if (!rows.has(k)) { rows.set(k, {}); xs.push(x); } return rows.get(k); };
+    const add = (name, data, isObj) => {
+      let n = name || (cols.length ? 'series ' + (cols.length + 1) : 'value'); while (cols.includes(n)) n += ' (2)'; cols.push(n);
+      data.forEach((p, i) => { if (p == null) return;
+        const o = isObj || (typeof p === 'object' && !Array.isArray(p));
+        const x = o ? p.x : labels[i], y = o ? p.y : p; if (x == null) return; row(x)[n] = y; });
+    };
+    labels.forEach(row);                                          // keep the axis order of category charts
+    ch.data.datasets.forEach((d, i) => { if (ch.isDatasetVisible(i)) add(d.label, d.data || []); });
+    const yl = ch.$years; if (yl && bandOn(ch, 3)) yl.years.forEach((y, k) => { if (!cols.includes(String(y))) add(String(y), yl.rows[k]); });   // highlighted years are in already
+    if (!labels.length) xs.sort((a, b) => (+a) - (+b));
+    const sx = ch.options.scales && ch.options.scales.x, day = sx && sx.ticks && sx.ticks.callback === window.dayTick;
+    const used = xs.filter(x => cols.some(c => rows.get(String(x))[c] != null));
+    const axTitle = a => a && a.title && a.title.display && a.title.text ? [].concat(a.title.text).join(' ') : '';
+    const sw = [...box.querySelectorAll('.seg .nb.on')].map(e => e.textContent.trim()).concat(
+      box.hasAttribute('data-own-switches') ? [] : [...document.querySelectorAll('main .seg')].filter(g => !g.closest('.box')).map(g => (g.querySelector('.nb.on') || {}).textContent || '').filter(Boolean));
+    const src = HOW[here] ? HOW[here][0].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+    const head = ['# Earth Indicators: ' + ((box.querySelector('h2') || {}).textContent || '').trim(),
+      '# ' + location.origin + location.pathname + '#' + box.id,
+      ...(sw.length ? ['# Settings: ' + [...new Set(sw)].join(', ')] : []),
+      ...(axTitle(ch.options.scales && ch.options.scales.y) ? ['# Values: ' + axTitle(ch.options.scales.y)] : []),
+      ...(src ? ['# Source: ' + src] : []),
+      '# Downloaded ' + new Date().toISOString().slice(0, 10) + '. Free to share with credit to Earth Indicators (CC BY 4.0); the data stays under its providers\' terms.'];
+    const xName = day ? 'day_of_year' : axTitle(sx) || (used.every(x => /^\d{4}$/.test(x)) ? 'year' : used.every(x => /^\d{4}-\d\d$/.test(x)) ? 'month' :
+      used.every(x => typeof x === 'number' && x > 1000 && x < 2300) ? 'decimal_year' : 'x');
+    const lines = [[xName, ...(day ? ['date'] : []), ...cols].map(q).join(',')];
+    used.forEach(x => { const r = rows.get(String(x));
+      lines.push([q(typeof x === 'number' ? +x.toPrecision(9) : x), ...(day ? [q(window.dayTick.call({ max: 366, min: 365 }, +x))] : []), ...cols.map(c => q(num(r[c])))].join(',')); });
+    return head.map(l => l.replace(/[\r\n]+/g, ' ')).join('\n') + '\n' + lines.join('\n') + '\n';
+  }
   if (nav && !['index.html', 'claims.html', 'methods.html'].includes(page)) {
    const shareSetup = () => {
     document.querySelectorAll('main .box').forEach(box => {
@@ -578,7 +741,7 @@
         if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url)); else prompt('Copy this link:', url);
         gcEvent('chart-copy/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem);
       };
-      bar.appendChild(b);
+      if (!EMBED) bar.appendChild(b);
       // the key includes the switches as they are set now (region, baseline, data source...), so the same chart
       // can be added once per setting, e.g. Arctic and Antarctic volume side by side in one image
       const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'nb pick';
@@ -587,8 +750,33 @@
       pb.onclick = () => picks.toggle(key(), box, cv, stem, label);
       box.addEventListener('click', e => { if (e.target.closest('.seg')) setTimeout(label, 0); });   // after the page has switched
       label(); picks.labels.push(label);
-      bar.appendChild(pb); box.appendChild(bar);
+      if (!EMBED) bar.appendChild(pb);
+      // the numbers behind the chart, as it is set now (region, switches, bands): data-no-csv on a box leaves it out (maps)
+      if (!box.hasAttribute('data-no-csv')) {
+        const cb = document.createElement('button'); cb.type = 'button'; cb.className = 'nb'; cb.textContent = 'Data (CSV)';
+        cb.title = 'The numbers in this chart, as a spreadsheet file';
+        cb.onclick = () => { const ch = window.Chart && Chart.getChart(cv); if (!ch) return;
+          const name = key().replace(/ · /g, '-').replace(/[^\w.-]+/g, '_').toLowerCase() + '.csv';
+          const a = document.createElement('a'); a.download = name;
+          a.href = URL.createObjectURL(new Blob(['﻿' + chartCSV(ch, box)], { type: 'text/csv;charset=utf-8' }));
+          document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+          gcEvent('chart-csv/' + stem + '-' + cv.id, (box.querySelector('h2') || {}).textContent || stem); };
+        if (EMBED) bar.appendChild(cb); else bar.insertBefore(cb, pb);
+      }
+      // "Embed": code for showing this chart, live, on another website (an iframe of this page in embed mode)
+      if (!EMBED) {
+        const eb = document.createElement('button'); eb.type = 'button'; eb.className = 'nb'; eb.textContent = 'Embed';
+        eb.title = 'Show this chart, kept up to date, on your own website'; eb.setAttribute('aria-expanded', 'false');
+        eb.onclick = () => embedPanel(box, cv, bar, eb);
+        bar.appendChild(eb);
+      } else {
+        const a = document.createElement('a'); a.className = 'nb'; a.href = location.origin + '/' + page + '#' + box.id; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = 'Earth Indicators ↗'; a.title = 'The full page, with more charts and how the numbers are made'; bar.appendChild(a);
+      }
+      stampFor(box, cv, bar);
+      box.appendChild(bar);
     });
+    if (EMBED) embedOnly(decodeURIComponent(location.hash.slice(1)).split('~')[1]);
     // arriving from a shared link: charts appear only after their data has loaded, so wait for the box to show
     const [h, code] = decodeURIComponent(location.hash.slice(1)).split('~');
     if (h) {
@@ -609,7 +797,7 @@
   // ---- section menu on wide screens: the page's sections down the empty right-hand side, as a timeline whose dot
   //      turns red for the section being read. Built from the page itself, so new sections appear in it by themselves;
   //      rebuilt when page scripts show sections or fill in chart titles after their data has loaded.
-  if (nav && page !== 'claims.html') {                      // the overview gets one too: its five groups
+  if (nav && !EMBED && page !== 'claims.html') {            // the overview gets one too: its five groups
     const side = document.createElement('nav');
     side.className = 'secnav'; side.setAttribute('aria-label', 'Sections on this page');
     document.body.appendChild(side);
@@ -868,10 +1056,13 @@
       if (n) y += gap;
       font(15, 1); x.fillStyle = THEME.ink; x.fillText((typeof tid === 'string' ? document.getElementById(tid) : tid).textContent, pad, y); y += tH;
       font(12);
-      if (key) {
+      if (key) {   // only what is switched on in the chart's band key
         let kx = pad;
-        [[THEME.band1, 'Range of prior years (min–max)'], [THEME.band2, 'Middle 80% of prior years']].forEach(([c, t]) => {
-          x.fillStyle = c; x.fillRect(kx, y + 2 * r, 14 * r, 10 * r); x.fillStyle = THEME.mut; x.fillText(t, kx + 20 * r, y);
+        [[THEME.band1, 'Range of prior years (min–max)', 1], [THEME.band2, 'Middle 80% of prior years', 2], [null, 'Every prior year (older → newer)', 3]].forEach(([c, t, k]) => {
+          if (!bandOn(ch, k)) return;
+          if (c) x.fillStyle = c;
+          else { const g = x.createLinearGradient(kx, 0, kx + 14 * r, 0); [0, .5, 1].forEach(f => g.addColorStop(f, yearColor(f, 1))); x.fillStyle = g; }
+          x.fillRect(kx, y + 2 * r, 14 * r, 10 * r); x.fillStyle = THEME.mut; x.fillText(t, kx + 20 * r, y);
           kx += 20 * r + x.measureText(t).width + 18 * r;
         });
         y += kH;

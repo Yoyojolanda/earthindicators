@@ -318,6 +318,7 @@ main section,main .box,main h2,.inshort,.how{scroll-margin-top:72px}
 .inshort .units{font-size:13px;color:var(--mut2);border-top:1px solid var(--blueedge);padding-top:8px}
 .cbar{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:8px}
 .cbar .nb{padding:3px 10px;font-size:12px}
+.cbar .cstamp{margin-right:auto;align-self:center;font-size:12px;color:var(--mut)}
 @media print{.cbar,.ptray{display:none}}
 .cbar .nb.pick.on{border-color:var(--acc);color:var(--acc)}
 .ptray{position:fixed;left:16px;bottom:16px;z-index:50;display:grid;grid-template-columns:auto auto;justify-content:start;gap:8px;align-items:center;max-width:calc(100% - 96px);padding:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:13px}
@@ -338,3 +339,16 @@ main section,main .box,main h2,.inshort,.how{scroll-margin-top:72px}
 .bandkey .bk{background:none;border:0;padding:2px 0;font:inherit;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .bandkey .bk:hover{color:var(--ink)}
 .bandkey .bk.off{opacity:.45;text-decoration:line-through}
+/* small comparison table (five temperature records) */
+.rt{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+.rt th,.rt td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--rule)}
+.rt th{font-weight:600;color:var(--mut);font-size:12px}
+/* "Embed" panel under a chart */
+.embedp{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:13px}
+.embedp p{margin:0 0 8px;color:var(--mut)}
+.embedp textarea{width:100%;box-sizing:border-box;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);resize:vertical}
+/* embedded chart (page?embed=<chart>): only the chart, edge to edge */
+html.embed main{max-width:none;padding:0}
+html.embed .box{margin:0;border-radius:0;border:0}
+html.embed .cbar a.nb{text-decoration:none;color:inherit}
+html.embed body{background:var(--card)}

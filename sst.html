@@ -41,7 +41,7 @@
 <h2 style="font-size:18px;margin:26px 0 6px">The map: every ocean</h2>
 <p style="margin:0 0 12px">The charts above average many grid points into one number. The map shows each of them: the latest day (preliminary) or the last complete month, as the temperature itself or compared with the 1991–2020 normal for the same date. Drag across the map (pinch on a phone) to zoom in; double-click or "Reset zoom" to see the whole globe again.</p>
 <div class="views" id="sview" style="margin:0 0 10px">Show: <button class="nb on" type="button" data-v="globe">Whole globe</button><button class="nb" type="button" data-v="pac">Pacific</button><button class="nb" type="button" data-v="atl">Atlantic</button><button class="nb" type="button" data-v="ind">Indian Ocean</button></div>
-<div class="box" id="smap" data-own-switches data-nav="Map, every ocean"><h2 id="tMap"></h2>
+<div class="box" data-no-csv id="smap" data-own-switches data-nav="Map, every ocean"><h2 id="tMap"></h2>
  <div class="seg" id="swhen">When: <button class="nb on" type="button" data-w="day">Latest day</button><button class="nb" type="button" data-w="month">Last complete month</button></div><div class="seg" id="skind">Show: <button class="nb on" type="button" data-k="temp">Temperature</button><button class="nb" type="button" data-k="anom">Compared with normal</button></div>
  <div class="wrap" style="height:auto"><canvas id="cMap"></canvas></div><p class="sub" id="rMap" style="margin:6px 0 0;min-height:1.3em"></p></div>
 <p class="sub">NOAA OISST v2.1 (NOAA PSL), every 1° (every 4th point of the 0.25° grid). "Compared with normal" is the difference from NOAA's 1991–2020 average for the same day of the year (latest day) or calendar month. The latest day is preliminary: NOAA revises it over about two weeks. The picture blends neighboring grid points; the value shown when you point at the map is the grid point's own. Gray is land (Natural Earth outline), near-white is sea ice (at least 15% ice cover, from NOAA's ice data in the same product). Robinson projection centered on 160°W, like Climate Reanalyzer's map; the dashed box is Niño 3.4 (<a href="nino.html">El Niño page</a>, which also compares the Pacific with past El Niños). <a href="methods.html#sst-map">How the map is made</a>.</p>
@@ -124,7 +124,7 @@ function run(raw){
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds.push({label:y,data:A[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds.push({label:String(cur),data:a.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
  if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
- c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+ c1=new Chart(document.getElementById('c1'),{type:'line',plugins:[bandPlugin,yearLines(prior,A)],data:{labels:x,datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>/^\d{4}$/.test(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min','90th percentile','10th percentile',String(cur),...Object.keys(HI)].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'°C vs 1991–2020',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  const bc=prior.map(y=>HI[y]||'#8fa9c4');
@@ -143,7 +143,7 @@ function run(raw){
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds3.push({label:y,data:P[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds3.push({label:String(cur),data:cd.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
  const shown=['1991–2020 mean',String(cur),...Object.keys(HI)];
- c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+ c3=new Chart(document.getElementById('c3'),{type:'line',plugins:[bandAbs,yearLines(prior,P,v=>v.toFixed(2)+' °C')],data:{labels:x,datasets:ds3},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tc,filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max','Prior-year min',...shown].includes(i.dataset.label),callbacks:{title:t=>fmtDate(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+' °C')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{title:{display:true,text:'°C',color:tc},ticks:{color:tc},grid:{color:THEME.grid,lineWidth:1}}}}});
  freeze(c1);freeze(c3);
