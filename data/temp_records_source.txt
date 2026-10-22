@@ -1,0 +1,5 @@
+# Files used for data/temp_records_monthly.csv (each record as published, on its own baseline)
+gistemp: https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv
+noaa: 
+hadcrut: 
+berkeley: 
