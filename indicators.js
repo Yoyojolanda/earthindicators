@@ -230,6 +230,9 @@ const LOAD={
   const L=B[B.length-1],o=mean(B.filter(r=>r.y<1850).map(r=>r.n)),n10=mean(B.slice(-10).map(r=>r.n)),e=Math.round(o-n10);
   return{src:'Aono / GMU cherry blossom data',vd:`Kyoto's cherry trees now bloom about ${e} days earlier than before 1850`,earlier:e+' days',date:L.y,through:String(L.y),
    spark:[...Array(Math.floor((L.y-1400)/10)+1).keys()].map(k=>{const c=1400+k*10,w=B.filter(r=>Math.abs(r.y-c)<=25);return w.length>=10?{x:c,y:mean(w.map(r=>r.n))}:null}).filter(Boolean)}}),
+ thaw:()=>get('permafrost_calm.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],v:+p[1],n:+p[6]}));   // CALM thaw depth, % vs each site's 2001-2020 average
+  const L=Y[Y.length-1],s=(L.v>=0?'+':'−')+Math.abs(L.v).toFixed(0)+'%';
+  return{src:'CALM network',vd:`Arctic summer thaw ${Math.abs(L.v).toFixed(0)}% ${L.v>=0?'deeper':'shallower'} than the 2001–2020 average in ${L.y}`,pct:s,n:L.n,date:L.y,through:String(L.y),spark:Y.map(r=>({x:r.y,y:r.v}))}}),
  rli:()=>get('redlist_index_world.csv').then(t=>{const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],v:+p[1]}));
   const F=Y[0],L=Y[Y.length-1],pct=(L.v-F.v)/F.v*100;
   return{src:'IUCN and BirdLife (UN SDG database)',vd:pct<0?'Species are, on balance, moving closer to extinction':'No overall increase in extinction risk',now:L.v.toFixed(3),first:F.v.toFixed(3),y0:F.y,pct:(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'%',date:L.y,through:L.y,spark:Y.map(r=>({x:+r.y,y:r.v}))}}),
@@ -251,7 +254,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={fire:'wildfires',air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
+const NAMES={fire:'wildfires',air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',thaw:'permafrost thaw',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

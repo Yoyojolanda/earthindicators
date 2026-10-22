@@ -11,17 +11,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Earth Indicators">
 <meta property="og:title" content="Slow signals: indicators measured once a year or less often">
-<meta property="og:description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
+<meta property="og:description" content="Fossil CO₂ emissions, thawing permafrost, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
 <meta property="og:url" content="https://earthindicators.org/slow.html">
 <meta property="og:image" content="https://earthindicators.org/og/slow.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Slow signals: latest yearly numbers for fossil CO₂ emissions, ocean acidity, the Atlantic overturning, extinction risk, tree cover loss and Kyoto's cherry blossom">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="Fossil CO₂ emissions, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
+<meta name="description" content="Fossil CO₂ emissions, thawing permafrost, ocean acidification, the Atlantic overturning circulation, extinction risk, tree cover loss, crop yields and Kyoto's cherry blossom since 812: important, but only measured once a year or less often.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<script src="pfmap.js"></script>
 <link rel="stylesheet" href="site.css">
 <style>
 :root{--h:340px;--hs:280px;--ph:240px;--phs:200px}
@@ -31,7 +32,7 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 </style></head><body><main>
 <h1>Slow signals</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
-<p class="sub">Some of the most important changes can only be measured slowly: emissions are added up from national energy statistics, seawater is sampled from research ships, instruments on the sea floor are read out when a ship recovers them, species are reassessed one group at a time, and harvests, forests and blossoms can only be counted once a year. The indicators on this page are updated once a year or less often, so their latest value is often a year or two old. That is how these measurements work, not a sign that the page has stopped updating. Each section says how far the data reach, how often new data are published, and when new data last arrived here. The sources are checked every week.</p>
+<p class="sub">Some of the most important changes can only be measured slowly: emissions are added up from national energy statistics, seawater is sampled from research ships, instruments on the sea floor are read out when a ship recovers them, the summer thaw of frozen ground is measured once at the end of each summer, species are reassessed one group at a time, and harvests, forests and blossoms can only be counted once a year. The indicators on this page are updated once a year or less often, so their latest value is often a year or two old. That is how these measurements work, not a sign that the page has stopped updating. Each section says how far the data reach, how often new data are published, and when new data last arrived here. The sources are checked every week.</p>
 <p id="err"></p>
 
 <section id="fossil-s" class="hide">
@@ -52,6 +53,28 @@ h2.sec{font-size:20px;margin:28px 0 6px}
  <div class="wrap"><canvas id="c9"></canvas></div></div>
 <ul id="sinks-read"></ul>
 <p class="sub">Each year, part of the CO₂ released by fossil fuels, cement and deforestation stays in the air; the rest is taken up by the ocean (it dissolves in seawater) and by plants and soils on land (more CO₂ lets plants grow a little faster, and forests that regrow store carbon). These "sinks" are not measured directly. The growth of CO₂ in the air is measured; the ocean sink is the average of ocean models and estimates from ship and buoy measurements; the land sink is the average of about 20 vegetation models. Each has an uncertainty of about ±0.5 billion metric tons of carbon (±2 of CO₂) a year, and the sums do not close exactly, so the shares below do not add up to exactly 100%. Thin lines: single years; thick lines: 10-year averages. Data: Friedlingstein et al., Global Carbon Budget, Global Carbon Project (<a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a>), via the CSV copy kept by <a href="https://github.com/openclimatedata/global-carbon-budget" target="_blank" rel="noopener">openclimatedata</a>; carbon converted to CO₂ by × 3.664.</p>
+</section>
+
+<section id="pf-s" class="hide">
+<h2 class="sec">Permafrost: the frozen ground of the north</h2>
+<div class="cards" id="pf-cards"></div>
+<p class="st" id="calm-st"></p>
+<div class="box" id="calm-box"><h2 id="t10"></h2>
+ <div class="wrap"><canvas id="c10"></canvas></div></div>
+<p class="st" id="permos-st"></p>
+<div class="box" id="permos-box"><h2 id="t11"></h2>
+ <div class="wrap"><canvas id="c11"></canvas></div></div>
+<p class="st" id="pfcci-st"></p>
+<div class="box" id="pfcci-box"><h2 id="t12"></h2>
+ <div class="seg" id="pk">Show: <button class="nb on" type="button" data-k="t">Average temperature</button><button class="nb" type="button" data-k="a">Area still frozen</button></div>
+ <div class="wrap s"><canvas id="c12"></canvas></div></div>
+<div class="box" id="pfmap-box" data-no-csv><h2 id="t13"></h2>
+ <div class="seg" id="pm">Show: <button class="nb on" type="button" data-k="temp">Temperature at 10 m</button><button class="nb" type="button" data-k="change">Change since 1997–2006</button></div>
+ <canvas id="c13"></canvas><p class="st" id="pf-ro" style="min-height:1.4em;margin:6px 0 0"></p></div>
+<ul id="pf-read"></ul>
+<p class="sub">Permafrost is ground that stays frozen for at least two years in a row. It underlies about a quarter of the land in the northern hemisphere, in the Arctic, Siberia, northern Canada and Alaska, and high mountains such as the Tibetan Plateau and the Alps. On top lies the active layer, which thaws every summer and freezes again in winter; when the climate warms, the summer thaw reaches deeper and the frozen ground below slowly warms toward 0 °C.</p>
+<p class="sub"><b>Measured:</b> thaw depth is the depth of the active layer at the end of summer, measured with a steel probe pushed into the ground at many points of a grid or along a line, in thaw tubes, or read from ground temperatures; each site is compared with its own 2001–2020 average, so sites where the ground thaws 30 cm and sites where it thaws a meter can be averaged; only sites north of 55°N are used, not the mountain sites. Data: Circumpolar Active Layer Monitoring network (CALM), <a href="https://www2.gwu.edu/~calm/" target="_blank" rel="noopener">gwu.edu/~calm</a>. Borehole temperatures are measured by sensors left in the ground; shown is the sensor closest to 10 m depth in each borehole with a long record, averaged over 12-month years ending in September. Long Arctic borehole records exist (in Alaska, Canada, Russia and Svalbard) but are not published as a regularly updated series that this page could read, so the measured borehole chart shows the Swiss Alps. Data: Swiss Permafrost Monitoring Network PERMOS, yearly data publication (<a href="https://www.permos.ch/data-portal/data-publications-doi" target="_blank" rel="noopener">permos.ch</a>).</p>
+<p class="sub"><b>Modelled:</b> ground temperatures for the whole northern hemisphere cannot be measured; they are calculated by a model of heat flowing into the ground (CryoGrid), driven by satellite measurements of the land-surface temperature (MODIS) and snow, and by the ERA5 reanalysis, and checked against borehole measurements. Its results are estimates, like the reanalysis temperatures on other pages of this site; averages over large areas are more reliable than any single point on the map. Shown at 10 m depth, averaged here from the 1 km grid to 0.5°. The average temperature is taken over the area that was frozen at 10 m in 1997–2006, so the same area is compared every year. Data: ESA Climate Change Initiative, Permafrost_cci, ground temperature for the northern hemisphere (Obu et al., University of Oslo; version named above the chart), <a href="https://climate.esa.int/en/projects/permafrost/" target="_blank" rel="noopener">climate.esa.int</a>.</p>
 </section>
 
 <section id="ph-s" class="hide">
@@ -241,7 +264,7 @@ function rli(t,S){
    scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{grid:{color:THEME.grid}}}}}))}
 
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
-$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.s,'t9',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0],[C.t,'t5',0],[C.c,'t6',0],[C.d,'t7',0],[C.b,'t8',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
+$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.s,'t9',0],[C.k,'t10',0],[C.h,'t11',0],[C.m,'t12',0],[C.q,'t13',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0],[C.t,'t5',0],[C.c,'t6',0],[C.d,'t7',0],[C.b,'t8',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
 function trees(t,S){
  const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1e6,f:p[2]===''||p[2]==null?null:+p[2]/1e6}));if(Y.length<15)throw 0;
  const L=Y[Y.length-1],max=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),sum=Y.reduce((a,r)=>a+r.t,0),hasF=Y.every(r=>r.f!=null);
@@ -314,8 +337,88 @@ function blossom(t,S){
    plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+dl(Math.round(c.parsed.y))}}},
    scales:{x:{type:'linear',min:800,max:L.y+5,ticks:{stepSize:100,callback:v=>String(v)},grid:{display:false}},y:{reverse:false,ticks:{callback:v=>dl(v)},title:{display:true,text:'Date of full bloom'},grid:{color:THEME.grid}}}}}))}
 
+
+// ---- permafrost: thaw depth (CALM, measured), Swiss borehole temperatures (PERMOS, measured), ground temperature
+//      at 10 m for the whole northern hemisphere (ESA Permafrost_cci, MODELLED). Each part shows on its own.
+const PF={},pfShow=()=>{$('pf-s').classList.remove('hide');pfCards()};
+const sgn=(v,d=1)=>(v>=0?'+':'−')+Math.abs(v).toFixed(d);
+function pfCards(){const c=[];
+ if(PF.calm)c.push([sgn(PF.calm.L.all,0)+'%',`thaw depth at Arctic sites in ${PF.calm.L.y} vs their 2001–2020 average (measured)`]);
+ if(PF.calm)c.push([sgn(PF.calm.tr,1)+'%',`thaw depth trend per decade, ${PF.calm.t0}–${PF.calm.L.y} (measured)`]);
+ if(PF.bh)c.push([sgn(PF.bh.tr,2)+' °C',`per decade, average trend 10 m deep in ${PF.bh.n} Swiss Alps boreholes (measured)`]);
+ if(PF.cci)c.push([sgn(PF.cci.dT,1)+' °C',`10 m deep in ${PF.cci.L.y} vs ${PF.cci.F.y}–${PF.cci.F.y+9}, average over the northern permafrost area (modelled)`]);
+ cards('pf-cards',c)}
+const pfRead=()=>{const R=[];
+ if(PF.calm){const C=PF.calm;R.push(`<b>Measured:</b> in ${C.L.y} the summer thaw at ${C.L.n} Arctic monitoring sites reached on average ${Math.abs(C.L.all).toFixed(0)}% ${C.L.all>=0?'deeper':'less deep'} than each site's 2001–2020 average. At a typical site, where the ground thaws about ${C.cm} cm deep, that is about ${Math.abs(Math.round(C.cm*C.L.all/100))} cm ${C.L.all>=0?'more':'less'} thawed ground. Since ${C.t0} the thaw has deepened by about ${C.tr.toFixed(1)}% per decade on average (straight-line trend); it varies from year to year with the summer weather, so single years say little.`);
+  R.push(`Why the thaw depth matters: frozen soil keeps its carbon locked away. When it thaws, microbes break down the old plant remains in it and release carbon dioxide and, where the ground is waterlogged, methane. A deeper active layer means more soil thawed each summer. Thawing also makes the ground sink and slump, which damages roads, pipelines and buildings across the Arctic.`)}
+ if(PF.bh){const B=PF.bh;R.push(`<b>Measured:</b> about 10 m below the surface, beneath the seasonal swings, the ground in ${B.n} Swiss Alps boreholes with long records ${B.tr>=0?'warmed':'cooled'} by ${Math.abs(B.tr).toFixed(2)} °C per decade on average (each borehole's straight-line trend over its own record). In ${B.near} of them the ground at that depth is now within half a degree of 0 °C${B.above.length?`, and at ${B.above.join(' and ')} it is now above 0 °C: the permafrost there has thawed at 10 m`:''}. Ice-rich ground can stay at about 0 °C for years while it thaws, because melting the ice takes up heat without warming the ground, so a flat line close to 0 °C does not mean the permafrost is safe. Worldwide, boreholes show the same: between 2007 and 2016 permafrost warmed by about 0.3 °C on average, and by about 0.4 °C in the coldest, continuous permafrost of the far north (Biskaborn et al. 2019, from the global borehole network GTN-P).`)}
+ if(PF.cci){const M=PF.cci;R.push(`<b>Modelled:</b> averaged over the area that was permafrost in ${M.F.y}–${M.F.y+9}, the ground 10 m deep was ${sgn(M.L.t).replace('+','')} °C in ${M.L.y}, against ${sgn(M.b).replace('+','')} °C then, ${Math.abs(M.dT).toFixed(1)} °C ${M.dT>=0?'warmer':'colder'}. The model puts the area still frozen at 10 m at ${M.L.a.toFixed(1)} million km² in ${M.L.y} (${M.F.a.toFixed(1)} in ${M.F.y}); ${M.L.w.toFixed(1)} million km² of it was between −2 and 0 °C, close to thawing. These are model estimates, checked against boreholes, not measurements.`)}
+ R.push(`<b>Estimates, not measurements:</b> the soils of the northern permafrost region are estimated to hold about 1,300 to 1,600 billion metric tons of carbon, almost twice the roughly 900 billion in the atmosphere now. Only part of it can thaw this century. The IPCC's best estimate is that by 2100 thawing permafrost releases about 18 billion metric tons of carbon as CO₂ (likely range 3 to 41) for every degree of global warming, plus some methane: about 66 billion metric tons of CO₂ per degree, close to two years of today's fossil emissions. Sudden thaw (ground collapsing, lakes forming) is not fully included in those models and could add to it. Once released, this carbon keeps warming the planet even if our own emissions stop: a feedback. Sources: Schuur et al. 2015 (Nature); IPCC AR6 Working Group I (2021), chapter 5.`);
+ $('pf-read').innerHTML=R.map(x=>`<li>${x}</li>`).join('')};
+
+function pfCalm(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],all:+p[1],al:p[2]===''?null:+p[2],ca:p[3]===''?null:+p[3],no:p[4]===''?null:+p[4],ru:p[5]===''?null:+p[5],n:+p[6],cm:+p[7]}));if(Y.length<15)throw 0;
+ const L=Y[Y.length-1],W=Y.filter(r=>r.y>=1995),tr=slope(W.map(r=>({x:r.y,y:r.all})))*10,cm=Math.round(mean(Y.slice(-10).map(r=>r.cm))/5)*5;
+ PF.calm={L,tr,t0:W[0].y,cm};
+ $('calm-st').innerHTML=`<b>Measured. Data through ${L.y}</b> (${S.sites||'?'} sites with a long enough record). Measured at the end of each summer; sites report at different times, so the newest year is shown here once most of them have. New data last arrived here on ${day(S.new_data)}.`;
+ $('t10').textContent=`Summer thaw depth at Arctic permafrost sites, ${Y[0].y}–${L.y}: % deeper (+) or shallower (−) than each site's 2001–2020 average`;
+ $('calm-box').dataset.through=`${L.y} · CALM`;
+ const ds=[['All Arctic sites','all','#b2182b',3,0],['Alaska','al','#d0a43a',1.3,1],['Canada','ca','#3d8b3d',1.3,2],['Greenland, Svalbard, Scandinavia','no','#4f81b0',1.3,3],['Russia','ru','#8a6db0',1.3,4]]
+  .filter(([,k])=>Y.some(r=>r[k]!=null)).map(([l,k,c,w,o])=>({label:l,data:Y.map(r=>r[k]),borderColor:c,backgroundColor:c,borderWidth:w,pointRadius:k==='all'?2:0,order:o,spanGaps:false}));
+ ready('k',new Chart($('c10'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{label:c=>c.parsed.y==null?null:c.dataset.label+': '+sgn(c.parsed.y)+'%',footer:t=>Y[t[0].dataIndex].n+' sites in all'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'% vs 2001–2020 average'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ pfRead();pfShow()}
+
+function pfBh(t,S){
+ const R=csv(t).map(p=>({b:p[0],l:p[1].replace(/^"|"$/g,''),e:p[2],d:p[3],y:+p[4],v:+p[5]}));if(R.length<100)throw 0;
+ const by={};R.forEach(r=>(by[r.b]=by[r.b]||{l:r.l,e:r.e,d:r.d,P:[]}).P.push({x:r.y,y:r.v}));
+ const B=Object.values(by).sort((a,b)=>a.P[0].x-b.P[0].x),last=Math.max(...R.map(r=>r.y)),first=Math.min(...R.map(r=>r.y));
+ const tr=mean(B.map(b=>slope(b.P)*10)),near=B.filter(b=>Math.abs(b.P[b.P.length-1].y)<.5).length,above=B.filter(b=>b.P[b.P.length-1].y>0).map(b=>b.l.replace(/ \(.*/,''));
+ PF.bh={tr,n:B.length,near,above:[...new Set(above)]};
+ $('permos-st').innerHTML=`<b>Measured. Data through the 12 months to September ${last}.</b> PERMOS publishes its checked data once a year (${S.zip?S.zip.replace('.zip',''):'yearly data publication'}). New data last arrived here on ${day(S.new_data)}.`;
+ $('t11').textContent=`Ground temperature about 10 m deep in ${B.length} boreholes in the Swiss Alps, ${first}–${last} (12-month averages to September)`;
+ $('permos-box').dataset.through=`Sep ${last} · PERMOS`;
+ const COL=['#b2182b','#d0a43a','#3d8b3d','#4f81b0','#8a6db0','#c2185b','#2a9d8f','#9a7650','#55524c','#e76f51','#264653','#7fa6c9'];
+ const ds=B.map((b,i)=>({label:`${b.l}, ${b.e?b.e+' m a.s.l., ':''}${b.d} m deep`,data:b.P,borderColor:COL[i%COL.length],backgroundColor:COL[i%COL.length],borderWidth:1.6,pointRadius:1.5,spanGaps:false}));
+ ready('h',new Chart($('c11'),{type:'line',data:{datasets:ds},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{legend:{labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{title:t=>'12 months to Sep '+t[0].parsed.x,label:c=>c.dataset.label.split(',')[0]+': '+c.parsed.y.toFixed(2)+' °C'}}},
+   scales:{x:{type:'linear',min:first,max:last,ticks:{stepSize:5,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'°C'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}}));
+ pfRead();pfShow()}
+
+function pfCci(t,S){
+ const Y=csv(t).map(p=>({y:+p[0],t:+p[1],a:+p[2],w:+p[3]}));if(Y.length<10)throw 0;
+ const F=Y[0],L=Y[Y.length-1],b=mean(Y.slice(0,10).map(r=>r.t)),dT=L.t-b;
+ PF.cci={F,L,b,dT};
+ $('pfcci-st').innerHTML=`<b>Modelled. Data through ${L.y}</b> (Permafrost_cci ${S.version||''}). New versions have come out about once a year, with data ending about two years before the release. New data last arrived here on ${day(S.new_data)}.`;
+ $('pfcci-box').dataset.through=`${L.y} · ESA Permafrost_cci (modelled)`;$('pfmap-box').dataset.through=`${L.y} · ESA Permafrost_cci (modelled)`;
+ const P=Y.map(r=>({x:r.y,y:r.t})),bb=slope(P),mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y)),fit=x=>my+bb*(x-mx);
+ const draw=k=>{if(C.m)C.m.destroy();
+  $('t12').textContent=k==='t'?`Ground temperature 10 m deep, average of the northern permafrost area, ${F.y}–${L.y} (modelled)`:`Area where the ground 10 m deep is frozen, northern hemisphere, ${F.y}–${L.y} (modelled, million km²)`;
+  const ds=k==='t'?[{label:'Average over the area frozen in '+F.y+'–'+(F.y+9),data:P,borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2.2,pointRadius:2.5,order:0},
+     {label:`Trend: ${sgn(bb*10,2)} °C per decade`,data:[{x:F.y,y:fit(F.y)},{x:L.y,y:fit(L.y)}],borderColor:THEME.clim,backgroundColor:THEME.clim,borderWidth:1.5,borderDash:[5,4],pointRadius:0,order:1}]
+   :[{label:'Frozen (below 0 °C)',data:Y.map(r=>({x:r.y,y:r.a})),borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2.2,pointRadius:2,order:0},
+     {label:'Of which close to thawing (−2 to 0 °C)',data:Y.map(r=>({x:r.y,y:r.w})),borderColor:'#d06a4e',backgroundColor:'#d06a4e',borderWidth:2,pointRadius:2,order:1}];
+  C.m=new Chart($('c12'),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{filter:i=>!/^Trend/.test(i.dataset.label),callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+(k==='t'?c.parsed.y.toFixed(2)+' °C':c.parsed.y.toFixed(2)+' million km²')}}},
+   scales:{x:{type:'linear',min:F.y,max:L.y,ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{min:k==='a'?0:undefined,title:{display:true,text:k==='t'?'°C at 10 m':'Million km²'},grid:{color:THEME.grid}}}}});
+  const i=charts.indexOf(C.m0);if(i>=0)charts.splice(i,1);charts.push(C.m);C.m0=C.m;$('exp').disabled=false};
+ draw('t');
+ $('pk').addEventListener('click',e=>{const x=e.target.closest('[data-k]');if(!x||x.classList.contains('on'))return;$('pk').querySelectorAll('.nb').forEach(q=>q.classList.toggle('on',q===x));draw(x.dataset.k)});
+ get('permafrost_map.json').then(JSON.parse).then(M=>{
+  const ttl=k=>$('t13').textContent=k==='temp'?`Ground temperature 10 m deep in ${M.year}, northern hemisphere (modelled; blue = frozen)`:`Change in ground temperature 10 m deep, ${M.base} to ${M.year} (modelled)`;
+  ttl('temp');
+  const m=PFMap.chart('c13',M,{kind:'temp',readout:x=>$('pf-ro').textContent=x||'Point at the map for the value at a place.'});
+  $('pf-ro').textContent='Point at the map for the value at a place.';ready('q',m);
+  $('pm').addEventListener('click',e=>{const x=e.target.closest('[data-k]');if(!x||x.classList.contains('on'))return;$('pm').querySelectorAll('.nb').forEach(q=>q.classList.toggle('on',q===x));m.$set(x.dataset.k);ttl(x.dataset.k)})
+ }).catch(e=>console.error('permafrost map',e));
+ pfRead();pfShow()}
+
 const PARTS=[['fossil emissions','fossil_co2_global.csv',fossil,'fossil'],['carbon sinks','carbon_sinks_global.csv',sinks,'sinks'],['ocean pH','hot_surface_ph.csv',ph,'ph'],
  ['Atlantic overturning','amoc_rapid_monthly.csv',amoc,'amoc'],['Red List Index','redlist_index_world.csv',rli,'rli'],
+ ['thaw depth','permafrost_calm.csv',pfCalm,'calm'],['permafrost boreholes','permafrost_permos.csv',pfBh,'permos'],['modelled ground temperature','permafrost_cci.csv',pfCci,'pfcci'],
  ['tree cover loss','tree_cover_loss_world.csv',trees,'trees'],['crop yields','fao_crop_yields_world.csv',crops,'crops'],['cherry blossom','kyoto_cherry_blossom.csv',blossom,'blossom']];
 get('slow_status.json').then(JSON.parse).catch(()=>({})).then(S=>Promise.allSettled(PARTS.map(([n,f,fn,k])=>get(f).then(t=>fn(t,S[k]||{})))))
  .then(r=>{const bad=PARTS.filter((p,i)=>r[i].status==='rejected');r.forEach((x,i)=>x.status==='rejected'&&console.error(PARTS[i][0],x.reason));

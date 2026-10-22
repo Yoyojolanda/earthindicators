@@ -97,11 +97,12 @@ window.IN_SHORT = {
     claims: ['glacier-growing', 'sea-level', 'antarctic-ice'],
   },
   'slow.html': {
-    units: "CO₂ emissions of about 38 billion metric tons a year are close to 5 metric tons for every person on Earth, about 13 kg a day. The Atlantic overturning moves about 16–17 sverdrups (Sv; 1 Sv = 1 million cubic meters per second): some 6,500 to 6,800 Olympic swimming pools every second, or about 14 times the flow of all the world's rivers together. A drop of 0.1 in pH means about 26% more acidity. A hectare is 100 × 100 m, about one and a half soccer pitches.",
+    units: "CO₂ emissions of about 38 billion metric tons a year are close to 5 metric tons for every person on Earth, about 13 kg a day. The Atlantic overturning moves about 16–17 sverdrups (Sv; 1 Sv = 1 million cubic meters per second): some 6,500 to 6,800 Olympic swimming pools every second, or about 14 times the flow of all the world's rivers together. A drop of 0.1 in pH means about 26% more acidity. A hectare is 100 × 100 m, about one and a half soccer pitches. The ground that thaws each summer at the Arctic permafrost sites is typically from about 30 cm to a meter deep.",
     text: [
       'In {fossil.through} the world emitted {fossil.now} of CO₂ from fossil fuels and cement ({fossil.ch} on the year before). About a quarter of it ends up in the ocean, which is slowly becoming more acidic: near Hawaiʻi, surface water has {ph.hplus} more acidity than in {ph.since}.',
       'The Atlantic overturning circulation, which carries warmth north towards Europe, averaged {amoc.a12} over the 12 months to {amoc.through}. It varies a lot, and two decades of direct measurements are not yet enough to confirm a long-term weakening, though climate models expect one.',
       'The Red List Index of extinction risk fell from {rli.first} in {rli.y0} to {rli.now} in {rli.through} ({rli.pct}): on balance, species are moving closer to extinction. On land, {trees.now} of tree cover was lost in {trees.through}, and the cherry trees of Kyoto, recorded since the year 812, now bloom about {blossom.earlier} earlier than before 1850.',
+      'In the far north, the ground above the permafrost thaws each summer; at Arctic monitoring sites the thaw in {thaw.through} reached {thaw.pct} compared with the 2001–2020 average (+ is deeper). Thawing permafrost releases carbon that has been frozen for thousands of years.',
     ],
     claims: ['adapt'],
   },

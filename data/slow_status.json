@@ -16,6 +16,12 @@
   "source": "https://raw.githubusercontent.com/GMU-CherryBlossomCompetition/peak-bloom-prediction/main/data/kyoto.csv",
   "through": "2026"
  },
+ "calm": {
+  "new_data": "2026-10-22",
+  "sites": 70,
+  "source": "https://www2.gwu.edu/~calm/data/north.htm",
+  "through": 2025
+ },
  "crops": {
   "first": "1961",
   "new_data": "2026-10-07",
@@ -29,6 +35,19 @@
   "source": "https://doi.org/10.5281/zenodo.17417124",
   "through": "2024",
   "version": "2025v15"
+ },
+ "permos": {
+  "new_data": "2026-10-22",
+  "source": "https://www.permos.ch/doi/permos-dataset-2025-1",
+  "through": 2024,
+  "zip": "PERMOS-DOI-2025-01.zip"
+ },
+ "pfcci": {
+  "first": 1997,
+  "new_data": "2026-10-22",
+  "source": "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/v05.0/northern_hemisphere/",
+  "through": 2023,
+  "version": "v05.0"
  },
  "ph": {
   "first": "1988-10",

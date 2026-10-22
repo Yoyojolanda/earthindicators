@@ -16,7 +16,8 @@ data/slow_status.json, next to the other slow signals (keys calm, permos, pfcci)
             those sites in their reference period, for everyday terms)
   permos Swiss Permafrost Monitoring Network (PERMOS), yearly data publication (zip, CC BY 4.0): ground temperature in
          boreholes in the Swiss Alps, averaged over hydrological years (October-September). For each borehole the
-         sensor nearest to 10 m depth (8-12.5 m) is used: below the seasonal swings, so the yearly values show the
+         sensor nearest to 10 m depth (8-12.5 m) is used, in boreholes with at least 15 such years and permafrost (not
+         the Gemsstock crest, which has none): below the seasonal swings, so the yearly values show the
          slow warming. The zip (~40 MB) is only downloaded when PERMOS publishes a new one.
          -> data/permafrost_permos.csv  borehole, label, elevation, depth, year, temp
   pfcci  ESA Permafrost Climate Change Initiative (Permafrost_cci), ground temperature for the northern hemisphere,
@@ -205,10 +206,10 @@ def permos(old):
             continue
         d = min(cand, key=lambda x: (abs(x - 10), -len(depths[x])))
         ser = depths[d]
-        if len(ser) < 12 or max(ser) < date.today().year - 4:
-            continue
         b = meta.get(bid, {})
-        label = f"{sname.get(b.get('site_id'), '?')} ({b.get('name', bid)})"
+        if len(ser) < 15 or max(ser) < date.today().year - 4 or "no permafrost" in (b.get("pf_thick") or "").lower():
+            continue
+        label = f"{sname.get(b.get('site_id'), '?')} ({b.get('name', bid)})".replace(",", " ")
         elev = b.get("h", "")
         elev = f"{float(elev):.0f}" if elev else ""
         for y in sorted(ser):
