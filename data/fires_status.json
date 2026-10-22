@@ -1,0 +1,70 @@
+{
+ "latest_week": 42,
+ "latest_year": 2026,
+ "through": "2026-10-21",
+ "new_data": "2026-10-22",
+ "regions": [
+  {
+   "code": "WORLD",
+   "name": "World"
+  },
+  {
+   "code": "N_AME",
+   "name": "North America"
+  },
+  {
+   "code": "CAN",
+   "name": "Canada"
+  },
+  {
+   "code": "USA",
+   "name": "United States"
+  },
+  {
+   "code": "S_AME",
+   "name": "South America"
+  },
+  {
+   "code": "BRA",
+   "name": "Brazil"
+  },
+  {
+   "code": "BLA",
+   "name": "Brazil's Legal Amazon"
+  },
+  {
+   "code": "UN_AFR",
+   "name": "Africa"
+  },
+  {
+   "code": "UN_EUR",
+   "name": "Europe"
+  },
+  {
+   "code": "RUS",
+   "name": "Russia"
+  },
+  {
+   "code": "UN_ASI",
+   "name": "Asia"
+  },
+  {
+   "code": "IDN",
+   "name": "Indonesia"
+  },
+  {
+   "code": "UN_OCE",
+   "name": "Oceania"
+  },
+  {
+   "code": "AUS",
+   "name": "Australia"
+  },
+  {
+   "code": "AMAP",
+   "name": "The Arctic (AMAP area)"
+  }
+ ],
+ "failed": [],
+ "source": "https://gwis.jrc.ec.europa.eu/apps/gwis.statistics/seasonaltrend"
+}
