@@ -38,6 +38,21 @@ jobs:
               echo "ViSHOP $h file looks incomplete; keeping the previous one"; rm -f "data/vishop_extent_$h.csv.tmp"
             fi
           done
+      - name: Download Northern Hemisphere snow cover (Rutgers Global Snow Lab)
+        continue-on-error: true      # never blocks the sea-ice update
+        run: |
+          # weekly and monthly snow-covered land area (km²), updated weekly; -z downloads only when the file has changed
+          for k in wk:weekly mon:monthly; do
+            f="data/snow_nh_${k#*:}.txt"
+            curl -fsSL --retry 3 --retry-delay 20 -z "$f" -o "$f.tmp" "https://climate.rutgers.edu/snowcover/files/${k%%:*}cov.nhland.txt" || continue
+            [ -s "$f.tmp" ] || { rm -f "$f.tmp"; continue; }
+            # keep only a complete file: starts in 1966, has this year or last year, and enough rows
+            if head -1 "$f.tmp" | grep -q '^1966 ' && tail -1 "$f.tmp" | grep -Eq "^($(date +%Y)|$(( $(date +%Y) - 1 ))) " && [ "$(wc -l < "$f.tmp")" -ge 600 ]; then
+              mv "$f.tmp" "$f"
+            else
+              echo "Snow file $f looks incomplete; keeping the previous one"; rm -f "$f.tmp"
+            fi
+          done
       - name: Commit changes
         run: |
           git config user.name "github-actions"
