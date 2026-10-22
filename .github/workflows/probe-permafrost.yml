@@ -6,47 +6,19 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install numpy xarray netCDF4 h5netcdf
-      - name: Probe
-        run: |
-          cat > probe.py <<'PY'
-          import re, io, json, urllib.request, urllib.parse
-          UA = "Mozilla/5.0 (X11; Linux x86_64) Chrome/126"
-          def get(u, t=300):
-              return urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": UA}), timeout=t).read()
-          def sec(n): print("\n========", n, flush=True)
-          S = "https://arcticdata.io/metacat/d1/mn/v2/query/solr/?wt=json&rows=200&fl=identifier,fileName,size,formatId&q="
-          for doi in ["doi:10.18739/A2SF2MD87", "doi:10.18739/A28C9R37P"]:
-              try:
-                  sec(doi)
-                  d = json.loads(get(S + urllib.parse.quote('resourceMap:"resource_map_%s"' % doi)))
-                  docs = d["response"]["docs"]; print(len(docs))
-                  for x in docs: print(" ", x.get("fileName"), x.get("size"), x.get("formatId"), x["identifier"])
-                  dat = [x for x in docs if str(x.get("fileName","")).lower().endswith((".csv",".txt",".dat"))]
-                  for x in dat[:2]:
-                      t = get("https://arcticdata.io/metacat/d1/mn/v2/object/" + urllib.parse.quote(x["identifier"], safe="")).decode("latin-1")
-                      print("----", x.get("fileName")); print(t[:1500])
-              except Exception as e: print("ERR", e)
-          try:
-              sec("ERDDAP all datasets")
-              u = "https://data.permafrostnet.ca/erddap/tabledap/allDatasets.csv?datasetID,title,minLatitude,maxLatitude,minLongitude,minTime,maxTime"
-              rows = list(__import__("csv").reader(io.StringIO(get(u, 600).decode())))[2:]
-              def yrs(r):
-                  try: return int(r[6][:4]) - int(r[5][:4])
-                  except: return -1
-              rows.sort(key=yrs, reverse=True); print(len(rows))
-              for r in rows[:60]: print(yrs(r), r[0], "|", r[1][:90], "|", r[2], r[4], r[5][:10], r[6][:10])
-          except Exception as e: print("ERR", e)
-          PY
-          python -u probe.py > probe.txt 2>&1 || true
+      - run: pip install numpy xarray netCDF4
+      - name: Run
+        run: python -u scripts/build_permafrost.py > probe.txt 2>&1 || true
       - name: Save
         if: always()
         run: |
-          df -h . | tail -1 >> probe.txt; free -m >> probe.txt
-          git init -q out && cd out && cp ../probe.txt . && git checkout -q -b probe-out
+          mkdir out && cp probe.txt out/ && cp data/permafrost_* data/slow_status.json out/ 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b probe-out
           git config user.name github-actions && git config user.email actions@users.noreply.github.com
-          git add probe.txt && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
+          git add . && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out

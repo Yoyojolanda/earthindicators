@@ -1,4 +1,4 @@
-name: Update slow signals (emissions, ocean pH, AMOC, Red List Index, trees, crops, cherry blossom)
+name: Update slow signals (emissions, ocean pH, AMOC, Red List Index, trees, crops, cherry blossom, permafrost)
 
 # These sources publish once a year or less often, so a weekly check is plenty. Each source is handled on its own
 # by scripts/build_slow.py; a failed download keeps the previous data. data/slow_status.json records how far each
@@ -22,6 +22,9 @@ jobs:
       - run: pip install numpy xarray netCDF4
       - name: Download and check
         run: python -u scripts/build_slow.py
+      - name: Permafrost (CALM thaw depth, PERMOS boreholes, ESA Permafrost_cci; the large CCI files only when new)
+        continue-on-error: true
+        run: python -u scripts/build_permafrost.py
       - name: CO2 history records (downloaded once; kept afterwards)
         continue-on-error: true
         run: python -u scripts/build_co2_history.py
