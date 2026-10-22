@@ -42,9 +42,14 @@ NCEI_DIR = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "ncei_oisst")   #
 _listings = {}
 
 
+TRIES = 4   # attempts per NCEI download; the top-up below lowers it, since nothing is lost if it fails
+# Set when the top-up could not reach NCEI, so the other series in this run don't try again.
+NCEI_TOPUP_FAILED = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "ncei_topup_failed")
+
+
 def _get(url, path=None):
     req = urllib.request.Request(url, headers={"User-Agent": "earthindicators.org data update"})
-    for attempt in range(4):
+    for attempt in range(TRIES):
         try:
             with urllib.request.urlopen(req, timeout=120) as r:
                 data = r.read()
@@ -94,6 +99,30 @@ def fetch_ncei(year, weighting, lat_box=LAT, lon_box=LON, stride=1, since=None, 
                 out[d] = float(m)
         d += timedelta(days=1)
     return out
+
+
+def top_up_from_ncei(year, got, first, a):
+    """PSL answered but adds each new day later than NCEI posts it: take the newest day(s) from NCEI's daily files.
+
+    Same OISST v2.1 values on the same grid. Usually one ~1.6 MB file per run, shared by every series (cached in
+    NCEI_DIR). The next run's 30-day refetch replaces these days with PSL's. If NCEI fails, PSL's days stand."""
+    global TRIES
+    newest = min(date(year, 12, 31), date.today() - timedelta(days=1))
+    last = max(got) if got else (first or date(year, 1, 1)) - timedelta(days=1)
+    if last >= newest or os.path.exists(NCEI_TOPUP_FAILED):
+        return got
+    TRIES = 1
+    try:
+        extra = fetch_ncei(year, a.weighting, tuple(a.lat), tuple(a.lon), a.stride, since=last + timedelta(days=1))
+    except Exception as e:
+        print(f"    NCEI top-up skipped ({e})", flush=True)
+        open(NCEI_TOPUP_FAILED, "w").close()
+        extra = {}
+    finally:
+        TRIES = 4
+    if extra:
+        print(f"    + {len(extra)} newer day(s) from NCEI ({min(extra)} to {max(extra)}); PSL had up to {last}", flush=True)
+    return {**got, **extra}
 
 
 def _open(url, engine):
@@ -318,6 +347,8 @@ def main():
             # nothing, or only part, came from PSL: NCEI supplies the rest (days PSL did deliver are kept)
             start = max(got) + timedelta(days=1) if got else first
             got = {**(got or {}), **fetch_ncei(y, a.weighting, tuple(a.lat), tuple(a.lon), a.stride, since=start)}
+        else:
+            got = top_up_from_ncei(y, got, first, a)
         print(f"    {len(got)} days", flush=True)
         if first is None and y < this and len(got) < 360:
             sys.exit(f"{y}: only {len(got)} days returned; refusing to continue")
