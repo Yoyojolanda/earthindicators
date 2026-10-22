@@ -4,14 +4,14 @@
 Source: NOAA Climate Data Record of Northern Hemisphere Snow Cover Extent (Robinson et al., Rutgers University Global
 Snow Lab, distributed by NOAA NCEI): weekly maps on an 88×88 grid, from the charts that analysts draw from satellite
 images. This is the same record as Rutgers' own snow cover tables (whose server does not answer automated requests
-from GitHub). NCEI publishes one file with the whole record, renamed each week as it grows; here it is read through
-NCEI's THREDDS server (OPeNDAP), asking only for the weeks not yet saved.
+from GitHub). NCEI publishes one file with the whole record, renamed each week as it grows; it is downloaded only when a new
+version appears (about once a week, ~25 MB).
 
 Area: for each week, the area of the grid cells that are snow covered and land, summed. Greenland is counted as
 land (as in Rutgers' "nhland" series, whose numbers this reproduces closely; checked by --check).
 Output: data/snow_nh_weekly.csv  week_start, area_km2 (one row per weekly map)
 """
-import csv, os, re, sys, urllib.request
+import csv, json, os, re, sys, urllib.request
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -19,7 +19,7 @@ import numpy as np
 CAT = "https://www.ncei.noaa.gov/thredds/catalog/cdr/snowcover/catalog.xml"
 DAP = "https://www.ncei.noaa.gov/thredds/dodsC/cdr/snowcover/{f}"
 FILE = "https://www.ncei.noaa.gov/thredds/fileServer/cdr/snowcover/{f}"
-OUT = "data/snow_nh_weekly.csv"
+OUT, STATUS = "data/snow_nh_weekly.csv", "data/snow_status.json"
 
 
 def latest_name():
@@ -32,16 +32,14 @@ def latest_name():
 
 
 def open_ds(name):
+    """The whole file (~25 MB), downloaded once per new version (NCEI's OPeNDAP server refuses the data requests)."""
     import xarray as xr
-    try:
-        return xr.open_dataset(DAP.format(f=name), engine="netcdf4")
-    except Exception as e:
-        print(f"OPeNDAP failed ({e}); downloading the whole file", flush=True)
-        path = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), name)
-        req = urllib.request.Request(FILE.format(f=name), headers={"User-Agent": "earthindicators.org data update (GitHub Actions)"})
-        with urllib.request.urlopen(req, timeout=600) as r, open(path, "wb") as fh:
-            fh.write(r.read())
-        return xr.open_dataset(path)
+    path = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), name)
+    req = urllib.request.Request(FILE.format(f=name), headers={"User-Agent": "earthindicators.org data update (GitHub Actions)"})
+    with urllib.request.urlopen(req, timeout=600) as r, open(path + ".part", "wb") as fh:
+        fh.write(r.read())
+    os.replace(path + ".part", path)
+    return xr.open_dataset(path)
 
 
 def describe(ds):
@@ -52,6 +50,9 @@ def describe(ds):
 
 def main():
     name = latest_name()
+    st = json.load(open(STATUS)) if os.path.exists(STATUS) else {}
+    if st.get("file") == name and os.path.exists(OUT) and "--force" not in sys.argv:
+        print(f"{name} already read; nothing new", flush=True); return
     print(f"file: {name}", flush=True)
     ds = open_ds(name)
     describe(ds)
@@ -95,6 +96,7 @@ def main():
         for t in sorted(out):
             w.writerow([t.isoformat(), out[t]])
     os.replace(OUT + ".tmp", OUT)
+    json.dump({"file": name, "through": last.isoformat(), "read": date.today().isoformat(), "source": FILE.format(f=name)}, open(STATUS, "w"), indent=1)
     print(f"::notice::wrote {OUT}: {min(out)} to {last}, {len(out)} weeks; latest {v / 1e6:.2f} million km²")
     if "--check" in sys.argv:   # Rutgers' published weekly values for a few recent weeks (wkcov.nhland.txt)
         print("::notice::check against Rutgers: " + ", ".join(f"{t}: {float(out[t]) / 1e6:.2f}" for t in sorted(out)[-6:]), flush=True)
