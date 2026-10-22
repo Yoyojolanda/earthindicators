@@ -111,6 +111,15 @@ jobs:
         timeout-minutes: 40
         run: python -u scripts/build_sst_map.py
 
+      # marine heatwaves: share of the ocean (60S-60N) in a heatwave each day, from a 2-degree sample. The first run
+      # downloads 1982 to now once and saves the 1991-2020 thresholds; later runs fetch only the last 75 days
+      - name: Marine heatwaves (60S-60N, every 8th grid point)
+        id: mhw
+        continue-on-error: true
+        if: ${{ !inputs.only || inputs.only == 'mhw' }}
+        timeout-minutes: 150
+        run: python -u scripts/build_mhw.py
+
       - name: Commit changes
         if: always()
         run: |
@@ -134,4 +143,5 @@ jobs:
           [[ "${{ steps.natl.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed N-Atlantic"
           [[ "${{ steps.npac.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed N-Pacific"
           [[ "${{ steps.sstmap.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed SST-maps"
+          [[ "${{ steps.mhw.outcome }}" =~ ^(success|skipped)$ ]] || failed="$failed marine-heatwaves"
           [ -z "$failed" ] || { echo "::error::failed:$failed"; exit 1; }
