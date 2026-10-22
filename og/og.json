@@ -1,7 +1,7 @@
 {
  "air": {
   "title": "Global air temperature",
-  "big": "+1.50 °C",
+  "big": "+1.51 °C",
   "label": "last 12 months, above pre-industrial (1850–1900)",
   "spark": [
    -0.6848743169398905,
@@ -93,12 +93,12 @@
   ],
   "sparkLabel": "yearly, 1940–2025",
   "source": "Copernicus ERA5",
-  "through": "Oct 17, 2026"
+  "through": "Oct 20, 2026"
  },
  "sst": {
   "title": "Sea surface temperature",
-  "big": "+0.89 °C",
-  "label": "vs 1991–2020 average on Oct 18",
+  "big": "+0.82 °C",
+  "label": "vs 1991–2020 average on Oct 21",
   "spark": [
    -0.2998904109589043,
    -0.21846849315068484,
@@ -147,16 +147,13 @@
   ],
   "sparkLabel": "yearly, 1982–2025",
   "source": "NOAA OISST",
-  "through": "Oct 18, 2026"
+  "through": "Oct 21, 2026"
  },
  "nino": {
   "title": "El Niño and La Niña (Niño 3.4)",
-  "big": "+3.47 °C",
-  "label": "central Pacific vs 1991–2020, Oct 18",
+  "big": "+3.34 °C",
+  "label": "central Pacific vs 1991–2020, Oct 21",
   "spark": [
-   -0.49099999999999966,
-   -0.504999999999999,
-   -0.5350000000000001,
    -0.5700000000000003,
    -0.5980000000000025,
    -0.6129999999999995,
@@ -487,7 +484,7 @@
    2.950000000000003,
    2.969000000000001,
    2.974,
-   2.9800000000000004,
+   2.9790000000000028,
    2.997,
    3.044999999999998,
    3.0760000000000005,
@@ -505,9 +502,9 @@
    3.304000000000002,
    3.294999999999998,
    3.3000000000000007,
-   3.4019999999999975,
-   3.3210000000000015,
-   3.3309999999999995,
+   3.3290000000000006,
+   3.317,
+   3.3299999999999983,
    3.276,
    3.257999999999999,
    3.304000000000002,
@@ -518,11 +515,14 @@
    3.3359999999999985,
    3.2609999999999992,
    3.3500000000000014,
-   3.471
+   3.471,
+   3.341000000000001,
+   3.3270000000000017,
+   3.338000000000001
   ],
   "sparkLabel": "last 12 months",
   "source": "NOAA OISST",
-  "through": "Oct 18, 2026"
+  "through": "Oct 21, 2026"
  },
  "land-ice": {
   "title": "Land ice: glaciers and ice sheets",
@@ -2365,8 +2365,8 @@
  },
  "co2": {
   "title": "Carbon dioxide (CO₂)",
-  "big": "426.3 ppm",
-  "label": "30-day average to Oct 18",
+  "big": "426.4 ppm",
+  "label": "30-day average to Oct 21",
   "spark": [
    331.40379999999993,
    332.01328947368427,
@@ -2421,7 +2421,7 @@
   ],
   "sparkLabel": "yearly, 1975–2025",
   "source": "NOAA Mauna Loa",
-  "through": "Oct 18, 2026"
+  "through": "Oct 21, 2026"
  },
  "ch4": {
   "title": "Methane",
@@ -4361,6 +4361,39 @@
   "sparkLabel": "12-month mean, 1940–2026",
   "source": "Copernicus ERA5",
   "through": "Sep 2026"
+ },
+ "wildfires": {
+  "title": "Wildfires: CO₂ from fires",
+  "big": "5.6 Gt",
+  "label": "CO₂ from fires worldwide, 1 January to Oct 21 2026",
+  "spark": [
+   7.812412699999999,
+   7.365816400000003,
+   7.1474729,
+   6.8683374000000015,
+   7.279204399999998,
+   6.535043899999999,
+   6.089212799999999,
+   6.396115499999999,
+   6.7644807,
+   7.396783600000002,
+   5.783492099999997,
+   6.4306039,
+   7.222986799999998,
+   6.319495400000003,
+   5.648343899999998,
+   5.457275499999999,
+   6.1880111,
+   5.1643552999999995,
+   5.896235099999999,
+   4.858874599999999,
+   6.674803799999999,
+   6.1717005,
+   4.6213382
+  ],
+  "sparkLabel": "yearly totals, 2003–2025 (billion metric tons)",
+  "source": "GWIS (Copernicus)",
+  "through": "Oct 21, 2026"
  },
  "slow": {
   "title": "Slow signals",
