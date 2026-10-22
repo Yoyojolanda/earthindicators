@@ -5,7 +5,7 @@
   gistemp   NASA GISTEMP v4, land-ocean index               data.giss.nasa.gov
   noaa      NOAA GlobalTemp (newest version), land-ocean    ncei.noaa.gov
   hadcrut   Met Office / UEA HadCRUT5, analysis             metoffice.gov.uk
-  berkeley  Berkeley Earth, land and ocean (air temperature over sea ice)
+  berkeley  Berkeley Earth, global land and ocean (high-resolution product)
 
 Each is saved as published, on its own baseline; the page puts them all on one footing (each month minus that
 record's own 1991-2020 average for the month, plus 0.88 °C). Output: data/temp_records_monthly.csv
@@ -48,13 +48,14 @@ def gistemp():
 
 def noaa():
     base = "https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/"
-    vers = sorted(set(re.findall(r'href="v(\d+(?:\.\d+)*)/"', get(base))), key=lambda v: [int(x) for x in v.split(".")])
+    # version folders, linked as "v6.1/" or with the full path
+    vers = sorted(set(re.findall(r'href="(?:[^"]*/)?v(\d+(?:\.\d+)*)/?"', get(base))), key=lambda v: [int(x) for x in v.split(".")])
     if not vers:
         raise RuntimeError("no versions listed")
     for v in reversed(vers):      # newest version that has a monthly global land-ocean series
         d = f"{base}v{v}/access/timeseries/"
         try:
-            names = re.findall(r'href="(aravg\.mon\.land_ocean\.90S\.90N\.v[\d.]+?\.(\d{6})\.asc)"', get(d))
+            names = re.findall(r'(aravg\.mon\.land_ocean\.90S\.90N\.v[\d.]+?\.(\d{6})\.asc)', get(d))
         except RuntimeError:
             continue
         if names:
@@ -67,41 +68,44 @@ def noaa():
                     if v_ > -900:
                         out[f"{int(p[0])}-{int(p[1]):02d}"] = v_
             return out, d + fn
-    raise RuntimeError("no time series file found")
+    raise RuntimeError(f"no time series file found (versions {vers})")
 
 
 def hadcrut():
-    tail = "analysis/diagnostics/{v}.analysis.summary_series.global.monthly.csv"
-    urls = []
-    try:   # the download page links the current version
-        page = get("https://www.metoffice.gov.uk/hadobs/hadcrut5/data/download.html")
-        urls += [u if u.startswith("http") else "https://www.metoffice.gov.uk" + u for u in
-                 re.findall(r'href="([^"]*summary_series\.global\.monthly\.csv)"', page)]
-    except RuntimeError:
-        pass
-    urls.append("https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/" + tail.format(v="HadCRUT.5.0.2.0"))
-    for url in dict.fromkeys(urls):
+    # newest version named on the HadCRUT5 pages (HadCRUT.5.2.0.0 in 2026); its global monthly analysis series
+    site = "https://www.metoffice.gov.uk/hadobs/hadcrut5/"
+    seen = set(["5.2.0.0"])
+    for page in (site, site + "data/download.html", site + "data/versions/"):
+        try:
+            seen |= set(re.findall(r"HadCRUT\.(\d+\.\d+\.\d+\.\d+)", get(page)))
+        except RuntimeError:
+            pass
+    errs = []
+    for v in sorted(seen, key=lambda v: [int(x) for x in v.split(".")], reverse=True):
+        url = f"{site}data/HadCRUT.{v}/analysis/diagnostics/HadCRUT.{v}.analysis.summary_series.global.monthly.csv"
         try:
             text = get(url)
-        except RuntimeError:
-            continue
+        except RuntimeError as e:
+            errs.append(v); continue
         out = {}
         for row in csv.reader(io.StringIO(text)):
-            if row and re.fullmatch(r"\d{4}-\d{2}", row[0].strip()) and row[1].strip():
+            if row and re.fullmatch(r"\d{4}-\d{2}", row[0].strip()) and len(row) > 1 and row[1].strip():
                 out[row[0].strip()] = float(row[1])
         if out:
             return out, url
-    raise RuntimeError("no HadCRUT5 file found")
+    raise RuntimeError(f"no HadCRUT5 file found (tried {errs})")
 
 
 def berkeley():
-    url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Land_and_Ocean_complete.txt"
+    # Since 2025 Berkeley Earth updates only its high-resolution (0.25°) product; its global monthly series is here.
+    # Anomalies vs 1951-1980; over sea ice, air temperature where ice is present (one series, no second section).
+    url = "https://storage.googleapis.com/berkeley-earth-temperature-hr/global/Global_TAVG_monthly.txt"
     out = {}
     for line in get(url).splitlines():
         p = line.split()
         if len(p) >= 3 and not line.lstrip().startswith("%") and re.fullmatch(r"\d{4}", p[0]) and re.fullmatch(r"\d{1,2}", p[1]):
             k = f"{int(p[0])}-{int(p[1]):02d}"
-            if k not in out and p[2].lower() != "nan":    # first section only: air temperature over sea ice
+            if k not in out and p[2].lower() != "nan":
                 out[k] = float(p[2])
     return out, url
 
