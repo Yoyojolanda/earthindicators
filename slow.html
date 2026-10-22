@@ -69,8 +69,8 @@ h2.sec{font-size:20px;margin:28px 0 6px}
  <div class="seg" id="pk">Show: <button class="nb on" type="button" data-k="t">Average temperature</button><button class="nb" type="button" data-k="a">Area still frozen</button></div>
  <div class="wrap s"><canvas id="c12"></canvas></div></div>
 <div class="box" id="pfmap-box" data-no-csv><h2 id="t13"></h2>
- <div class="seg" id="pm">Show: <button class="nb on" type="button" data-k="temp">Temperature at 10 m</button><button class="nb" type="button" data-k="change">Change since 1997–2006</button></div>
- <canvas id="c13"></canvas><p class="st" id="pf-ro" style="min-height:1.4em;margin:6px 0 0"></p></div>
+ <div class="seg" id="pm">Show: <button class="nb on" type="button" data-k="change">Change since 1997–2006</button><button class="nb" type="button" data-k="temp">Temperature at 10 m</button></div>
+ <div class="wrap" style="height:auto"><canvas id="c13"></canvas></div><p class="st" id="pf-ro" style="min-height:1.4em;margin:6px 0 0"></p></div>
 <ul id="pf-read"></ul>
 <p class="sub">Permafrost is ground that stays frozen for at least two years in a row. It underlies about a quarter of the land in the northern hemisphere, in the Arctic, Siberia, northern Canada and Alaska, and high mountains such as the Tibetan Plateau and the Alps. On top lies the active layer, which thaws every summer and freezes again in winter; when the climate warms, the summer thaw reaches deeper and the frozen ground below slowly warms toward 0 °C.</p>
 <p class="sub"><b>Measured:</b> thaw depth is the depth of the active layer at the end of summer, measured with a steel probe pushed into the ground at many points of a grid or along a line, in thaw tubes, or read from ground temperatures; each site is compared with its own 2001–2020 average, so sites where the ground thaws 30 cm and sites where it thaws a meter can be averaged; only sites north of 55°N are used, not the mountain sites. Data: Circumpolar Active Layer Monitoring network (CALM), <a href="https://www2.gwu.edu/~calm/" target="_blank" rel="noopener">gwu.edu/~calm</a>. Borehole temperatures are measured by sensors left in the ground; shown is the sensor closest to 10 m depth in each borehole with a long record, averaged over 12-month years ending in September. Long Arctic borehole records exist (in Alaska, Canada, Russia and Svalbard) but are not published as a regularly updated series that this page could read, so the measured borehole chart shows the Swiss Alps. Data: Swiss Permafrost Monitoring Network PERMOS, yearly data publication (<a href="https://www.permos.ch/data-portal/data-publications-doi" target="_blank" rel="noopener">permos.ch</a>).</p>
@@ -409,8 +409,8 @@ function pfCci(t,S){
  $('pk').addEventListener('click',e=>{const x=e.target.closest('[data-k]');if(!x||x.classList.contains('on'))return;$('pk').querySelectorAll('.nb').forEach(q=>q.classList.toggle('on',q===x));draw(x.dataset.k)});
  get('permafrost_map.json').then(JSON.parse).then(M=>{
   const ttl=k=>$('t13').textContent=k==='temp'?`Ground temperature 10 m deep in ${M.year}, northern hemisphere (modelled; blue = frozen)`:`Change in ground temperature 10 m deep, ${M.base} to ${M.year} (modelled)`;
-  ttl('temp');
-  const m=PFMap.chart('c13',M,{kind:'temp',readout:x=>$('pf-ro').textContent=x||'Point at the map for the value at a place.'});
+  ttl('change');
+  const m=PFMap.chart('c13',M,{kind:'change',readout:x=>$('pf-ro').textContent=x||'Point at the map for the value at a place.'});
   $('pf-ro').textContent='Point at the map for the value at a place.';ready('q',m);
   $('pm').addEventListener('click',e=>{const x=e.target.closest('[data-k]');if(!x||x.classList.contains('on'))return;$('pm').querySelectorAll('.nb').forEach(q=>q.classList.toggle('on',q===x));m.$set(x.dataset.k);ttl(x.dataset.k)})
  }).catch(e=>console.error('permafrost map',e));

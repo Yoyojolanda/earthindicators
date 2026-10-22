@@ -92,7 +92,19 @@
         if (hov) { const [X, Y] = proj(hov[0], hov[1]); ctx.strokeStyle = THEME.ink; ctx.lineWidth = 2; ctx.strokeRect(sx.getPixelForValue(X) - 4, sy.getPixelForValue(Y) - 4, 8, 8); }
         ctx.restore();
       },
-      afterDraw(c) {                                  // color bar above the map
+      afterDraw(c) {
+        if (hov && hov[2]) {                          // the value at the pointer, in a box on the map itself
+          const { ctx, chartArea: a, scales: { x: sx, y: sy } } = c, [X, Y] = proj(hov[0], hov[1]);
+          const px = sx.getPixelForValue(X), py = sy.getPixelForValue(Y), L = hov[2];
+          ctx.save(); ctx.font = '12px system-ui,sans-serif';
+          const w = Math.max(...L.map(t => ctx.measureText(t).width)) + 16, h = 17 * L.length + 8;
+          let bx = px + 12, by = py - h - 8; if (bx + w > a.right - 2) bx = px - w - 12; if (bx < a.left + 2) bx = a.left + 2; if (by < a.top + 2) by = py + 12;
+          ctx.fillStyle = THEME.dark ? 'rgba(20,18,14,.92)' : 'rgba(255,255,255,.94)'; ctx.strokeStyle = THEME.mut; ctx.lineWidth = .8;
+          ctx.beginPath(); ctx.rect(bx, by, w, h); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = THEME.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          L.forEach((t, k) => { ctx.font = (k === 1 ? '600 ' : '') + '12px system-ui,sans-serif'; ctx.fillText(t, bx + 8, by + 5 + 17 * k); });
+          ctx.restore();
+        }
         const S = SCALES[kind], { ctx, chartArea: a } = c, w = Math.min(260, a.right - a.left - 150), x0 = a.right - w, y0 = 6; if (w < 60) return;
         const t0 = S.ticks[0], t1 = S.ticks[S.ticks.length - 1];
         ctx.save();
@@ -111,7 +123,11 @@
           const j = Math.round((p[1] - G.lat0) / G.step), i = ((Math.round((p[0] - G.lon0) / G.step) % G.nlon) + G.nlon) % G.nlon;
           if (j < 0 || j >= G.nlat) { if (hov) { hov = null; rd(''); c.draw(); } return; }
           const n = j * G.nlon + i, t = V.temp[n], d = V.change[n], B = G.lat0 + j * G.step, L = G.lon0 + i * G.step;
-          hov = [L, B];
+          const place = `${B.toFixed(2)}°N ${Math.abs(L).toFixed(2)}${L < 0 ? '°W' : '°E'}`;
+          hov = [L, B, [place, t !== t ? 'no value (sea, ice sheet or outside the model)' : kind === 'change'
+            ? (d === d ? `${sg(d)} °C since ${M.base}` : '') + ` · now ${t.toFixed(1).replace('-', '−')} °C (${t < 0 ? 'frozen' : 'not frozen'})`
+            : `${t.toFixed(1).replace('-', '−')} °C at 10 m (${t < 0 ? 'frozen' : 'not frozen'})` + (d === d ? ` · ${sg(d)} since ${M.base}` : ''),
+            ...(t === t ? [`modelled, ${M.year}`] : [])]];
           rd(`${B.toFixed(2)}°N ${lonLab(L) === '0°' ? '0°' : Math.abs(L).toFixed(2) + (L < 0 ? '°W' : '°E')}: ` + (t !== t ? 'no value here (outside the area the model covers, sea or ice sheet)' :
             `${t.toFixed(1)} °C at 10 m in ${M.year} (${t < 0 ? 'frozen' : 'not frozen'})` + (d === d ? `, ${sg(d)} °C since ${M.base}` : '') + ' · modelled'));
           c.draw();
