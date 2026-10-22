@@ -39,24 +39,12 @@ jobs:
               echo "ViSHOP $h file looks incomplete; keeping the previous one"; rm -f "data/vishop_extent_$h.csv.tmp"
             fi
           done
-      - name: Download Northern Hemisphere snow cover (Rutgers Global Snow Lab)
+      - name: Northern Hemisphere snow cover (NOAA snow cover record, Rutgers)
         continue-on-error: true      # never blocks the sea-ice update
         run: |
-          # weekly and monthly snow-covered land area (km²), updated weekly; -z downloads only when the file has changed
-          for k in wk:weekly mon:monthly; do
-            f="data/snow_nh_${k#*:}.txt"
-            u="https://climate.rutgers.edu/snowcover/files/${k%%:*}cov.nhland.txt"
-            [ -f "$f" ] && z=(-z "$f") || z=()
-            code=$(curl -sSL --connect-timeout 30 --max-time 180 --retry 2 --retry-delay 20 -A "earthindicators.org data update (GitHub Actions)" "${z[@]}" -o "$f.tmp" -w '%{http_code}' "$u") || code="failed ($code)"
-            [ "$code" = 200 ] || { echo "::warning::snow ${k#*:}: HTTP $code from $u"; rm -f "$f.tmp"; continue; }
-            [ -s "$f.tmp" ] || { rm -f "$f.tmp"; continue; }
-            # keep only a complete file: starts in 1966, has this year or last year, and enough rows
-            if head -1 "$f.tmp" | grep -q '^1966 ' && tail -1 "$f.tmp" | grep -Eq "^($(date +%Y)|$(( $(date +%Y) - 1 ))) " && [ "$(wc -l < "$f.tmp")" -ge 600 ]; then
-              mv "$f.tmp" "$f"
-            else
-              echo "Snow file $f looks incomplete; keeping the previous one"; rm -f "$f.tmp"
-            fi
-          done
+          # weekly snow-covered land area; reads only the weeks not yet saved (see scripts/build_snow.py)
+          pip install -q numpy xarray netCDF4
+          python -u scripts/build_snow.py --check
       - name: Commit changes
         run: |
           git config user.name "github-actions"
