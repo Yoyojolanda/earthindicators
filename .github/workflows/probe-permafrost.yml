@@ -1,0 +1,68 @@
+name: Probe permafrost sources (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray netCDF4 h5netcdf
+      - name: Probe
+        run: |
+          cat > probe.py <<'PY'
+          import re, io, zipfile, urllib.request, os
+          def get(u, t=300):
+              r = urllib.request.Request(u, headers={"User-Agent": "earthindicators.org data probe"})
+              return urllib.request.urlopen(r, timeout=t).read()
+          def sec(n): print("\n========", n, flush=True)
+          try:
+              sec("CALM frameset")
+              h = get("https://www2.gwu.edu/~calm/data/north.htm").decode("latin-1")
+              print(h[:1500])
+              for f in re.findall(r'(?:src|href)="([^"]+)"', h): print(" link:", f)
+          except Exception as e: print("ERR", e)
+          try:
+              sec("CALM sheet001")
+              h = get("https://www2.gwu.edu/~calm/data/north_files/sheet001.htm").decode("latin-1")
+              print(len(h)); rows = re.findall(r"<tr.*?</tr>", h, re.S)
+              print("rows", len(rows))
+              txt = lambda r: [re.sub(r"<[^>]+>|&nbsp;", " ", c).strip() for c in re.findall(r"<td.*?</td>", r, re.S)]
+              for r in rows[:14]: print(txt(r))
+              for r in rows[60:64]: print(txt(r))
+              for r in rows[-6:]: print(txt(r))
+              print(rows[3][:3000])
+          except Exception as e: print("ERR", e)
+          try:
+              sec("EPA links")
+              h = get("https://www.epa.gov/climate-indicators/climate-change-indicators-permafrost").decode()
+              for f in sorted(set(re.findall(r'href="([^"]+\.(?:csv|xlsx|zip))"', h))): print(" ", f)
+          except Exception as e: print("ERR", e)
+          try:
+              sec("PERMOS")
+              z = zipfile.ZipFile(io.BytesIO(get("https://www.permos.ch/fileadmin/Files/data/PERMOS-DOI-2025-01.zip")))
+              names = z.namelist(); print(len(names))
+              for n in names[:400]: print(" ", n, z.getinfo(n).file_size)
+              ann = [n for n in names if re.search(r"(?i)bh|bore", n) and re.search(r"(?i)ann|year|_y", n)]
+              for n in ann[:3]:
+                  print("----", n); print(z.read(n).decode("latin-1")[:1500])
+          except Exception as e: print("ERR", e)
+          for d in ["https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/v05.0/northern_hemisphere/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/active_layer_thickness/L4/area4/pp/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/permafrost_extent/L4/area4/pp/"]:
+              try:
+                  sec("CEDA " + d)
+                  h = get(d + "?json").decode()
+                  print(h[:3000])
+              except Exception as e:
+                  print("ERR json", e)
+                  try:
+                      h = get(d).decode(); print(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", h))[:3000])
+                  except Exception as e2: print("ERR", e2)
+          PY
+          python -u probe.py
