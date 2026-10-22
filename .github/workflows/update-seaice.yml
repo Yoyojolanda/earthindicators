@@ -11,6 +11,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Download NSIDC Sea Ice Index daily extent
@@ -44,7 +45,7 @@ jobs:
           # weekly and monthly snow-covered land area (km²), updated weekly; -z downloads only when the file has changed
           for k in wk:weekly mon:monthly; do
             f="data/snow_nh_${k#*:}.txt"
-            curl -fsSL --retry 3 --retry-delay 20 -z "$f" -o "$f.tmp" "https://climate.rutgers.edu/snowcover/files/${k%%:*}cov.nhland.txt" || continue
+            curl -fsSL --connect-timeout 30 --max-time 180 --retry 2 --retry-delay 20 -z "$f" -o "$f.tmp" "https://climate.rutgers.edu/snowcover/files/${k%%:*}cov.nhland.txt" || continue
             [ -s "$f.tmp" ] || { rm -f "$f.tmp"; continue; }
             # keep only a complete file: starts in 1966, has this year or last year, and enough rows
             if head -1 "$f.tmp" | grep -q '^1966 ' && tail -1 "$f.tmp" | grep -Eq "^($(date +%Y)|$(( $(date +%Y) - 1 ))) " && [ "$(wc -l < "$f.tmp")" -ge 600 ]; then
