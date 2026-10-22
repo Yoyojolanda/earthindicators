@@ -65,7 +65,7 @@ def main():
     old = {}
     if os.path.exists(OUT):
         with open(OUT) as fh:
-            old = {date.fromisoformat(r["week_start"]): r["area_km2"] for r in csv.DictReader(fh)}
+            old = {date.fromisoformat(r["week_start"]): r["area_km2"] for r in csv.DictReader(fh) if float(r["area_km2"]) > 0}
     # land mask: land (1) and, if coded separately, Greenland/ice sheet; water and sea ice are left out
     L = ds[land].values
     fv = ds[land].attrs.get("flag_values"); fm = str(ds[land].attrs.get("flag_meanings", "")).split()
@@ -84,7 +84,11 @@ def main():
             s = sub[j]
             if not np.isfinite(s).any():
                 continue
-            out[times[i]] = f"{float(np.sum(A[(s == 1) & M])):.0f}"
+            a = float(np.sum(A[(s == 1) & M]))
+            if a > 0:      # weeks without a map (some in 1968-1971) are stored as all zeros: left out
+                out[times[i]] = f"{a:.0f}"
+            else:
+                out.pop(times[i], None)
     if len(out) < 2500:
         sys.exit(f"only {len(out)} weeks")
     last = max(out)

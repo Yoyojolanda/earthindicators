@@ -31,6 +31,11 @@ data reach, where they came from and the date new data last arrived (a change in
         because GFW's own API needs a key and its download links change with each release.
         -> data/tree_cover_loss_world.csv  year, total, wildfire (hectares; OWID publishes the total and the wildfire
            part as separate charts)
+  sinks Global Carbon Budget (Friedlingstein et al., Global Carbon Project), global budget table: where each year's
+        CO2 goes (atmosphere, ocean sink, land sink). Released once a year, in November; read from the CSV copy of
+        the official Excel file that openclimatedata keeps on GitHub (same numbers, no Excel parsing needed).
+        -> data/carbon_sinks_global.csv  year, fossil, land_use, atmosphere, ocean, land, cement, imbalance (billion
+           tonnes of carbon a year; × 3.664 for CO2)
 """
 import csv, hashlib, io, json, os, sys, tempfile, urllib.request
 from datetime import date, datetime, timedelta
@@ -44,6 +49,7 @@ FAO_URLS = ["https://bulks-faostat.fao.org/production/Production_Crops_Livestock
             "https://fenixservices.fao.org/faostat/static/bulkdownloads/Production_Crops_Livestock_E_All_Data_(Normalized).zip"]
 TREES_URL = "https://ourworldindata.org/grapher/tree-cover-loss.csv?v=1&csvType=full&useColumnShortNames=false"
 FIRE_URL = "https://ourworldindata.org/grapher/tree-cover-loss-from-wildfires.csv?v=1&csvType=full&useColumnShortNames=false"
+SINKS_URL = "https://raw.githubusercontent.com/openclimatedata/global-carbon-budget/main/data/global-carbon-budget-{y}-global-carbon-budget.csv"
 RLI_URL = "https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=ER_RSK_LST&areaCode=1&pageSize=1000"
 
 
@@ -275,15 +281,39 @@ def trees():
     return {"through": str(rows[-1][0]), "first": str(rows[0][0]), "source": "Global Forest Watch, via Our World in Data"}
 
 
+def sinks():
+    """Newest Global Carbon Budget global table: tries this year's release first, then earlier ones."""
+    for y in range(date.today().year, 2023, -1):
+        try:
+            text = get(SINKS_URL.format(y=y)).decode("utf-8-sig")
+        except Exception:
+            continue
+        doi = next((l.split("https://doi.org/")[1].split()[0] for l in text.splitlines() if "doi.org/" in l), "")
+        rd = csv.reader(l for l in text.splitlines() if not l.startswith("#"))
+        head = [h.strip().lower() for h in next(rd)]
+        col = lambda k: next(i for i, h in enumerate(head) if h.startswith(k))
+        ix = [col("year"), col("fossil"), col("land-use"), col("atmospheric"), col("ocean"), col("land sink"), col("cement"), col("budget")]
+        rows = [[int(float(r[ix[0]]))] + [f"{float(r[i]):.3f}" if r[i].strip() else "" for i in ix[1:]] for r in rd if r and r[0].strip()]
+        last = rows[-1]
+        if len(rows) < 60 or rows[0][0] > 1960 or last[0] < date.today().year - 3 or not (-3 < float(last[5]) < 6):
+            raise RuntimeError(f"incomplete or implausible: {len(rows)} years, last {last}")
+        print(f"  sinks: GCB {y}, {rows[0][0]} to {last[0]}; land sink {last[5]} GtC", flush=True)
+        write_csv("data/carbon_sinks_global.csv", ["year", "fossil", "land_use", "atmosphere", "ocean", "land", "cement", "imbalance"], rows)
+        return {"through": str(last[0]), "first": str(rows[0][0]), "release": f"Global Carbon Budget {y}",
+                "source": f"https://doi.org/{doi}" if doi else SINKS_URL.format(y=y)}
+    raise RuntimeError("no Global Carbon Budget table found")
+
+
 def main():
     os.makedirs("data", exist_ok=True)
     status = json.load(open(STATUS)) if os.path.exists(STATUS) else {}
     files = {"amoc": "data/amoc_rapid_monthly.csv", "rli": "data/redlist_index_world.csv",
              "fossil": "data/fossil_co2_global.csv", "ph": "data/hot_surface_ph.csv",
-             "blossom": "data/kyoto_cherry_blossom.csv", "crops": "data/fao_crop_yields_world.csv", "trees": "data/tree_cover_loss_world.csv"}
+             "blossom": "data/kyoto_cherry_blossom.csv", "crops": "data/fao_crop_yields_world.csv", "trees": "data/tree_cover_loss_world.csv",
+             "sinks": "data/carbon_sinks_global.csv"}
     failed = []
     for key, fn in (("amoc", amoc), ("rli", rli), ("fossil", fossil), ("ph", ph),
-                    ("blossom", blossom), ("crops", crops), ("trees", trees)):
+                    ("blossom", blossom), ("crops", crops), ("trees", trees), ("sinks", sinks)):
         before = hashlib.sha1(open(files[key], "rb").read()).hexdigest() if os.path.exists(files[key]) else None
         try:
             info = fn()

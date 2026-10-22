@@ -43,6 +43,17 @@ h2.sec{font-size:20px;margin:28px 0 6px}
 <p class="sub">Carbon dioxide released each year by burning coal, oil and gas, by cement production (limestone gives off CO₂ when it is heated) and by flaring gas at oil wells, in billions of metric tons of CO₂. The world total includes international shipping and aviation. Not included: CO₂ from deforestation and other land-use change, which adds roughly another tenth. News reports of the Global Carbon Budget usually quote a slightly lower figure: that headline number subtracts the CO₂ that cement and concrete slowly reabsorb from the air over their lifetime, roughly 0.8 billion metric tons a year. This page shows emissions before that subtraction, so both numbers are correct; they measure slightly different things. These are the emissions that drive the rising CO₂ in the air (see the <a href="co2.html">CO₂ page</a>). Data: Global Carbon Project, fossil CO₂ emissions dataset (Andrew and Peters), the data behind the yearly Global Carbon Budget, published on <a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a> and Zenodo (the version used is named in the line above the chart).</p>
 </section>
 
+<section id="sinks-s" class="hide">
+<h2 class="sec">Where our CO₂ goes: the land and ocean sinks</h2>
+<p class="st" id="sinks-st"></p>
+<div class="cards" id="sinks-cards"></div>
+<div class="box"><h2 id="t9"></h2>
+ <div class="seg" id="sk">Show: <button class="nb on" type="button" data-k="share">Share of emissions</button><button class="nb" type="button" data-k="gt">Billion metric tons</button></div>
+ <div class="wrap"><canvas id="c9"></canvas></div></div>
+<ul id="sinks-read"></ul>
+<p class="sub">Each year, part of the CO₂ released by fossil fuels, cement and deforestation stays in the air; the rest is taken up by the ocean (it dissolves in seawater) and by plants and soils on land (more CO₂ lets plants grow a little faster, and forests that regrow store carbon). These "sinks" are not measured directly. The growth of CO₂ in the air is measured; the ocean sink is the average of ocean models and estimates from ship and buoy measurements; the land sink is the average of about 20 vegetation models. Each has an uncertainty of about ±0.5 billion metric tons of carbon (±2 of CO₂) a year, and the sums do not close exactly, so the shares below do not add up to exactly 100%. Thin lines: single years; thick lines: 10-year averages. Data: Friedlingstein et al., Global Carbon Budget, Global Carbon Project (<a href="https://globalcarbonbudget.org/" target="_blank" rel="noopener">globalcarbonbudget.org</a>), via the CSV copy kept by <a href="https://github.com/openclimatedata/global-carbon-budget" target="_blank" rel="noopener">openclimatedata</a>; carbon converted to CO₂ by × 3.664.</p>
+</section>
+
 <section id="ph-s" class="hide">
 <h2 class="sec">Ocean acidification</h2>
 <p class="st" id="ph-st"></p>
@@ -131,6 +142,37 @@ function fossil(t,S){
    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' Gt',footer:t=>'Total: '+Z[t[0].dataIndex].t.toFixed(1)+' Gt'}}},
    scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Billion metric tons CO₂'},grid:{color:THEME.grid}}}}}))}
 
+// ---- the land and ocean sinks (Global Carbon Budget): what share of each year's emissions they take up
+function sinks(t,S){
+ const K=3.664,Y=csv(t).map(p=>({y:+p[0],e:(+p[1])+(+p[2]),a:+p[3],o:+p[4],l:+p[5]}));if(Y.length<60)throw 0;
+ const L=Y[Y.length-1],avg=(k,a,b)=>mean(Y.filter(r=>r.y>=a&&r.y<=b).map(r=>r[k])),sh=(r,k)=>r[k]/r.e*100;
+ const run=k=>Y.map((r,i)=>i<9?null:mean(Y.slice(i-9,i+1).map(q=>q[k])));
+ const l10=avg('l',2010,2019),lo=[...Y].sort((a,b)=>a.l-b.l),rank=lo.findIndex(r=>r.y===L.y)+1,since=Y.filter(r=>r.y<L.y&&r.l<=L.l).pop();
+ const shL=sh(L,'l'),shL0=mean(Y.filter(r=>r.y<2020).map(r=>sh(r,'l'))),shO0=mean(Y.filter(r=>r.y<2020).map(r=>sh(r,'o')));
+ $('sinks-st').innerHTML=`<b>Data through ${L.y}</b> (${S.release||'Global Carbon Budget'}, <a href="${S.source}" target="_blank" rel="noopener">dataset</a>). Published once a year, in November, with figures up to the year before. New data last arrived here on ${day(S.new_data)}.`;
+ cards('sinks-cards',[[(L.l*K).toFixed(1)+' Gt',`CO₂ taken up by land in ${L.y} (billion metric tons)`],[Math.round(shL)+'%',`of ${L.y}'s emissions taken up by land (1959–2019 average: ${Math.round(shL0)}%)`],
+  [Math.round(sh(L,'o'))+'%',`taken up by the ocean (average: ${Math.round(shO0)}%)`],[Math.round(sh(L,'a'))+'%',`stayed in the air`]]);
+ $('t9').textContent=`Where each year's CO₂ goes: land, ocean and air, 1959–${L.y}`;
+ const p2=Y[Y.length-2];
+ $('sinks-read').innerHTML=[
+  `In ${L.y} plants and soils on land took up ${(L.l*K).toFixed(1)} billion metric tons of CO₂, ${Math.round(shL)}% of that year's emissions. ${since?`That is the least since ${since.y}`:`That is the least on record`}${p2.l<l10*.8?`, after an already weak ${p2.y} (${(p2.l*K).toFixed(1)})`:''}. In the 2010s land took up ${(l10*K).toFixed(1)} a year on average.`,
+  `Year-to-year swings in the land sink are large and mostly natural: El Niño years bring heat and drought to the tropics and more fires, so forests take up less. The Global Carbon Project links the weak land sink of 2023–24 to the strong El Niño on top of record heat, and to the large fires in Canada and South America; it expects the land sink to recover as El Niño fades.`,
+  `The ocean takes up a steadier share, about ${Math.round(sh(L,'o'))}% in ${L.y}. Over the decades both sinks have grown, because there is more CO₂ in the air to absorb, but not as fast as emissions: decade by decade, roughly 40–50% of what is emitted has stayed in the air${(()=>{const r=Y.filter(q=>q.y>=2020),f=r.reduce((s,q)=>s+q.a,0)/r.reduce((s,q)=>s+q.e,0)*100;return `, ${Math.round(f)}% since 2020`})()}, while the amount emitted has more than doubled since the 1960s. Studies warn that warming itself can weaken the sinks.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('sinks-s').classList.remove('hide');
+ $('t9').closest('.box').dataset.through=`${L.y} · Global Carbon Project`;
+ const R={a:run('a'),o:run('o'),l:run('l')},S3=[['In the air','a','#8a8478'],['Ocean','o','#1f6fb5'],['Land','l','#3d8b3d']];
+ const draw=k=>{if(C.s)C.s.destroy();const v=(r,q)=>k==='share'?sh(r,q):r[q]*K,vr=(i,q)=>R[q][i]==null?null:k==='share'?R[q][i]/mean(Y.slice(i-9,i+1).map(r=>r.e))*100:R[q][i]*K;
+  const ds=S3.flatMap(([l,q,c])=>[{label:l+', 10-year average',data:Y.map((r,i)=>vr(i,q)),borderColor:c,backgroundColor:c,borderWidth:3,pointRadius:0,order:1},
+   {label:l+', each year',data:Y.map(r=>v(r,q)),borderColor:c+'80',backgroundColor:c+'80',borderWidth:1.2,pointRadius:0,order:2}]);
+  C.s=new Chart($('c9'),{type:'line',data:{labels:Y.map(r=>String(r.y)),datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{labels:{filter:i=>/average$/.test(i.text)}},tooltip:{filter:i=>/each year$/.test(i.dataset.label),callbacks:{label:c=>c.dataset.label.replace(', each year','')+': '+(k==='share'?Math.round(c.parsed.y)+'% of emissions':c.parsed.y.toFixed(1)+' Gt CO₂')}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:k==='share'?0:undefined,title:{display:true,text:k==='share'?'% of the year\'s CO₂ emissions':'Billion metric tons CO₂ a year'},grid:{color:THEME.grid}}}}});
+  const i=charts.indexOf(C.s0);if(i>=0)charts.splice(i,1);charts.push(C.s);C.s0=C.s};
+ draw('share');$('exp').disabled=false;
+ $('sk').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(!b||b.classList.contains('on'))return;$('sk').querySelectorAll('.nb').forEach(x=>x.classList.toggle('on',x===b));draw(b.dataset.k)});
+}
+
 function ph(t,S){
  const D=csv(t).map(p=>{const [y,m,d]=p[0].split('-').map(Number);return{d:p[0],x:y+(m-1+(d-.5)/31)/12,c:p[1]===''?null:+p[1],m:p[2]===''?null:+p[2]}});if(D.length<200)throw 0;
  const Pc=D.filter(r=>r.c!=null).map(r=>({x:r.x,y:r.c})),Pm=D.filter(r=>r.m!=null).map(r=>({x:r.x,y:r.m})),b=slope(Pc),my=mean(Pc.map(p=>p.y)),mx=mean(Pc.map(p=>p.x));
@@ -199,7 +241,7 @@ function rli(t,S){
    scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{grid:{color:THEME.grid}}}}}))}
 
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c.resize())));
-$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0],[C.t,'t5',0],[C.c,'t6',0],[C.d,'t7',0],[C.b,'t8',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
+$('exp').onclick=()=>{const L=[[C.f,'t3',0],[C.s,'t9',0],[C.p,'t4',0],[C.a,'t1',0],[C.r,'t2',0],[C.t,'t5',0],[C.c,'t6',0],[C.d,'t7',0],[C.b,'t8',0]].filter(x=>x[0]);if(L.length)siteExport(L,'slow-signals.jpg')};
 function trees(t,S){
  const Y=csv(t).map(p=>({y:+p[0],t:+p[1]/1e6,f:p[2]===''||p[2]==null?null:+p[2]/1e6}));if(Y.length<15)throw 0;
  const L=Y[Y.length-1],max=Y.reduce((b,r)=>r.t>b.t?r:b,Y[0]),sum=Y.reduce((a,r)=>a+r.t,0),hasF=Y.every(r=>r.f!=null);
@@ -272,7 +314,7 @@ function blossom(t,S){
    plugins:{tooltip:{callbacks:{title:t=>String(t[0].parsed.x),label:c=>c.dataset.label+': '+dl(Math.round(c.parsed.y))}}},
    scales:{x:{type:'linear',min:800,max:L.y+5,ticks:{stepSize:100,callback:v=>String(v)},grid:{display:false}},y:{reverse:false,ticks:{callback:v=>dl(v)},title:{display:true,text:'Date of full bloom'},grid:{color:THEME.grid}}}}}))}
 
-const PARTS=[['fossil emissions','fossil_co2_global.csv',fossil,'fossil'],['ocean pH','hot_surface_ph.csv',ph,'ph'],
+const PARTS=[['fossil emissions','fossil_co2_global.csv',fossil,'fossil'],['carbon sinks','carbon_sinks_global.csv',sinks,'sinks'],['ocean pH','hot_surface_ph.csv',ph,'ph'],
  ['Atlantic overturning','amoc_rapid_monthly.csv',amoc,'amoc'],['Red List Index','redlist_index_world.csv',rli,'rli'],
  ['tree cover loss','tree_cover_loss_world.csv',trees,'trees'],['crop yields','fao_crop_yields_world.csv',crops,'crops'],['cherry blossom','kyoto_cherry_blossom.csv',blossom,'blossom']];
 get('slow_status.json').then(JSON.parse).catch(()=>({})).then(S=>Promise.allSettled(PARTS.map(([n,f,fn,k])=>get(f).then(t=>fn(t,S[k]||{})))))

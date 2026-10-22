@@ -42,6 +42,13 @@
   "source": "UN SDG database, series ER_RSK_LST (indicator 15.5.1)",
   "through": "2025"
  },
+ "sinks": {
+  "first": "1959",
+  "new_data": "2026-10-22",
+  "release": "Global Carbon Budget 2025",
+  "source": "https://doi.org/10.18160/gcp-2025",
+  "through": "2024"
+ },
  "trees": {
   "first": "2001",
   "new_data": "2026-10-07",
