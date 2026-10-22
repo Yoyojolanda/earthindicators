@@ -22,6 +22,7 @@ const PAGES = {
   ghg:         { id: 'ghg',  title: 'All greenhouse gases: warming effect' },
   eei:         { id: 'eei',  title: "Earth's energy imbalance" },
   water:       { id: 'wv',   title: 'Water vapor in the air' },
+  wildfires:   { id: 'fire', title: 'Wildfires: CO₂ from fires' },
 };
 
 (async () => {

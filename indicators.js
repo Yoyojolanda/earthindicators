@@ -5,7 +5,7 @@
 //   EI.get(id)    -> Promise of an object of ready-to-print strings (plus .tile for the front page)
 //   EI.fill(root) -> fills every <span data-k="id.key"> inside root, e.g. data-k="air.vd"
 //
-// ids: air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, ghg (all long-lived greenhouse gases: NOAA's yearly index, plus monthly N₂O), eei, wv (water vapor), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
+// ids: fire (CO₂ from fires, world, GWIS), air, sst, nino, ohc, sl, ice (Arctic), ant (Antarctic), glob (both together), co2, ch4, ghg (all long-lived greenhouse gases: NOAA's yearly index, plus monthly N₂O), eei, wv (water vapor), sun (solar cycle), pdo, land (Greenland + Antarctica ice mass), amoc (Atlantic overturning), rli (Red List Index), fossil (fossil CO₂ emissions), ph (ocean pH at Hawaii), trees (tree cover loss), blossom (Kyoto cherry blossom)
 // Every object has: vd (plain verdict), through (how recent the data is), src (data source)
 (function () {
 const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -218,6 +218,14 @@ const LOAD={
   return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt,spark:yearly(D.map(p=>({y:Math.floor(p.x),v:p.y})),4)}}),
  trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:(+p[1]||0)/1e6}));
   const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y,spark:R.map(r=>({x:+r.y,y:r.t})),bars:true}}),
+ fire:()=>get('fires_weekly.csv').then(t=>{   // GWIS weekly fire CO2 (thousand t), world: this year so far vs the same weeks in earlier years
+  const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[0]==='WORLD').map(p=>({y:+p[1],w:p.slice(2).map(v=>v===''?null:+v/1000)}));
+  const C=R[R.length-1],y=C.y;let k=-1;C.w.forEach((v,i)=>{if(v!=null)k=i});if(k<0)throw new Error('no fire data');
+  const ytd=r=>r.w.slice(0,k+1).reduce((s,v)=>s+(v||0),0),P=R.filter(r=>r.y<y),now=ytd(C),avg=mean(P.map(ytd)),rank=P.filter(r=>ytd(r)>now).length+1;
+  const end=new Date(Date.UTC(y,0,7*(k+1))),date=ML[end.getUTCMonth()]+' '+end.getUTCDate(),tot=P.map(r=>({x:r.y,y:r.w.reduce((s,v)=>s+(v||0),0)/1000}));
+  const d=(now/avg-1)*100,vd=Math.abs(d)<10?'about average for the time of year':d>0?`${Math.round(d)}% more than the ${P[0].y}–${y-1} average for the same weeks`:`${Math.round(-d)}% less than the ${P[0].y}–${y-1} average for the same weeks`;
+  return{src:'GWIS (Copernicus)',vd,now:(now/1000).toFixed(1)+' billion metric tons',avg:(avg/1000).toFixed(1)+' billion metric tons',rank:rankTxt(rank,'Highest','highest'),y,date,through:`${date}, ${y}`,first:P[0].y,
+   tile:{v:(now/1000).toFixed(1)+' Gt',l:`CO₂ from fires worldwide, 1 January to ${date} ${y}`,s:vd,spark:tot,sparkLabel:`yearly totals, ${P[0].y}–${y-1} (billion metric tons)`}}}),
  blossom:()=>get('kyoto_cherry_blossom.csv').then(t=>{const B=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],d:p[1],n:+p[2]}));
   const L=B[B.length-1],o=mean(B.filter(r=>r.y<1850).map(r=>r.n)),n10=mean(B.slice(-10).map(r=>r.n)),e=Math.round(o-n10);
   return{src:'Aono / GMU cherry blossom data',vd:`Kyoto's cherry trees now bloom about ${e} days earlier than before 1850`,earlier:e+' days',date:L.y,through:String(L.y),
@@ -243,7 +251,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
+const NAMES={fire:'wildfires',air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

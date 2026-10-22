@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("ei-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<title>Wildfire tracker</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Earth Indicators">
+<meta property="og:title" content="Wildfires: CO₂ from fires, worldwide and by region">
+<meta property="og:description" content="CO₂ released by fires week by week, worldwide and in Canada, Siberia, the Amazon, Australia and more, compared with every year since 2003. Copernicus GWIS data.">
+<meta property="og:url" content="https://earthindicators.org/wildfires.html">
+<meta property="og:image" content="https://earthindicators.org/og/wildfires.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wildfires: CO₂ from fires this year, worldwide">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="CO₂ released by fires week by week, worldwide and in Canada, Siberia, the Amazon, Australia and more, compared with every year since 2003. Copernicus GWIS data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>
+:root{--h:380px;--hs:300px;--ph:250px;--phs:200px}
+#rg{display:flex;flex-wrap:wrap}
+</style></head><body><main>
+<h1>Wildfire tracker</h1>
+<nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
+<p id="err"></p>
+<div id="out" class="hide">
+<div class="seg" id="rg">Region: </div>
+<div class="cards" id="cards"></div>
+<p class="sub hint">Tip: click any legend entry to hide or show that series.</p>
+<div class="box" data-nav="This year, added up"><h2 id="t1"></h2><div class="sub bandkey" style="margin:0 0 6px"><button type="button" class="bk" data-band="1" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max)</button> &nbsp; <button type="button" class="bk" data-band="2" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</button></div><div class="wrap"><canvas id="c1"></canvas></div></div>
+<div class="box" data-nav="Week by week"><h2 id="t2"></h2><div class="sub bandkey" style="margin:0 0 6px"><button type="button" class="bk" data-band="1" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max)</button> &nbsp; <button type="button" class="bk" data-band="2" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</button></div><div class="wrap s"><canvas id="c2"></canvas></div></div>
+<div class="box" data-nav="Every year"><h2 id="t3"></h2><div class="wrap s"><canvas id="c3"></canvas></div></div>
+<div class="box" data-own-switches data-nav="Where the world's fire CO₂ comes from"><h2 id="t4"></h2><div class="wrap"><canvas id="c4"></canvas></div><p class="sub" id="n4" style="margin:8px 0 0"></p></div>
+<h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
+<p class="sub">Most fire CO₂ comes back out of the air again as plants regrow: grass in a savanna within a year or two, a forest over decades. So fires add to the CO₂ in the air for good mainly where forests and peatlands burn and do not grow back as they were (deforestation fires, the drained peat of Indonesia, and more and more the northern forests and permafrost soils, which store carbon built up over centuries). Fire smoke also harms health far from the fires, and soot darkens snow and ice.</p>
+<p class="sub">How it is measured: satellites (NASA's MODIS and VIIRS instruments) see the heat given off by active fires several times a day; from the fire's power, models estimate how much vegetation burns and how much CO₂ and other gases it releases. The Global Wildfire Information System (GWIS), run by the European Commission's Joint Research Centre within the Copernicus programme, adds these estimates up per country and region and per week, from 2003. Weeks count from 1 January (week 1 = 1–7 January; 31 December is not counted). The newest weeks can still be revised. Estimates from satellites have large uncertainties (tens of percent for a single region and year), but the differences between years and regions are robust. Regions: the continents and macro-regions as GWIS defines them (Europe includes all of Russia; North America includes Canada, the United States and Mexico); "Brazil's Legal Amazon" is the official administrative area of the Amazon in Brazil; "the Arctic" is the area of the Arctic Monitoring and Assessment Programme, which includes much of the boreal forest. Data: Global Wildfire Information System, <a href="https://gwis.jrc.ec.europa.eu/apps/gwis.statistics/seasonaltrend" target="_blank" rel="noopener">GWIS statistics portal</a> (Copernicus Emergency Management Service, European Commission Joint Research Centre).</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const MS=[0,31,59,90,120,151,181,212,243,273,304,334],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],NW=52;
+const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,ord=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+const wd=(y,i)=>{const d=new Date(Date.UTC(y,0,7*(i+1)));return ML[d.getUTCMonth()]+' '+d.getUTCDate()};   // last day of week i
+const wl=i=>{const d=new Date(Date.UTC(2001,0,7*i+1));return ML[d.getUTCMonth()]+' '+d.getUTCDate()+'–'+wd(2001,i)};
+const Mt=v=>v>=100?Math.round(v).toLocaleString('en-US'):v>=10?v.toFixed(0):v>=1?v.toFixed(1):v.toFixed(2);
+const tick=v=>{const d=v*7,m=MS.findIndex(s=>s>=d&&s<d+7);return m>=0?ML[m]:''};
+let D={},NAME={},ORDER=[],reg='WORLD',ch=[],expName='wildfires.jpg';
+const poly=(c,lo,hi,col)=>{const{ctx,scales:{x,y}}=c;ctx.save();ctx.beginPath();for(let i=0;i<NW;i++){const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}for(let i=NW-1;i>=0;i--)ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]));ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.restore()};
+function bands(rows){const mn=[],mx=[],p10=[],p90=[],av=[];for(let i=0;i<NW;i++){const v=rows.map(r=>r[i]).filter(x=>x!=null);mn.push(Math.min(...v));mx.push(Math.max(...v));p10.push(q(v,.1));p90.push(q(v,.9));av.push(mean(v))}return{mn,mx,p10,p90,av}}
+function draw(){
+ ch.forEach(c=>c.destroy());ch=[];
+ const Y=D[reg],years=Object.keys(Y).map(Number).sort((a,b)=>a-b),cur=years[years.length-1],prior=years.filter(y=>y<cur),first=prior[0];
+ let k=-1;Y[cur].forEach((v,i)=>{if(v!=null)k=i});
+ const cum=w=>{let s=0;return w.map(v=>v==null?null:(s+=v))},C={};years.forEach(y=>C[y]=cum(Y[y]));
+ const tot=y=>Y[y].reduce((s,v)=>s+(v||0),0),ytd=y=>C[y][k],now=ytd(cur),avg=mean(prior.map(ytd)),rk=prior.filter(y=>ytd(y)>now).length+1;
+ const recY=prior.reduce((a,y)=>tot(y)>tot(a)?y:a,prior[0]),hiY=prior.reduce((a,y)=>ytd(y)>ytd(a)?y:a,prior[0]),prev=cur-1,name=NAME[reg];
+ const pct=(now/avg-1)*100,cmp=Math.abs(pct)<5?'about the same as':Math.round(Math.abs(pct))+'% '+(pct>0?'more than':'less than');
+ $('cards').innerHTML=[[Mt(now)+' Mt',`CO₂ from fires, ${name}, 1 Jan – ${wd(cur,k)} ${cur} (million metric tons)`],[Mt(avg)+' Mt',`${first}–${prev} average for the same weeks`],
+  [rk===1?'Highest':ord(rk),`of ${prior.length+1} years for this time of year`],[Mt(tot(recY))+' Mt',`highest whole year: ${recY}`]].map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+ const tc=THEME.axis,through=`week ending ${wd(cur,k)}, ${cur} · GWIS (Copernicus)`;
+ // 1: added up through the year
+ $('t1').textContent=`${name}: CO₂ from fires added up week by week, ${cur} compared with every year since ${first} (million metric tons)`;
+ const B1=bands(prior.map(y=>C[y])),shown=[`${first}–${prev} average`,String(recY),String(prev),String(cur)];
+ const ds1=[{label:'Prior-year max',data:B1.mx,borderWidth:0,pointRadius:0,fill:false},{label:'Prior-year min',data:B1.mn,borderWidth:0,pointRadius:0,fill:false},
+  {label:'90th percentile',data:B1.p90,borderWidth:0,pointRadius:0,fill:false},{label:'10th percentile',data:B1.p10,borderWidth:0,pointRadius:0,fill:false},
+  {label:`${first}–${prev} average`,data:B1.av,borderColor:THEME.clim,borderWidth:1.3,borderDash:[5,4],pointRadius:0,fill:false,order:4}];
+ if(recY!==prev)ds1.push({label:String(recY),data:C[recY],borderColor:'#7b5ea7',borderWidth:1.4,pointRadius:0,fill:false,order:2});
+ ds1.push({label:String(prev),data:C[prev],borderColor:THEME.dark?'#f2b25c':'#c9740f',borderWidth:1.4,pointRadius:0,fill:false,order:1},
+  {label:String(cur),data:C[cur],borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:0});
+ const opt=(ytitle,fmt)=>({animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max',...shown].includes(i.dataset.label),callbacks:{title:t=>'Week '+(t[0].dataIndex+1)+': '+wl(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':fmt(c.parsed.y)+' Mt')}}},
+  scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:tick},grid:{display:false}},y:{min:0,title:{display:true,text:ytitle,color:tc},ticks:{color:tc},grid:{color:THEME.grid}}}});
+ ch.push(new Chart($('c1'),{type:'line',plugins:[{id:'b1',beforeDraw(c){if(bandOn(c,1))poly(c,B1.mn,B1.mx,THEME.band1);if(bandOn(c,2))poly(c,B1.p10,B1.p90,THEME.band2)}},yearLines(prior,prior.map(y=>C[y]),v=>Mt(v)+' Mt')],
+  data:{labels:[...Array(NW).keys()],datasets:ds1},options:opt('Million metric tons CO₂, since 1 January',Mt)}));
+ // 2: week by week
+ $('t2').textContent=`${name}: CO₂ from fires each week of ${cur}, compared with every year since ${first} (million metric tons a week)`;
+ const B2=bands(prior.map(y=>Y[y])),ds2=ds1.map(d=>({...d,data:d.label==='Prior-year max'?B2.mx:d.label==='Prior-year min'?B2.mn:d.label==='90th percentile'?B2.p90:d.label==='10th percentile'?B2.p10:/average$/.test(d.label)?B2.av:Y[+d.label]}));
+ ch.push(new Chart($('c2'),{type:'line',plugins:[{id:'b2',beforeDraw(c){if(bandOn(c,1))poly(c,B2.mn,B2.mx,THEME.band1);if(bandOn(c,2))poly(c,B2.p10,B2.p90,THEME.band2)}},yearLines(prior,prior.map(y=>Y[y]),v=>Mt(v)+' Mt')],
+  data:{labels:[...Array(NW).keys()],datasets:ds2},options:opt('Million metric tons CO₂ a week',Mt)}));
+ // 3: every year
+ $('t3').textContent=`${name}: CO₂ from fires per year, ${first}–${cur} (million metric tons; ${cur} so far)`;
+ const bar=THEME.bar;
+ ch.push(new Chart($('c3'),{type:'bar',data:{labels:years.map(String),datasets:[
+   {label:'Whole year',data:years.map(y=>y<cur?tot(y):null),backgroundColor:years.map(y=>y===recY?'#7b5ea7':bar),borderWidth:0,grouped:false},
+   {label:`${cur} so far (to ${wd(cur,k)})`,data:years.map(y=>y===cur?now:null),backgroundColor:'#d00000',borderWidth:0,grouped:false},
+   {label:`Same weeks in earlier years`,type:'line',data:years.map(y=>ytd(y)),showLine:false,pointStyle:'line',pointRadius:7,borderColor:THEME.ink,borderWidth:2}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:{filter:i=>i.parsed.y!=null,callbacks:{label:c=>c.dataset.label+': '+Mt(c.parsed.y)+' Mt'}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:0,title:{display:true,text:'Million metric tons CO₂'},grid:{color:THEME.grid}}}}}));
+ [1,2,3].forEach(i=>$('c'+i).closest('.box').dataset.through=through);
+ // interpretation
+ const t10=mean(prior.slice(-10).map(tot)),f10=mean(prior.slice(0,10).map(tot)),ch10=(t10/f10-1)*100;
+ const can=D.CAN&&D.CAN[2023]?D.CAN[2023].reduce((s,v)=>s+(v||0),0):null;
+ $('read').innerHTML=[
+  `From 1 January to ${wd(cur,k)} ${cur}, fires in ${reg==='WORLD'?'the world':name} released ${Mt(now)} million metric tons of CO₂, ${cmp} the ${first}–${prev} average for the same weeks (${rk===1?'the highest':ord(rk)+' highest'} of ${prior.length+1} years). The highest whole year since ${first} was ${recY}, with ${Mt(tot(recY))} million metric tons.`,
+  `Over the last ten complete years, fires here released ${Mt(t10)} million metric tons a year on average, ${Math.abs(ch10)<5?'about the same as':Math.round(Math.abs(ch10))+'% '+(ch10>0?'more than':'less than')} in the first ten years of the record (${first}–${first+9}).`,
+  reg==='WORLD'?`Worldwide, fire CO₂ has gone down since 2003, mostly because fewer savannas and grasslands burn in Africa as more land is farmed and grazed. That hides the opposite trend in the forests of the far north: Canada's fires released ${can?Mt(can):'about 1,300'} million metric tons of CO₂ in 2023, more than ${Math.round((can||1320)/Math.max(...prior.filter(y=>y<2023).map(y=>D.CAN[y].reduce((s,v)=>s+(v||0),0))))} times its highest year before. Hotter, drier summers make fire seasons longer and fires bigger (see <a href="claims.html#wildfires">"wildfires are natural"</a>).`
+   :['CAN','N_AME','USA','RUS','AMAP'].includes(reg)?`The northern forests are where fire is growing: hotter, drier summers, earlier snowmelt and more lightning give longer fire seasons and bigger fires. These forests and their soils store carbon built up over centuries, which does not grow back within a lifetime (see <a href="claims.html#wildfires">"wildfires are natural"</a>).`
+   :`Fire here depends on drought and on people: in the tropics most fires are lit to clear or manage land, and a drought (often in El Niño years) lets them spread into forests that normally do not burn.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ expName=`wildfires-${reg.toLowerCase()}-${cur}.jpg`;$('exp').disabled=false;
+}
+// 4: the world by region, every year (does not change with the region switch)
+let c4=null;
+function world(){
+ const W=D.WORLD,years=Object.keys(W).map(Number).sort((a,b)=>a-b).filter(y=>y<Math.max(...years0()));
+ function years0(){return Object.keys(D.WORLD).map(Number)}
+ const tot=(r,y)=>D[r]&&D[r][y]?D[r][y].reduce((s,v)=>s+(v||0),0):0;
+ const P=[['UN_AFR','Africa','#d0a43a'],['S_AME','South America','#3d8b3d'],['UN_ASI','Asia','#b05a3c'],['UN_EUR','Europe (including Russia)','#7b5ea7'],['N_AME','North America','#1f6fb5'],['UN_OCE','Oceania','#2a9d8f']];
+ const ds=P.map(([r,l,c])=>({label:l,data:years.map(y=>tot(r,y)),backgroundColor:c,borderWidth:0,stack:'s'}));
+ ds.push({label:'Elsewhere (Central America, Caribbean, other)',data:years.map((y,i)=>Math.max(0,tot('WORLD',y)-P.reduce((s,[r])=>s+tot(r,y),0))),backgroundColor:THEME.dark?'#5a5650':'#c9c3b7',borderWidth:0,stack:'s'});
+ $('t4').textContent=`Where the world's fire CO₂ comes from: every year ${years[0]}–${years[years.length-1]}, by region (million metric tons)`;
+ c4=new Chart($('c4'),{type:'bar',data:{labels:years.map(String),datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{tooltip:{itemSort:(a,b)=>b.parsed.y-a.parsed.y,callbacks:{label:c=>c.dataset.label+': '+Mt(c.parsed.y)+' Mt',footer:t=>'World: '+Mt(tot('WORLD',years[t[0].dataIndex]))+' Mt'}}},
+  scales:{x:{stacked:true,ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{stacked:true,title:{display:true,text:'Million metric tons CO₂'},grid:{color:THEME.grid}}}}});
+ const a=(r,ys)=>mean(ys.map(y=>tot(r,y))),e=years.slice(0,5),l=years.slice(-5);
+ $('n4').textContent=`Whole years only. Africa's share: ${Math.round(a('UN_AFR',e)/a('WORLD',e)*100)}% in ${e[0]}–${e[4]}, ${Math.round(a('UN_AFR',l)/a('WORLD',l)*100)}% in ${l[0]}–${l[4]}; North America's: ${Math.round(a('N_AME',e)/a('WORLD',e)*100)}% then, ${Math.round(a('N_AME',l)/a('WORLD',l)*100)}% now. The regions do not quite add up to the world total, because GWIS's regions do not cover every country; the rest is shown as "elsewhere".`;
+ $('c4').closest('.box').dataset.through=`${years[years.length-1]} · GWIS (Copernicus)`;
+}
+Promise.all([fetch('data/fires_weekly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}),fetch('data/fires_status.json').then(r=>r.json())]).then(([t,st])=>{
+ t.trim().split(/\r?\n/).slice(1).forEach(l=>{const p=l.split(',');(D[p[0]]??={})[+p[1]]=p.slice(2).map(v=>v===''?null:+v/1000)});
+ st.regions.forEach(r=>{NAME[r.code]=r.name;if(D[r.code])ORDER.push(r.code)});NAME.WORLD='World';
+ $('rg').insertAdjacentHTML('beforeend',ORDER.map(c=>`<button class="nb${c===reg?' on':''}" type="button" data-r="${c}">${NAME[c]}</button>`).join(''));
+ $('rg').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b||b.dataset.r===reg)return;reg=b.dataset.r;$('rg').querySelectorAll('.nb').forEach(x=>x.classList.toggle('on',x===b));draw()});
+ $('out').classList.remove('hide');draw();world();
+}).catch(e=>{console.error(e);$('err').textContent='The fire data could not be loaded. Try again later.'});
+$('exp').onclick=()=>{if(ch.length<3)return;siteExport([[ch[0],'t1',1],[ch[1],'t2',1],[ch[2],'t3',0],...(c4?[[c4,'t4',0]]:[])],expName)};
+</script></main></body></html>

@@ -203,6 +203,14 @@ window.IN_SHORT = {
     ],
     claims: ['weather-blame', 'trace-gas'],
   },
+  'wildfires.html': {
+    units: 'One million metric tons (1 Mt) of CO₂ is roughly what 200,000 cars emit in a year. Canada\'s fires in 2023 released about 1,300 Mt, more than Japan emits from fossil fuels in a year (about 1,000 Mt).',
+    text: [
+      'How much CO₂ fires release, worldwide and by region, estimated week by week from satellites since 2003. Worldwide the total has gone down, because fewer savannas burn as land is farmed; but in the northern forests, fires are getting bigger, and the carbon they release does not grow back within a lifetime.',
+      'So far in {fire.y} (to {fire.date}): {fire.now} of CO₂ worldwide, {fire.vd}.',
+    ],
+    claims: ['wildfires', 'extreme-picks'],
+  },
   'eei.html': {
     units: '1 W/m² sounds tiny, about the power of a small night light for every square meter. But Earth has 510 million km² of surface, so 1 W/m² over the whole planet is about 510 terawatts: more than 25 times all the energy humanity uses.',
     text: [
