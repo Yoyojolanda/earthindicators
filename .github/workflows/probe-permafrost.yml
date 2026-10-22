@@ -14,56 +14,53 @@ jobs:
       - name: Probe
         run: |
           cat > probe.py <<'PY'
-          import re, io, zipfile, urllib.request, os
-          def get(u, t=300):
-              r = urllib.request.Request(u, headers={"User-Agent": "earthindicators.org data probe"})
+          import re, io, zipfile, urllib.request, os, tempfile
+          UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
+          def get(u, t=600):
+              r = urllib.request.Request(u, headers={"User-Agent": UA})
               return urllib.request.urlopen(r, timeout=t).read()
           def sec(n): print("\n========", n, flush=True)
-          try:
-              sec("CALM frameset")
-              h = get("https://www2.gwu.edu/~calm/data/north.htm").decode("latin-1")
-              print(h[:1500])
-              for f in re.findall(r'(?:src|href)="([^"]+)"', h): print(" link:", f)
-          except Exception as e: print("ERR", e)
-          try:
-              sec("CALM sheet001")
-              h = get("https://www2.gwu.edu/~calm/data/north_files/sheet001.htm").decode("latin-1")
-              print(len(h)); rows = re.findall(r"<tr.*?</tr>", h, re.S)
-              print("rows", len(rows))
-              txt = lambda r: [re.sub(r"<[^>]+>|&nbsp;", " ", c).strip() for c in re.findall(r"<td.*?</td>", r, re.S)]
-              for r in rows[:14]: print(txt(r))
-              for r in rows[60:64]: print(txt(r))
-              for r in rows[-6:]: print(txt(r))
-              print(rows[3][:3000])
-          except Exception as e: print("ERR", e)
-          try:
-              sec("EPA links")
-              h = get("https://www.epa.gov/climate-indicators/climate-change-indicators-permafrost").decode()
-              for f in sorted(set(re.findall(r'href="([^"]+\.(?:csv|xlsx|zip))"', h))): print(" ", f)
-          except Exception as e: print("ERR", e)
-          try:
-              sec("PERMOS")
-              z = zipfile.ZipFile(io.BytesIO(get("https://www.permos.ch/fileadmin/Files/data/PERMOS-DOI-2025-01.zip")))
-              names = z.namelist(); print(len(names))
-              for n in names[:400]: print(" ", n, z.getinfo(n).file_size)
-              ann = [n for n in names if re.search(r"(?i)bh|bore", n) and re.search(r"(?i)ann|year|_y", n)]
-              for n in ann[:3]:
-                  print("----", n); print(z.read(n).decode("latin-1")[:1500])
-          except Exception as e: print("ERR", e)
-          for d in ["https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/",
-                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/",
-                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/v05.0/northern_hemisphere/",
-                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/active_layer_thickness/L4/area4/pp/",
-                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/permafrost_extent/L4/area4/pp/"]:
+          def links(u, pat=r'href="([^"]+)"'):
+              h = get(u).decode("utf-8", "replace"); return h, re.findall(pat, h)
+          for u in ["https://www.epa.gov/climate-indicators/climate-change-indicators-permafrost",
+                    "https://permafrost.gi.alaska.edu/sites_map", "https://permafrost.gi.alaska.edu/site/dh1",
+                    "https://permafrost.gi.alaska.edu/site/wd1", "https://www.permos.ch/doi/permos-dataset-2026-1"]:
               try:
-                  sec("CEDA " + d)
-                  h = get(d + "?json").decode()
-                  print(h[:3000])
-              except Exception as e:
-                  print("ERR json", e)
-                  try:
-                      h = get(d).decode(); print(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", h))[:3000])
-                  except Exception as e2: print("ERR", e2)
+                  sec(u); h, L = links(u)
+                  for l in sorted(set(L)):
+                      if re.search(r"(?i)csv|xls|zip|txt|data|download|\.dat|file", l): print("  ", l)
+              except Exception as e: print("ERR", e)
+          try:
+              sec("PERMOS borehole meta")
+              z = zipfile.ZipFile(io.BytesIO(get("https://www.permos.ch/fileadmin/Files/data/PERMOS-DOI-2025-01.zip")))
+              for n in ["borehole_20250627.csv", "site_20250627.csv"]:
+                  print("----", n); print(z.read("PERMOS-DOI-2025-01/Data/" + n).decode("latin-1")[:6000])
+              t = z.read("PERMOS-DOI-2025-01/Data/bht_year_20250627.csv").decode().splitlines()[1:]
+              from collections import defaultdict
+              D = defaultdict(set)
+              for l in t:
+                  b, d, y = l.split(",")[:3]; D[(b, round(float(d)))].add(int(y))
+              for k in sorted(D, key=lambda k:(int(k[0]),k[1])): print(" bh", k, min(D[k]), max(D[k]), len(D[k]))
+          except Exception as e: print("ERR", e)
+          for d in ["https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/v05.0/northern_hemisphere/2023/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/active_layer_thickness/L4/area4/pp/v05.0/",
+                    "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/permafrost_extent/L4/area4/pp/v05.0/"]:
+              try:
+                  sec(d); h = get(d).decode(); print(re.sub(r"<[^>]+>", "", h)[:2500])
+              except Exception as e: print("ERR", e)
+          try:
+              sec("CCI GTD 2023 file")
+              d = "https://dap.ceda.ac.uk/neodc/esacci/permafrost/data/ground_temperature/L4/area4/pp/v05.0/northern_hemisphere/2023/"
+              f = [x for x in re.findall(r'href="([^"]+\.nc)"', get(d).decode())][0]
+              print(f); raw = get(d + f.split("/")[-1], 1800); print(len(raw))
+              p = os.path.join(tempfile.mkdtemp(), "g.nc"); open(p, "wb").write(raw)
+              import xarray as xr, numpy as np
+              ds = xr.open_dataset(p); print(ds)
+              for v in ds.data_vars:
+                  a = ds[v]
+                  if a.ndim >= 2:
+                      x = a.values.astype("float32"); print(v, a.dims, a.shape, np.nanmin(x), np.nanmax(x), np.isfinite(x).mean(), a.attrs)
+          except Exception as e: print("ERR", e)
           PY
           python -u probe.py > probe.txt 2>&1 || true
           git init -q out && cd out && cp ../probe.txt . && git checkout -q -b probe-out
