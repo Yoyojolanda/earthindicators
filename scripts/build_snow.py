@@ -55,7 +55,7 @@ def main():
     print(f"file: {name}", flush=True)
     ds = open_ds(name)
     describe(ds)
-    sce = next(v for v in ds.data_vars if "snow" in v.lower())
+    sce = "snow_cover_extent" if "snow_cover_extent" in ds else next(v for v in ds.data_vars if "snow" in v.lower() and ds[v].ndim == 3)
     land = next((v for v in ds.data_vars if v.lower() in ("land", "land_mask", "landmask")), None)
     area = next((v for v in ds.data_vars if "area" in v.lower()), None)
     if land is None or area is None:
@@ -101,4 +101,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:   # shown on the job's summary page
+        print(f"::error::snow cover: {type(e).__name__}: {e}", flush=True); raise
