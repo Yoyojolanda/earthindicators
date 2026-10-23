@@ -274,7 +274,8 @@ def pfcci(old):
     have = {}
     if os.path.exists(cache) and old.get("version") == ver:
         z = np.load(cache)
-        have = {int(y): (z["grids"][k], float(z["area_pf"][k]), float(z["area_warm"][k])) for k, y in enumerate(z["years"])}
+        zg, za, zw = z["grids"], z["area_pf"], z["area_warm"]       # read each array once
+        have = {int(y): (zg[k], float(za[k]), float(zw[k])) for k, y in enumerate(z["years"])}
         lat0, lon0 = float(z["lat0"]), float(z["lon0"])
     todo = [y for y in years if y not in have]
     print(f"  pfcci: version {ver}, years {years[0]}-{years[-1]}; {len(todo)} to download", flush=True)

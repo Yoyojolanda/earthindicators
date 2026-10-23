@@ -300,26 +300,28 @@ const SOIL_READY=true;
   window.soilCharts=()=>[[c5,'t5',1],[c6,'t6',0],[c7,'t7',0]];
  }).catch(e=>console.error('soil moisture:',e));
 })();
-// ---- satellite check: SMAP Level-4 root-zone soil moisture vs ERA5, each against its own 2016-2025 average (scripts/build_smap.py)
-const SMAP_READY=false;   // held back: the global averages of SMAP and ERA5 hardly agree (see the methods page); needs a like-for-like comparison first
-(SMAP_READY?Promise.resolve():Promise.reject('SMAP check held back')).then(()=>Promise.all([fetch('data/smap_rootzone_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}),fetch('data/soil_pentad.csv').then(r=>{if(!r.ok)throw 0;return r.text()})])).then(([ts,te])=>{
- const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],sg=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1);
- const S=ts.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({m:p[0],v:+p[1]}));
- const E={};te.trim().split(/\r?\n/).slice(1).forEach(l=>{const p=l.split(','),m=p[0].slice(0,7);if(m>='2015-04')(E[m]=E[m]||[]).push(+p[3])});
- const rel=(R,f)=>{const c={};R.filter(r=>r.m>='2016'&&r.m<'2026').forEach(r=>(c[r.m.slice(5)]=c[r.m.slice(5)]||[]).push(r.v));return R.map(r=>c[r.m.slice(5)]?f(r.v,mean(c[r.m.slice(5)])):null)};
- const Sa=rel(S,(v,c)=>(v/c-1)*100),Er=Object.keys(E).sort().map(m=>({m,v:mean(E[m])})),Ea=rel(Er,(v,c)=>v-c),Em=Object.fromEntries(Er.map((r,i)=>[r.m,Ea[i]]));
- const lab=S.map(r=>r.m),eLine=lab.map(m=>Em[m]??null);
- const both=lab.map((m,i)=>[Sa[i],eLine[i]]).filter(p=>p[0]!=null&&p[1]!=null),cx=(()=>{const a=both.map(p=>p[0]),b=both.map(p=>p[1]),ma=mean(a),mb=mean(b);let s1=0,s2=0,s3=0;both.forEach(([x,y])=>{s1+=(x-ma)*(y-mb);s2+=(x-ma)**2;s3+=(y-mb)**2});return s1/Math.sqrt(s2*s3)})();
- $('t9').textContent=`Satellite check: root-zone soil moisture from SMAP and from ERA5, ${lab[0].slice(0,4)}–${lab[lab.length-1].slice(0,4)} (% compared with each one's own 2016–2025 average for the month)`;
+// ---- satellite check: share of land in drought from ERA5 and from NASA's SMAP Level 4, the same method for both,
+//      each against its own 2016-2025 percentiles (scripts/build_soil_check.py)
+fetch('data/soil_smap_check.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ // NASA: SMAP data from 14 May to 28 July 2026 have a geolocation problem and are being reprocessed
+ const BAD=['2026-05-09','2026-07-28'],bad=d=>d>=BAD[0]&&d<=BAD[1],unsure=d=>d>='2026-01-01';
+ const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({d:p[0],e:+p[1],s:bad(p[0])?null:+p[2]}));
+ const lab=R.map(r=>r.d),ok=R.filter(r=>r.s!=null&&!unsure(r.d));
+ const cx=(()=>{const a=ok.map(r=>r.e),b=ok.map(r=>r.s),ma=mean(a),mb=mean(b);let s1=0,s2=0,s3=0;a.forEach((x,i)=>{s1+=(x-ma)*(b[i]-mb);s2+=(x-ma)**2;s3+=(b[i]-mb)**2});return s1/Math.sqrt(s2*s3)})();
+ const yr={};ok.forEach(r=>{(yr[r.d.slice(0,4)]??=[]).push(r)});const ym=Object.entries(yr).filter(([,v])=>v.length>=60).map(([y,v])=>[y,mean(v.map(r=>r.e)),mean(v.map(r=>r.s))]);
+ const gap=ym.reduce((a,b)=>Math.abs(b[1]-b[2])>Math.abs(a[1]-a[2])?b:a);
+ $('t9').textContent=`Satellite check: share of the land in drought from ERA5 and from NASA's SMAP satellite, ${lab[0].slice(0,4)}–${lab[lab.length-1].slice(0,4)} (%, each against its own 2016–2025 percentiles)`;
  const c9=new Chart($('c9'),{type:'line',data:{labels:lab,datasets:[
-   {label:'SMAP satellite (NASA Level 4)',data:Sa,borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2,pointRadius:0,order:0},
-   {label:'ERA5',data:eLine,borderColor:'#8a5a2b',backgroundColor:'#8a5a2b',borderWidth:2,pointRadius:0,order:1}]},
+   {label:'SMAP satellite (NASA Level 4)',data:R.map(r=>r.s),borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:1.8,pointRadius:0,order:0,spanGaps:false,
+    segment:{borderDash:c=>unsure(lab[c.p1DataIndex])?[4,4]:undefined}},
+   {label:'ERA5',data:R.map(r=>r.e),borderColor:'#8a5a2b',backgroundColor:'#8a5a2b',borderWidth:1.8,pointRadius:0,order:1}]},
   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-   plugins:{tooltip:{callbacks:{title:t=>{const[y,m]=lab[t[0].dataIndex].split('-');return ML[m-1]+' '+y},label:c=>c.parsed.y==null?null:c.dataset.label+': '+sg(c.parsed.y)+'%'}}},
-   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>lab[v].endsWith('-01')?lab[v].slice(0,4):''},grid:{display:false}},y:{title:{display:true,text:'% wetter (+) or drier (−)'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}});
- const[ly,lm]=lab[lab.length-1].split('-');
- $('n9').textContent=`SMAP feeds a satellite's measurements of the top few centimeters of soil into NASA's own land model, which carries them down to the root zone; ERA5 gets its soil moisture from weather observations and its own model. The two are made independently, so where they agree the picture is more certain. Month by month, their ups and downs line up with a correlation of ${cx.toFixed(2)} (1 = identical). They cover slightly different land (SMAP: all unfrozen land between 60°S and 75°N; ERA5: as above), and each is compared with its own 2016–2025 average because their absolute values differ. Data: NASA SMAP L4 Global 3-hourly 9 km Surface and Root Zone Soil Moisture (SPL4SMGP, Reichle et al.), via NSIDC; one field a day, every 10th grid point.`;
- c9.canvas.closest('.box').dataset.through=`${ML[lm-1]} ${ly} · NASA SMAP L4, ERA5`;
+   plugins:{tooltip:{callbacks:{title:t=>{const d=lab[t[0].dataIndex];return '5 days from '+ML[+d.slice(5,7)-1]+' '+(+d.slice(8))+', '+d.slice(0,4)},
+     label:c=>c.parsed.y==null?(c.datasetIndex==0&&bad(lab[c.dataIndex])?'SMAP: left out (NASA is reprocessing these days)':null):c.dataset.label+': '+c.parsed.y.toFixed(1)+'% of the land in drought'+(c.datasetIndex==0&&unsure(lab[c.dataIndex])?' (uncertain)':'')}}},
+   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>lab[v].slice(5)<='01-05'?lab[v].slice(0,4):''},grid:{display:false}},y:{min:0,title:{display:true,text:'% of the land in drought'},grid:{color:THEME.grid}}}}});
+ $('n9').textContent=`Two independent estimates of the same thing: ERA5 gets its soil moisture from weather observations and its own land model; SMAP feeds a satellite's measurements of the top few centimeters of soil into NASA's land model, which carries them down to the root zone. Both are put through exactly the same method (driest 20% of 2016–2025 for each place and time of year, unfrozen soil only), so both average about 20% by definition (ERA5 is measured against 2016–2025 here, so it differs a little from the chart above, which uses 1991–2020). They agree only partly: from one five-day period to the next their ups and downs line up with a correlation of ${cx.toFixed(2)} (1 = identical, 0 = unrelated), and their yearly averages differ by up to ${Math.abs(gap[1]-gap[2]).toFixed(0)} percentage points (${gap[0]}: ERA5 ${gap[1].toFixed(0)}%, SMAP ${gap[2].toFixed(0)}%). How dry the world's soils are is still uncertain, and the two are best read together. NASA reports a location error in SMAP data from 14 May to 28 July 2026, being reprocessed: those days are left out, and SMAP's 2026 values are dashed and uncertain. Data: NASA SMAP L4 Global 3-hourly 9 km Surface and Root Zone Soil Moisture, version 8 (SPL4SMGP, Reichle et al.), via NSIDC; one field a day, every 10th grid point; ERA5 as above.`;
+ c9.canvas.closest('.box').dataset.through=`${lab[lab.length-1]} · NASA SMAP L4, ERA5`;
  $('b9').classList.remove('hide');window.smapChart=c9;
 }).catch(e=>console.error('SMAP check:',e));
 
