@@ -17,7 +17,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_soil as b
-import build_smap as sm
 
 OUT = "data/soil_smap_check.csv"
 BASE = (2016, 2025)
@@ -35,19 +34,26 @@ def main():
     if not sc or not os.path.exists(sc) or not grid or not os.path.isdir(grid):
         sys.exit("needs both caches (SOIL_CACHE and SMAP_GRID)")
     c = np.load(sc)
-    E = {(int(y), int(k)): (c["rz"][n], c["st"][n].astype("float32")) for n, (y, k) in enumerate(zip(c["y"], c["k"])) if y >= 2015}
+    cy, ck, crz, cst = c["y"], c["k"], c["rz"], c["st"]      # read each array once (indexing the npz re-reads it)
+    E = {(int(y), int(k)): (crz[n], cst[n].astype("float32")) for n, (y, k) in enumerate(zip(cy, ck)) if y >= 2015}
     # ERA5 point weights: cos(latitude) of the 1° land points (same selection as build_soil.py, from its thresholds file)
     jj = np.load(b.THR)["jj"].astype(int)
     lat_e = 90 - 0.25 * b.STRIDE * jj                        # ARCO-ERA5 latitudes run from 90°N down in 0.25° steps
     se = shares(E, np.cos(np.radians(lat_e)))
-    sm.GRID = grid
-    grids, lat = sm.cache_load()
-    keep = (lat >= -60) & (lat <= 75)
-    days = {d: (np.where(np.isfinite(rz.astype("float32")), rz.astype("float32"), np.nan)[keep],
-                np.where(st[keep] == -128, np.nan, st[keep]).astype("float32")) for d, (rz, st) in grids.items()}
-    land = np.mean([np.isfinite(v[0]) for v in list(days.values())[:200]], axis=0) > 0.9
-    days = {d: (v[0][land], v[1][land]) for d, v in days.items()}
-    S = b.to_pentads(days)
+    # SMAP, one year file at a time (the whole cache at once does not fit in memory): days -> pentads at the land points
+    lat = np.load(os.path.join(grid, "lat.npy"))
+    keep = ((lat >= -60) & (lat <= 75)).ravel()
+    files = sorted(f for f in os.listdir(grid) if f.endswith(".npz") and f[:4].isdigit())
+    z = np.load(os.path.join(grid, files[len(files) // 2]))
+    land = keep & (np.isfinite(z["rz"].astype("float32").reshape(len(z["dates"]), -1)).mean(axis=0) > 0.9)
+    S = {}
+    for f in files:
+        z = np.load(os.path.join(grid, f))
+        rz = z["rz"].reshape(len(z["dates"]), -1)[:, land].astype("float32")
+        st = z["st"].reshape(len(z["dates"]), -1)[:, land].astype("float32")
+        st[st == -128] = np.nan
+        S.update(b.to_pentads({date.fromisoformat(str(d)): (rz[k], st[k]) for k, d in enumerate(z["dates"])}))
+        del z, rz, st
     ss = shares(S, np.ones(int(land.sum())))
     keys = sorted(set(se) & set(ss))
     buf = io.StringIO(); wr = csv.writer(buf, lineterminator="\n"); wr.writerow(["date", "era5", "smap"])

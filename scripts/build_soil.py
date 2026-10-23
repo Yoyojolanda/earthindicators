@@ -209,7 +209,8 @@ def main():
         P, t0, start = {}, time.time(), date(FIRST, 1, 1)
         if CACHE and os.path.exists(CACHE):
             c = np.load(CACHE)
-            P = {(int(y), int(k)): (c["rz"][n], c["st"][n].astype("float32")) for n, (y, k) in enumerate(zip(c["y"], c["k"]))}
+            cy, ck, crz, cst = c["y"], c["k"], c["rz"], c["st"]      # read each array once (indexing the npz re-reads it)
+            P = {(int(y), int(k)): (crz[n], cst[n].astype("float32")) for n, (y, k) in enumerate(zip(cy, ck))}
             last = max(P); start = pentad_start(*last) + timedelta(days=5)      # whole pentads only
             P = {q: v for q, v in P.items() if q != last}; start = pentad_start(*last)
             print(f"cache: {len(P)} pentads up to {last}", flush=True)
@@ -253,7 +254,8 @@ def main():
     P = to_pentads(read_days(ds, end - timedelta(days=99), end, jj, ii))
     if CACHE and os.path.exists(CACHE):            # keep the cache of every pentad up to date (for the SMAP check)
         c = np.load(CACHE)
-        C = {(int(y), int(k)): (c["rz"][n], c["st"][n]) for n, (y, k) in enumerate(zip(c["y"], c["k"]))}
+        cy, ck, crz, cst = c["y"], c["k"], c["rz"], c["st"]          # read each array once (indexing the npz re-reads it)
+        C = {(int(y), int(k)): (crz[n], cst[n]) for n, (y, k) in enumerate(zip(cy, ck))}
         C.update({q: (v[0], np.clip(np.round(v[1]), -100, 100).astype(np.int8)) for q, v in P.items()})
         K = sorted(C)
         np.savez(CACHE + ".tmp.npz", y=np.array([q[0] for q in K], np.int16), k=np.array([q[1] for q in K], np.int16),

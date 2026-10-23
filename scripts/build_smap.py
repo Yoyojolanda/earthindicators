@@ -97,8 +97,9 @@ def cache_load():
     for f in sorted(os.listdir(GRID)):
         if f.endswith(".npz") and f[:4].isdigit():
             z = np.load(os.path.join(GRID, f))
-            for k, d in enumerate(z["dates"]):
-                out[date.fromisoformat(str(d))] = (z["rz"][k], z["st"][k])
+            ds, rz, st = z["dates"], z["rz"], z["st"]          # read each array once (indexing the npz re-reads it)
+            for k, d in enumerate(ds):
+                out[date.fromisoformat(str(d))] = (rz[k], st[k])
     return out, lat
 
 
