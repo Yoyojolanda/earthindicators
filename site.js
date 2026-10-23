@@ -19,12 +19,28 @@
   //      Key 3 is "Every year": each prior year as its own thin line, off until the reader turns it on.
   const boxOn = (b, k) => !b ? k != 3 : k == 3 ? b.dataset.band3 === 'on' : b.dataset['band' + k] !== 'off';
   window.bandOn = (ch, k) => boxOn(ch && ch.canvas && ch.canvas.closest('.box'), k);
+  //      "Range of prior years" and "Every year" show the same thing two ways, so turning one on turns the other off.
+  //      The middle 80% can stay on with "Every year", but is then drawn faint, behind the lines (bandColor).
+  const setBand = (box, k, on) => {
+    box.dataset['band' + k] = on ? 'on' : 'off';
+    const b = box.querySelector('.bandkey [data-band="' + k + '"]');
+    if (b) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on); }
+  };
   document.addEventListener('click', e => {
     const t = e.target.closest('.bandkey [data-band]'); if (!t) return;
     const box = t.closest('.box'), k = t.dataset.band, on = !boxOn(box, k);
-    box.dataset['band' + k] = on ? 'on' : 'off'; t.classList.toggle('off', !on); t.setAttribute('aria-pressed', on);
+    setBand(box, k, on);
+    if (on && k == 3) setBand(box, 1, false);
+    if (on && k == 1) setBand(box, 3, false);
     const cv = box.querySelector('canvas'), ch = cv && window.Chart && Chart.getChart(cv); if (ch) ch.update();
   });
+  // fill color of band k (1 = range, 2 = middle 80%) for this chart: the middle 80% fades while "Every year" is on
+  window.bandColor = (ch, k) => {
+    const c = k == 1 ? THEME.band1 : THEME.band2;
+    if (k != 2 || !bandOn(ch, 3)) return c;
+    const n = parseInt(c.slice(1), 16);
+    return 'rgba(' + (n >> 16) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + (THEME.dark ? .5 : .4) + ')';
+  };
   // every year as a line, colored from blue (oldest) through purple to orange (newest), under the highlighted years
   // and the current year. Pointing at a line (tapping on a phone) makes it stand out and names its year.
   // Pages add it to a band chart's plugins: yearLines([1982, 1983, ...], [values of 1982, values of 1983, ...]).
@@ -1066,7 +1082,7 @@
       font(12);
       if (key) {   // only what is switched on in the chart's band key
         let kx = pad;
-        [[THEME.band1, 'Range of prior years (min–max)', 1], [THEME.band2, 'Middle 80% of prior years', 2], [null, 'Every prior year (older → newer)', 3]].forEach(([c, t, k]) => {
+        [[bandColor(ch, 1), 'Range of prior years (min–max)', 1], [bandColor(ch, 2), 'Middle 80% of prior years', 2], [null, 'Every prior year (older → newer)', 3]].forEach(([c, t, k]) => {
           if (!bandOn(ch, k)) return;
           if (c) x.fillStyle = c;
           else { const g = x.createLinearGradient(kx, 0, kx + 14 * r, 0); [0, .5, 1].forEach(f => g.addColorStop(f, yearColor(f, 1))); x.fillStyle = g; }

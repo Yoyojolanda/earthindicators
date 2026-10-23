@@ -77,12 +77,12 @@ function draw(){
  const opt=(ytitle,fmt)=>({animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max',...shown].includes(i.dataset.label),callbacks:{title:t=>'Week '+(t[0].dataIndex+1)+': '+wl(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':fmt(c.parsed.y)+' Mt')}}},
   scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:tick},grid:{display:false}},y:{min:0,title:{display:true,text:ytitle,color:tc},ticks:{color:tc},grid:{color:THEME.grid}}}});
- ch.push(new Chart($('c1'),{type:'line',plugins:[{id:'b1',beforeDraw(c){if(bandOn(c,1))poly(c,B1.mn,B1.mx,THEME.band1);if(bandOn(c,2))poly(c,B1.p10,B1.p90,THEME.band2)}},yearLines(prior,prior.map(y=>C[y]),v=>Mt(v)+' Mt')],
+ ch.push(new Chart($('c1'),{type:'line',plugins:[{id:'b1',beforeDraw(c){if(bandOn(c,1))poly(c,B1.mn,B1.mx,THEME.band1);if(bandOn(c,2))poly(c,B1.p10,B1.p90,bandColor(c,2))}},yearLines(prior,prior.map(y=>C[y]),v=>Mt(v)+' Mt')],
   data:{labels:[...Array(NW).keys()],datasets:ds1},options:opt('Million metric tons CO₂, since 1 January',Mt)}));
  // 2: week by week
  $('t2').textContent=`${name}: CO₂ from fires each week of ${cur}, compared with every year since ${first} (million metric tons a week)`;
  const B2=bands(prior.map(y=>Y[y])),ds2=ds1.map(d=>({...d,data:d.label==='Prior-year max'?B2.mx:d.label==='Prior-year min'?B2.mn:d.label==='90th percentile'?B2.p90:d.label==='10th percentile'?B2.p10:/average$/.test(d.label)?B2.av:Y[+d.label]}));
- ch.push(new Chart($('c2'),{type:'line',plugins:[{id:'b2',beforeDraw(c){if(bandOn(c,1))poly(c,B2.mn,B2.mx,THEME.band1);if(bandOn(c,2))poly(c,B2.p10,B2.p90,THEME.band2)}},yearLines(prior,prior.map(y=>Y[y]),v=>Mt(v)+' Mt')],
+ ch.push(new Chart($('c2'),{type:'line',plugins:[{id:'b2',beforeDraw(c){if(bandOn(c,1))poly(c,B2.mn,B2.mx,THEME.band1);if(bandOn(c,2))poly(c,B2.p10,B2.p90,bandColor(c,2))}},yearLines(prior,prior.map(y=>Y[y]),v=>Mt(v)+' Mt')],
   data:{labels:[...Array(NW).keys()],datasets:ds2},options:opt('Million metric tons CO₂ a week',Mt)}));
  // 3: every year
  $('t3').textContent=`${name}: CO₂ from fires per year, ${first}–${cur} (million metric tons; ${cur} so far)`;

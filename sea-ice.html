@@ -301,7 +301,7 @@ Promise.all(['N','S'].map(h=>fetch(`data/${h}_seaice_extent_daily_v4.0.csv`).the
   document.getElementById('t8').textContent=`Northern Hemisphere snow cover: each week of ${cur} compared with the same week in every year since ${ys[0]} (million km²)`;
   const poly=(ch,lo,hi,c)=>{const{ctx,scales:{x,y}}=ch;ctx.save();ctx.beginPath();for(let i=0;i<NW;i++){const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}for(let i=NW-1;i>=0;i--)ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]));ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()};
   const tc=THEME.axis,prev=cur-1;
-  const c8=new Chart(document.getElementById('c8'),{type:'line',plugins:[{id:'snowband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,THEME.band2)}},yearLines(ys,ys.map(y=>W[y]),v=>v.toFixed(2)+'M km²')],
+  const c8=new Chart(document.getElementById('c8'),{type:'line',plugins:[{id:'snowband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,bandColor(ch,2))}},yearLines(ys,ys.map(y=>W[y]),v=>v.toFixed(2)+'M km²')],
    data:{labels:[...Array(NW).keys()],datasets:[
     {label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},{label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},
     {label:'90th percentile',data:p90,borderWidth:0,pointRadius:0,fill:false},{label:'10th percentile',data:p10,borderWidth:0,pointRadius:0,fill:false},

@@ -111,7 +111,7 @@ table.evt td:first-child{white-space:nowrap;font-weight:600}
   Object.keys(HL).forEach(y=>{if(D[y]&&+y<cur)ds.push({label:y,data:D[y],borderColor:HL[y],borderWidth:1.4,pointRadius:0,fill:false,order:2})});
   ds.push({label:String(cur),data:D[cur].map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:0});
   const shown=['1991–2020 average',...Object.keys(HL),String(cur)];
-  const c5=new Chart(document.getElementById('c1'),{type:'line',plugins:[{id:'coralband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,THEME.band2)}},yearLines(prior,prior.map(y=>D[y]),pf)],
+  const c5=new Chart(document.getElementById('c1'),{type:'line',plugins:[{id:'coralband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,bandColor(ch,2))}},yearLines(prior,prior.map(y=>D[y]),pf)],
    data:{labels:[...Array(N).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{labels:{filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max',...shown].includes(i.dataset.label),callbacks:{title:t=>fd(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':pf(c.parsed.y))}}},
     scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{min:0,title:{display:true,text:'% of reef regions at Alert Level 1 or 2',color:tc},ticks:{color:tc},grid:{color:THEME.grid}}}}});

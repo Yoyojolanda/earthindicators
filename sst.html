@@ -133,7 +133,7 @@ function run(raw){
   {label:'90th percentile',data:p90,borderWidth:0,pointRadius:0,fill:false},
   {label:'10th percentile',data:p10,borderWidth:0,pointRadius:0,fill:false}];
  const poly=(ch,lo,hi,c)=>{const{ctx,scales:{x,y}}=ch;ctx.save();ctx.beginPath();for(let i=0;i<N;i++){const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}for(let i=N-1;i>=0;i--)ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]));ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()};
- const bandPlugin={id:'band',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,THEME.band2)}};
+ const bandPlugin={id:'band',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,bandColor(ch,2))}};
  Object.keys(HI).forEach(y=>{const k=prior.indexOf(+y);if(k>=0)ds.push({label:y,data:A[k],borderColor:HI[y],borderWidth:1.3,pointRadius:0,fill:false,order:5})});
  ds.push({label:String(cur),data:a.map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:1});
  if(c1)c1.destroy();if(c2)c2.destroy();if(c3)c3.destroy();
@@ -146,7 +146,7 @@ function run(raw){
  // absolute temperatures
  const P=prior.map(y=>by[y]),amn=[],amx=[],a10=[],a90=[];
  for(let i=0;i<N;i++){const v=P.map(r=>r[i]).filter(v=>v!=null);amn.push(v.length?Math.min(...v):null);amx.push(v.length?Math.max(...v):null);a10.push(q(v,.1));a90.push(q(v,.9))}
- const bandAbs={id:'bandAbs',beforeDraw(ch){if(bandOn(ch,1))poly(ch,amn,amx,THEME.band1);if(bandOn(ch,2))poly(ch,a10,a90,THEME.band2)}};
+ const bandAbs={id:'bandAbs',beforeDraw(ch){if(bandOn(ch,1))poly(ch,amn,amx,THEME.band1);if(bandOn(ch,2))poly(ch,a10,a90,bandColor(ch,2))}};
  const ds3=[
   {label:'Prior-year max',data:amx,borderWidth:0,pointRadius:0,fill:false},
   {label:'Prior-year min',data:amn,borderWidth:0,pointRadius:0,fill:false},
@@ -223,7 +223,7 @@ load('world').catch(()=>{document.getElementById('err').textContent='Could not l
   ds.push({label:String(cur),data:D[cur].map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:0});
   ds.push({label:'Last 4 days, not settled yet',data:D[cur].map((v,i)=>i>=last&&i<=end?v:null),borderColor:'#d00000',borderWidth:2,borderDash:[4,4],pointRadius:0,fill:false,order:0});
   const shown=['1991–2020 average',...Object.keys(HL),String(cur),'Last 4 days, not settled yet'];
-  const c7=new Chart(document.getElementById('c7'),{type:'line',plugins:[{id:'mhwband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,THEME.band2)}},yearLines(prior,prior.map(y=>D[y]),pf)],
+  const c7=new Chart(document.getElementById('c7'),{type:'line',plugins:[{id:'mhwband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,bandColor(ch,2))}},yearLines(prior,prior.map(y=>D[y]),pf)],
    data:{labels:[...Array(N).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{labels:{filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max',...shown].includes(i.dataset.label),callbacks:{title:t=>fd(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':pf(c.parsed.y))}}},
     scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:dayTick},grid:{display:false}},y:{min:0,title:{display:true,text:'% of the ocean in a heatwave',color:tc},ticks:{color:tc},grid:{color:THEME.grid}}}}});
