@@ -1,0 +1,55 @@
+name: Update extreme rainfall (NASA IMERG)
+
+# Daily IMERG rainfall, a 1° sample of land points, kept in GitHub's Actions cache (not the repository). Each run
+# reads only the new days, and swaps preliminary "Late" days for "Final" ones once NASA publishes them.
+on:
+  schedule:
+    - cron: "37 9 * * 2"       # Tuesdays
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: imerg
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy netCDF4 requests matplotlib
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/imergcache
+          key: imerg-days-v1-${{ github.run_id }}
+          restore-keys: imerg-days-v1-
+      - name: Earthdata login
+        env:
+          EDL_USER: ${{ secrets.EARTHDATA_USERNAME }}
+          EDL_PASS: ${{ secrets.EARTHDATA_PASSWORD }}
+        run: |
+          printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc
+          chmod 600 ~/.netrc
+      - name: Build extreme rainfall
+        timeout-minutes: 300
+        run: |
+          rc=0; python -u scripts/build_imerg.py 2>&1 | tee /tmp/i.log || rc=$?; tail -30 /tmp/i.log > data/imerg_check.txt; exit $rc
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: ~/imergcache
+          key: imerg-days-v1-${{ github.run_id }}
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f ~/.netrc data/*.tmp
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/imerg_*
+          git diff --cached --quiet || (git commit -m "Update extreme rainfall data" && git pull --rebase && git push)
