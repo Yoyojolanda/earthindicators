@@ -69,6 +69,15 @@
 <ul id="gread"></ul>
 <p class="sub">Shown: the change in all water stored on land between 60°S and the North Pole, except Greenland (on the <a href="land-ice.html">land ice page</a>), as a layer of water spread over that land, compared with the average for the same month in 2004–2009 (the land holds more water in some seasons than in others); glaciers elsewhere (Alaska, the Andes, High Mountain Asia) are included, and their melting is part of the decline. 1 mm over this land is about 130 billion metric tons of water. There is a gap from July 2017 to May 2018 between the two missions, and some months are missing when a satellite was switched off. Data: NASA JPL GRACE/GRACE-FO mascon solution RL06.3, version 4, with the coastal resolution improvement (Watkins et al. 2015; Wiese et al. 2016), via NASA PO.DAAC; averaged here by area.</p>
 </section>
+<section id="rain" class="hide">
+<h2 style="font-size:18px;margin:26px 0 6px">Extreme rainfall: IMERG satellites</h2>
+<p style="margin:0 0 12px">Warmer air holds more water vapor, so when it rains hard, it can rain harder. NASA's IMERG combines the rain measurements of a whole fleet of satellites into a world rain map every half hour since 1998, calibrated with rain gauges.</p>
+<div class="cards" id="rcards"></div>
+<div class="box" data-nav="Wettest day of the year"><h2 id="t10"></h2><div class="wrap s"><canvas id="c10"></canvas></div></div>
+<div class="box" data-nav="Rain from very wet days"><h2 id="t11"></h2><div class="wrap s"><canvas id="c11"></canvas></div></div>
+<ul id="rread"></ul>
+<p class="sub">Shown, averaged over the land between 60°S and 60°N: the wettest day of each year at each place, compared with that place's average wettest day in 2001–2020; and the share of all rain that fell on very wet days, days wetter than 99% of the wet days (1 mm or more) at that place in 2001–2020. Places that are almost always dry (an average wettest day under 5 mm) are left out. Measured by satellites, not modelled, but rain from space is still an estimate: satellites see a place only now and then and infer rain from the microwave glow and cloud-top temperatures, and gauges correct the monthly totals. Read here as a 1° sample of IMERG's 0.1° cells (single cells, not averages, so the heaviest local rain is kept). The research-quality "Final" data arrive months later; days not yet in Final come from the quicker "Late" run and are preliminary (lighter bars). 1998–2000 come from fewer satellites. Data: NASA GPM IMERG version 07, daily (Huffman et al.), via NASA GES DISC.</p>
+</section>
 <script>
 const $=id=>document.getElementById(id);
 const charts=[],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],AREA=5.1e14,ERIE=484;
@@ -343,8 +352,38 @@ fetch('data/grace_tws_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).
  ].map(x=>`<li>${x}</li>`).join('');
  $('tws').classList.remove('hide');window.graceChart=c8;
 }).catch(e=>console.error('GRACE:',e));
+// ---- extreme rainfall: IMERG wettest day of the year and share of rain on very wet days (scripts/build_imerg.py)
+fetch('data/imerg_yearly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,sg=(v,d=1)=>(v>=0?'+':'−')+Math.abs(v).toFixed(d);
+ const Y=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:+p[0],rx:+p[1],r99:+p[2],days:+p[3],late:+p[4]}));
+ const cur=new Date().getUTCFullYear(),full=Y.filter(r=>r.days>=365),L=full[full.length-1],part=Y.find(r=>r.days<365);
+ const lab=Y.map(r=>String(r.y)),pre=r=>r.late>0||r.days<365;
+ const fit=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+ const F=full.filter(r=>r.y>=2001&&!r.late),trx=fit(F.map(r=>({x:r.y,y:r.rx})))*10,tr9=fit(F.map(r=>({x:r.y,y:r.r99})))*10,b99=mean(F.filter(r=>r.y<=2020).map(r=>r.r99));
+ const rk=[...full].sort((a,b)=>b.rx-a.rx),rank=rk.indexOf(L)+1,ord=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
+ $('rcards').innerHTML=[[sg(L.rx)+'%',`wettest day of ${L.y}, land average, vs 2001–2020${L.late?' (preliminary)':''}`],[sg(trx)+'%',`per decade, wettest day of the year (trend since 2001)`],
+  [L.r99.toFixed(1)+'%',`of the rain on land in ${L.y} fell on very wet days (2001–2020: ${b99.toFixed(1)}%)`],[ord(rank),`wettest "wettest day" of ${full.length} complete years since ${full[0].y}`]]
+  .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+ $('t10').textContent=`Wettest day of the year, land average: % above (+) or below (−) each place's 2001–2020 average, ${Y[0].y}–${Y[Y.length-1].y}`;
+ $('t11').textContent=`Share of all rain on land that fell on very wet days (wetter than 99% of wet days in 2001–2020), ${Y[0].y}–${Y[Y.length-1].y} (%)`;
+ const col=(r,v)=>pre(r)?(v>=0?'#d0606066':'#4f81b066'):(v>=0?'#c0392b':'#4f81b0');
+ const tip=r=>r.days<365?` (${r.y} so far: ${r.days} days)`:r.late?` (preliminary: ${r.late} days from the Late run)`:'';
+ const c10=new Chart($('c10'),{type:'bar',data:{labels:lab,datasets:[{label:'Wettest day vs 2001–2020',data:Y.map(r=>r.rx),backgroundColor:Y.map(r=>col(r,r.rx)),borderWidth:0}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>sg(c.parsed.y)+'%'+tip(Y[c.dataIndex])}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'% vs 2001–2020'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}});
+ const c11=new Chart($('c11'),{type:'line',data:{labels:lab,datasets:[{label:'Share of rain on very wet days',data:Y.map(r=>r.r99),borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2,
+   pointRadius:Y.map(r=>pre(r)?4:2.5),pointBackgroundColor:Y.map(r=>pre(r)?'transparent':'#1f6fb5'),segment:{borderDash:c=>pre(Y[c.p1DataIndex])?[4,4]:undefined}}]},
+  options:{animation:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(1)+'% of the rain'+tip(Y[c.dataIndex])}}},
+   scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{title:{display:true,text:'% of the year\'s rain'},grid:{color:THEME.grid}}}}});
+ const th=`${Y[Y.length-1].y}${part?' so far':''} · NASA IMERG`;[c10,c11].forEach(c=>c.canvas.closest('.box').dataset.through=th);
+ $('rread').innerHTML=[
+  `In ${L.y} the wettest day of the year was, averaged over the land, ${Math.abs(L.rx).toFixed(1)}% ${L.rx>=0?'wetter':'less wet'} than in 2001–2020${L.late?' (preliminary)':''}. Since 2001 the wettest day has changed by ${sg(trx)}% per decade, and the share of rain falling on very wet days by ${sg(tr9,2)} percentage points per decade.`,
+  `Physics sets the pace: air can hold about 7% more water vapor for every 1 °C of warming, and the heaviest downpours tend to grow at about that rate (IPCC AR6, chapter 11). The water vapor charts above show the extra moisture already in the air. Year-to-year swings are large: El Niño and La Niña move the heaviest rain around the tropics, and a quarter of a century of satellite records is short for a trend.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('rain').classList.remove('hide');window.rainCharts=()=>[[c10,'t10',0],[c11,'t11',0]];
+}).catch(e=>console.error('IMERG:',e));
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>siteExport([...[1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),...(window.soilCharts?soilCharts():[]),...(window.smapChart?[[smapChart,'t9',0]]:[]),...(window.graceChart?[[graceChart,'t8',0]]:[])],expName);
+$('exp').onclick=()=>siteExport([...[1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),...(window.soilCharts?soilCharts():[]),...(window.smapChart?[[smapChart,'t9',0]]:[]),...(window.graceChart?[[graceChart,'t8',0]]:[]),...(window.rainCharts?rainCharts():[])],expName);
 const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
 Promise.all([txt('era5_tcwv_monthly.csv'),txt('era5_t2_regions_monthly.csv').catch(()=>null)]).then(([a,b])=>build(a,b))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the water vapor data. Please try again later.'});
