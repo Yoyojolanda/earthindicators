@@ -34,6 +34,8 @@ CACHE = os.environ.get("IMERG_CACHE") or os.path.expanduser("~/imergcache")
 OUT = "data/imerg_yearly.csv"
 THREADS = int(os.environ.get("IMERG_THREADS") or 8)
 S = requests.Session()
+import threading
+LOCK = threading.Lock()
 
 
 def land_points():
@@ -74,9 +76,10 @@ def fetch(url, ii, jj):
         try:
             r = S.get(url + ".dap.nc4?dap4.ce=" + ce, timeout=180)
             r.raise_for_status()
-            ds = netCDF4.Dataset("mem.nc", memory=r.content)
-            v = np.ma.filled(ds.variables["precipitation"][0].astype("float32"), np.nan)
-            ds.close()
+            with LOCK:                                  # the netCDF library is not thread-safe: downloads run in
+                ds = netCDF4.Dataset("mem.nc", memory=r.content)   # parallel, reading the bytes one at a time
+                v = np.ma.filled(ds.variables["precipitation"][0].astype("float32"), np.nan)
+                ds.close()
             return v[ii, jj]
         except Exception as e:
             if t == 4:

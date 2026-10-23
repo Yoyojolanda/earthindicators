@@ -15,7 +15,7 @@ The first run reads every day since April 2015 (~4,000 small requests, in parall
 newest 45 days.
 """
 import csv, io, json, os, sys, time, urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from datetime import date, timedelta
 
 import numpy as np
@@ -73,6 +73,11 @@ def day_value(r):
     return (float(rz[ok].mean()), int(ok.sum())) if ok.sum() > 1000 else None
 
 
+def one_day(url):
+    r = read(url)
+    return day_value(r) if r is not None else None
+
+
 def main():
     today = date.today()
     daily = {}
@@ -83,12 +88,11 @@ def main():
     print(f"{len(G)} granules from {start}", flush=True)
     todo = sorted(G)
     t0 = time.time()
-    with ThreadPoolExecutor(THREADS) as ex:
-        for d, r in zip(todo, ex.map(lambda d: read(G[d]), todo)):
-            if r is not None:
-                v = day_value(r)
-                if v:
-                    daily[d.isoformat()] = v
+    # separate processes, not threads: the netCDF/HDF5 library crashes when several threads use it at once
+    with ProcessPoolExecutor(THREADS) as ex:
+        for d, v in zip(todo, ex.map(one_day, [G[d] for d in todo], chunksize=4)):
+            if v:
+                daily[d.isoformat()] = v
             if len(daily) % 200 == 0:
                 print(f"  {d}: {time.time() - t0:.0f} s", flush=True)
     if len(daily) < 30:
