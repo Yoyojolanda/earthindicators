@@ -1,0 +1,49 @@
+name: Probe ERA5 soil moisture (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray zarr gcsfs dask
+      - name: Probe
+        run: |
+          cat > p.py <<'PY'
+          import time, numpy as np, xarray as xr, gcsfs
+          fs = gcsfs.GCSFileSystem(token="anon")
+          for p in fs.ls("gcp-public-data-arco-era5/ar"): print("store", p)
+          P = "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
+          ds = xr.open_zarr(P, consolidated=True, storage_options={"token": "anon"}, chunks=None)
+          print("time", ds.time.values[0], ds.time.values[-1], ds.sizes)
+          for v in ds.data_vars:
+              if "soil" in v or "evapor" in v or "precip" in v or v in ("land_sea_mask",):
+                  print(" ", v, ds[v].dims, ds[v].encoding.get("chunks"), ds[v].encoding.get("compressor") or ds[v].encoding.get("compressors"))
+          # object sizes for one hour of layer 1
+          base = P.replace("gs://", "") + "/volumetric_soil_water_layer_1"
+          try:
+              ls = fs.ls(base)[:5]; print(ls)
+          except Exception as e: print("ls", e)
+          for v in ["volumetric_soil_water_layer_1","volumetric_soil_water_layer_2","volumetric_soil_water_layer_3"]:
+              t=time.time(); a=ds[v].sel(time="2020-06-15T12:00").values; print(v, a.shape, np.nanmin(a), np.nanmax(a), f"{time.time()-t:.2f}s")
+          t=time.time()
+          a=ds["volumetric_soil_water_layer_2"].sel(time=slice("2020-06-01T12:00","2020-06-30T12:00")).isel(time=slice(0,None,24)).values
+          print("30 days layer2 at 12UTC", a.shape, f"{time.time()-t:.1f}s")
+          for q in ["1959-2022-1h-360x181_equiangular_with_poles_conservative.zarr","1959-2022-6h-1440x721.zarr"]:
+              try:
+                  d=xr.open_zarr("gs://gcp-public-data-arco-era5/ar/"+q, consolidated=True, storage_options={"token":"anon"}, chunks=None)
+                  print(q, d.time.values[[0,-1]], [v for v in d.data_vars if "soil" in v], d[[v for v in d.data_vars if "soil" in v][0]].encoding.get("chunks") if any("soil" in v for v in d.data_vars) else "")
+              except Exception as e: print(q, "ERR", e)
+          PY
+          python -u p.py > probe.txt 2>&1 || true
+      - name: Save
+        if: always()
+        run: |
+          mkdir out && cp probe.txt out/ && cd out && git init -q && git checkout -q -b probe-out
+          git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add . && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
