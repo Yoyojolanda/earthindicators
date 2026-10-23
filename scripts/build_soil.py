@@ -63,9 +63,10 @@ def pentad_start(y, k):
 
 
 def open_arco():
-    import dask, xarray as xr
-    dask.config.set(scheduler="threads", num_workers=THREADS)
-    return xr.open_zarr(ARCO, chunks={"time": 1}, consolidated=True, storage_options={"token": "anon"})
+    # no dask: a dask graph over the whole store (1.3 million hours, hundreds of variables) does not fit in memory.
+    # Fields are read one by one, in parallel threads (read_days).
+    import xarray as xr
+    return xr.open_zarr(ARCO, chunks=None, consolidated=True, storage_options={"token": "anon"})
 
 
 def land_points(ds):
@@ -89,27 +90,29 @@ def last_day(ds):
 
 def read_days(ds, d0, d1, jj, ii):
     """Root-zone soil moisture and soil temperature (7-28 cm) at 12 UTC, days d0..d1 -> {date: (rz, st)}."""
-    out = {}
-    a = d0
-    while a <= d1:
-        b = min(d1, (a.replace(day=28) + timedelta(4)).replace(day=1) - timedelta(1))   # month by month
-        times = np.arange(np.datetime64(f"{a}T12:00"), np.datetime64(f"{b}T12:00") + np.timedelta64(1, "D"), np.timedelta64(1, "D"))
-        sub = ds[VARS].sel(time=times).isel(latitude=slice(None, None, STRIDE), longitude=slice(None, None, STRIDE))
-        for t in range(3):
+    from concurrent.futures import ThreadPoolExecutor
+    tax = ds["time"].values
+    arrs = {v: ds[v] for v in VARS}
+
+    def one(v, d):
+        k = int(np.searchsorted(tax, np.datetime64(f"{d}T12:00")))
+        for t in range(4):
             try:
-                sub = sub.compute(); break
+                return arrs[v].isel(time=k).values[::STRIDE, ::STRIDE][jj, ii].astype("float32")
             except Exception as e:
-                print(f"  {a:%Y-%m}: {e}; retry", flush=True); time.sleep(20 * (t + 1))
-        else:
-            raise RuntimeError(f"could not read {a:%Y-%m}")
-        L = np.stack([sub[v].values[:, jj, ii] for v in VARS[:3]])          # (3, days, points)
-        rz = np.tensordot(WGT, L, 1).astype("float32")
-        st = (sub[VARS[3]].values[:, jj, ii] - 273.15).astype("float32")
-        for k, t in enumerate(times):
-            dd = t.astype("datetime64[D]").astype(object)
-            if np.isfinite(rz[k]).mean() > 0.9:
-                out[dd] = (rz[k], st[k])
-        a = b + timedelta(1)
+                if t == 3:
+                    raise
+                print(f"  {v} {d}: {e}; retry", flush=True); time.sleep(10 * (t + 1))
+
+    days = [d0 + timedelta(n) for n in range((d1 - d0).days + 1)]
+    with ThreadPoolExecutor(THREADS) as ex:
+        got = {(v, d): f for v in VARS for d in days for f in [ex.submit(one, v, d)]}
+        got = {k: f.result() for k, f in got.items()}
+    out = {}
+    for d in days:
+        rz = (WGT[0] * got[(VARS[0], d)] + WGT[1] * got[(VARS[1], d)] + WGT[2] * got[(VARS[2], d)]).astype("float32")
+        if np.isfinite(rz).mean() > 0.9:
+            out[d] = (rz, got[(VARS[3], d)] - 273.15)
     return out
 
 
