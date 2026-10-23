@@ -45,7 +45,11 @@ WGT = np.array([7, 21, 72], "float32") / 100
 THR = "data/soil_thresholds.npz"
 PCSV, YCSV = "data/soil_pentad.csv", "data/soil_yearly.csv"
 THREADS = int(os.environ.get("ARCO_THREADS") or "16")
-MIN_SPREAD = 0.002
+MIN_SPREAD = float(os.environ.get("SOIL_SPREAD") or 0.005)   # m³/m³, 40th minus 20th percentile
+MIN_FLOOR = float(os.environ.get("SOIL_FLOOR") or 0.001)    # m³/m³, 20th percentile minus the driest value
+PERSIST = int(os.environ.get("SOIL_PERSIST") or 3)          # pentads in drought, the onset included
+WARM = float(os.environ.get("SOIL_WARM") or 0)              # °C, soil 7-28 cm
+CACHE = os.environ.get("SOIL_CACHE")                        # optional: every pentad since 1950, kept between runs
 
 
 def pentad(d):
@@ -131,31 +135,39 @@ def to_pentads(days):
 def thresholds(P):
     """mean, p20, p40 per (pentad, point) from the base years, pooling neighbouring pentads."""
     n = next(iter(P.values()))[0].shape[0]
-    M = np.empty((73, n), "float32"); Q20 = np.empty_like(M); Q40 = np.empty_like(M)
+    M = np.empty((73, n), "float32"); Q20 = np.empty_like(M); Q40 = np.empty_like(M); Q0 = np.empty_like(M)
     for k in range(73):
         S = np.stack([P[(y, (k + j) % 73)][0] for y in range(BASE[0], BASE[1] + 1) for j in (-1, 0, 1) if (y, (k + j) % 73) in P])
-        M[k] = S.mean(0); Q20[k], Q40[k] = np.percentile(S, [20, 40], axis=0)
-    return M, Q20, Q40
+        M[k] = S.mean(0); Q0[k], Q20[k], Q40[k] = np.percentile(S, [0, 20, 40], axis=0)
+    return M, Q20, Q40, Q0
 
 
-def rows_for(P, keys, M, Q20, Q40, w):
-    """One row per pentad in keys (sorted), using the 4 pentads before each for flash droughts."""
+def rows_for(P, keys, M, Q20, Q40, Q0, w, spread=None, floor=None, persist=None, warm=None):
+    """One row per pentad in keys (sorted), using the 4 pentads before each (and PERSIST-1 after) for flash droughts.
+    A flash drought whose persistence can't be judged yet (the newest pentads) is not counted yet."""
+    spread = MIN_SPREAD if spread is None else spread; floor = MIN_FLOOR if floor is None else floor
+    persist = PERSIST if persist is None else persist; warm = WARM if warm is None else warm
     allk = sorted(P)
     pos = {k: i for i, k in enumerate(allk)}
     out, onset = {}, {}
     for key in keys:
         y, k = key
         rz, st = P[key]
-        valid = (st > 0) & ((Q40[k] - Q20[k]) >= MIN_SPREAD) & np.isfinite(rz)
+        # counts: soil not frozen; the percentiles vary enough; and the driest 20% are not all pinned at the model's
+        # dry floor (where the soil cannot get any drier, the 20th percentile would mean nothing)
+        valid = (st > warm) & ((Q40[k] - Q20[k]) >= spread) & ((Q20[k] - Q0[k]) >= floor) & np.isfinite(rz)
         dry = rz < Q20[k]
         i = pos[key]
         prev = [allk[i - j] for j in range(1, 5) if i - j >= 0]
-        if len(prev) == 4 and prev[0] in P:
+        nxt = [allk[i + j] for j in range(1, persist) if i + j < len(allk)]
+        if len(prev) == 4 and len(nxt) == persist - 1:
             p1 = P[prev[0]][0] >= Q20[prev[0][1]]                            # was not yet below the 20th percentile
             wet = np.zeros_like(dry)
             for q in prev:
                 wet |= P[q][0] > Q40[q[1]]                                   # above the 40th within the last 4 pentads
             fl = dry & p1 & wet
+            for q in nxt:
+                fl &= P[q][0] < Q20[q[1]]                                    # and it stays in drought
         else:
             fl = np.zeros_like(dry)
         W = w[valid].sum()
@@ -193,17 +205,40 @@ def main():
     w = (np.cos(np.radians(lat[jj])) * (111.2 * STRIDE * 0.25) ** 2 / 1e6).astype("float64")   # million km² per point
     end = last_day(ds)
     print(f"{len(jj)} land points; ERA5 in ARCO through {end}", flush=True)
-    if not os.path.exists(THR) or not os.path.exists(PCSV):
-        P, t0 = {}, time.time()
-        for y in range(FIRST, end.year + 1):
-            P.update(to_pentads(read_days(ds, date(y, 1, 1), min(end, date(y, 12, 31)), jj, ii)))
+    if not os.path.exists(THR) or not os.path.exists(PCSV) or os.environ.get("SOIL_REBUILD"):
+        P, t0, start = {}, time.time(), date(FIRST, 1, 1)
+        if CACHE and os.path.exists(CACHE):
+            c = np.load(CACHE)
+            P = {(int(y), int(k)): (c["rz"][n], c["st"][n].astype("float32")) for n, (y, k) in enumerate(zip(c["y"], c["k"]))}
+            last = max(P); start = pentad_start(*last) + timedelta(days=5)      # whole pentads only
+            P = {q: v for q, v in P.items() if q != last}; start = pentad_start(*last)
+            print(f"cache: {len(P)} pentads up to {last}", flush=True)
+        for y in range(start.year, end.year + 1):
+            P.update(to_pentads(read_days(ds, max(start, date(y, 1, 1)), min(end, date(y, 12, 31)), jj, ii)))
             print(f"  {y}: {time.time() - t0:.0f} s", flush=True)
-        M, Q20, Q40 = thresholds(P)
-        np.savez_compressed(THR + ".tmp.npz", mean=np.round(M * 1e4).astype(np.int16), p20=np.round(Q20 * 1e4).astype(np.int16),
-                            p40=np.round(Q40 * 1e4).astype(np.int16), jj=jj.astype(np.int16), ii=ii.astype(np.int16), stride=STRIDE)
+        if CACHE:
+            K = sorted(P)
+            np.savez(CACHE + ".tmp.npz", y=np.array([q[0] for q in K], np.int16), k=np.array([q[1] for q in K], np.int16),
+                     rz=np.stack([P[q][0] for q in K]), st=np.stack([np.clip(np.round(P[q][1]), -100, 100).astype(np.int8) for q in K]))
+            os.replace(CACHE + ".tmp.npz", CACHE)
+            P = {q: (v[0], np.clip(np.round(v[1]), -100, 100).astype("float32")) for q, v in P.items()}   # as the cache holds it
+        M, Q20, Q40, Q0 = thresholds(P)
+        np.savez_compressed(THR + ".tmp.npz", mean=M, p20=Q20, p40=Q40, p0=Q0, jj=jj.astype(np.int16), ii=ii.astype(np.int16), stride=STRIDE)
         os.replace(THR + ".tmp.npz", THR)
-        M, Q20, Q40 = M.round(4), Q20.round(4), Q40.round(4)     # the same rounding later runs read back
-        rows, onset = rows_for(P, sorted(P), M, Q20, Q40, w)
+        # check: how the choices change the numbers (data/soil_check.txt)
+        lines = ["spread floor persist warm | drought 1991-2020 (should be ~20) | flash area/yr 1991-2020, 2011-2020 | land counted (M km²)"]
+        for sp, fo, pe, wa in [(0.002, 0, 1, 0), (0.002, 0.001, 1, 0), (0.005, 0.001, 1, 0), (0.005, 0.001, 3, 0), (0.01, 0.001, 3, 0),
+                               (0.005, 0.002, 3, 0), (0.005, 0.001, 3, 5), (0.01, 0.002, 3, 5)]:
+            r, o = rows_for(P, sorted(P), M, Q20, Q40, Q0, w, sp, fo, pe, wa)
+            fy = {}
+            for (y, k), (f, v) in o.items():
+                a = fy.setdefault(y, [np.zeros_like(f), np.zeros_like(v)]); a[0] |= f; a[1] |= v
+            fa = lambda a, b: np.mean([100 * w[fy[y][0]].sum() / w[fy[y][1]].sum() for y in range(a, b + 1)])
+            dr = np.mean([float(r[q][1]) for q in r if BASE[0] <= q[0] <= BASE[1]])
+            lines.append(f"{sp} {fo} {pe} {wa} | {dr:.1f} | {fa(1991, 2020):.1f}, {fa(2011, 2020):.1f} | {np.mean([float(r[q][4]) for q in r]):.1f}")
+            print(lines[-1], flush=True)
+        open("data/soil_check.txt", "w").write("\n".join(lines) + "\n")
+        rows, onset = rows_for(P, sorted(P), M, Q20, Q40, Q0, w)
         fl = {}
         for (y, k), (f, v) in onset.items():
             a = fl.setdefault(y, [np.zeros_like(f), np.zeros_like(v), w]); a[0] |= f; a[1] |= v
@@ -214,10 +249,10 @@ def main():
         print(f"{len(prow)} pentads, {prow[0][0]} to {prow[-1][0]}", flush=True)
         return
     z = np.load(THR)
-    M, Q20, Q40 = z["mean"] / 1e4, z["p20"] / 1e4, z["p40"] / 1e4
+    M, Q20, Q40, Q0 = z["mean"], z["p20"], z["p40"], z["p0"]
     P = to_pentads(read_days(ds, end - timedelta(days=99), end, jj, ii))
     keys = sorted(P)[4:]
-    rows, onset = rows_for(P, keys, M, Q20, Q40, w)
+    rows, onset = rows_for(P, keys, M, Q20, Q40, Q0, w)
     old = {r[0]: r for r in csv.reader(open(PCSV)) if r and r[0][:1].isdigit()}
     old.update({r[0]: r for r in rows.values()})
     prow = [old[k] for k in sorted(old)]
