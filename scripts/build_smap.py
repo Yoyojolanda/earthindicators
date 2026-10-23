@@ -35,12 +35,17 @@ def granules(d0, d1):
              f"&temporal={d0}T00:00:00Z,{d1}T23:59:59Z&readable_granule_name=*{HOUR}*&options%5Breadable_granule_name%5D%5Bpattern%5D=true")
         g = json.loads(urllib.request.urlopen(u, timeout=120).read())["feed"]["entry"]
         for e in g:
-            ops = [l["href"] for l in e.get("links", []) if "opendap.earthdata.nasa.gov" in l.get("href", "")]
-            if ops and HOUR in e["title"]:
-                d = date.fromisoformat(e["title"].split("_")[4][:8][:4] + "-" + e["title"].split("_")[4][4:6] + "-" + e["title"].split("_")[4][6:8])
-                out[d] = ops[0]
+            # the OPeNDAP address is built from the granule's own title: for older granules the link stored in CMR
+            # points to a name that no longer exists (404)
+            ops = [f"https://opendap.earthdata.nasa.gov/collections/{e['collection_concept_id']}/granules/{e['title']}"]
+            if HOUR in e["title"]:
+                st = e["title"].split("_")[4]
+                d = date(int(st[:4]), int(st[4:6]), int(st[6:8]))
+                # some days have an older and a reprocessed version (Vv8010 and Vv8012): keep the newest
+                if d not in out or e["title"].split("_")[5] > out[d][1]:
+                    out[d] = (ops[0], e["title"].split("_")[5])
         if len(g) < 2000:
-            return out
+            return {d: v[0] for d, v in out.items()}
         page += 1
 
 
@@ -60,8 +65,8 @@ def read(url):
             ds.close()
             return rz, st
         except Exception as e:
-            if t == 3:
-                print(f"  failed {url.rsplit('/', 1)[-1]}: {e}", flush=True)
+            if t == 3 or "does not identify a granule" in str(e) or "404" in str(e):
+                print(f"  failed {url.rsplit('/', 1)[-1]}: {str(e)[:200]}", flush=True)
                 return None
             time.sleep(10 * (t + 1))
 
