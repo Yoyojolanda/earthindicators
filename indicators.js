@@ -218,6 +218,13 @@ const LOAD={
   return{src:'Hawaii Ocean Time-series',vd:`Surface pH near Hawaiʻi falling about ${Math.abs(b*10).toFixed(3)} per decade`,dec:'−'+Math.abs(b*10).toFixed(3),since:Math.floor(D[0].x),hplus:'+'+((Math.pow(10,-dpH)-1)*100).toFixed(0)+'%',date:dt,through:dt,spark:yearly(D.map(p=>({y:Math.floor(p.x),v:p.y})),4)}}),
  trees:()=>get('tree_cover_loss_world.csv').then(t=>{const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({y:p[0],t:(+p[1]||0)/1e6}));
   const L=R[R.length-1];return{src:'Global Forest Watch',vd:`${L.t.toFixed(1)} million hectares of tree cover lost in ${L.y}`,now:L.t.toFixed(1)+' million hectares',date:L.y,through:L.y,spark:R.map(r=>({x:+r.y,y:r.t})),bars:true}}),
+ coral:()=>get('coral_alert_daily.csv').then(t=>{   // NOAA Coral Reef Watch: share of reef regions at Alert Level 1 or 2, latest day vs the same date in earlier years
+  const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({d:p[0],y:+p[0].slice(0,4),md:p[0].slice(5),v:(+p[4]+ +p[5]+ +p[6])/ +p[1]*100}));
+  const L=R[R.length-1],same=R.filter(r=>r.md===L.md&&r.y<L.y),rank=same.filter(r=>r.v>L.v).length+1,dt=`${ML[+L.md.slice(0,2)-1]} ${+L.md.slice(3)}`;
+  const g={};R.forEach(r=>(g[r.y]=g[r.y]||[]).push(r.v));const Y=Object.keys(g).filter(y=>g[y].length>=300).map(y=>({x:+y,y:mean(g[y])}));
+  const vd=`${rankTxt(rank,'Highest','highest')} for ${dt} (since ${R[0].y})`;
+  return{src:'NOAA Coral Reef Watch',vd,now:L.v.toFixed(0)+'%',date:dt,through:`${dt}, ${L.y}`,
+   tile:{v:L.v.toFixed(0)+'%',l:`of the world's reef regions under bleaching-level heat stress, ${dt} ${L.y}`,s:vd,spark:Y,sparkLabel:`yearly average, ${Y[0].x}–${Y[Y.length-1].x}`}}}),
  fire:()=>get('fires_weekly.csv').then(t=>{   // GWIS weekly fire CO2 (thousand t), world: this year so far vs the same weeks in earlier years
   const R=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).filter(p=>p[0]==='WORLD').map(p=>({y:+p[1],w:p.slice(2).map(v=>v===''?null:+v/1000)}));
   const C=R[R.length-1],y=C.y;let k=-1;C.w.forEach((v,i)=>{if(v!=null)k=i});if(k<0)throw new Error('no fire data');
@@ -254,7 +261,7 @@ const LOAD={
    tile:{v:sg(l12,2)+' W/m²',l:`average over the 12 months to ${dt}`,s:`48-month average ${sg(l48,2)} W/m², vs ${sg(f48,2)} W/m² in the first 4 years of the record (${y0}–${y0+3})`,spark:run,sparkLabel:`12-month mean, ${R[11].m.slice(0,4)}–${y}`}}})
 };
 
-const NAMES={fire:'wildfires',air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',thaw:'permafrost thaw',blossom:'cherry blossom'};
+const NAMES={fire:'wildfires',air:'air temperature',sst:'sea surface',nino:'El Niño',ohc:'ocean heat',sl:'sea level',ice:'Arctic sea ice',ant:'Antarctic sea ice',co2:'CO₂',ch4:'methane',ghg:'greenhouse gases',eei:'energy imbalance',wv:'water vapor',glob:'global sea ice',sun:'solar cycle',pdo:'PDO',land:'land ice',amoc:'Atlantic overturning',rli:'Red List Index',fossil:'fossil CO₂ emissions',ph:'ocean pH',trees:'tree cover loss',coral:'coral reef heat stress',thaw:'permafrost thaw',blossom:'cherry blossom'};
 const cache={};
 function getId(id){if(!LOAD[id])return Promise.reject(new Error('unknown indicator '+id));return cache[id]||(cache[id]=LOAD[id]())}
 

@@ -146,6 +146,14 @@ window.IN_SHORT = {
     ],
     claims: ['natural-cycles', 'weather-blame', 'urban-heat', 'records-short', 'data-manipulated'],
   },
+  'corals.html': {
+    units: 'A reef region counts as under bleaching-level heat stress once the heat built up over the last 12 weeks reaches about 4 °C-weeks: for example, 1 °C above the usual warmest month for 4 weeks, or 2 °C for 2 weeks (NOAA Coral Reef Watch\'s Alert Level 1).',
+    text: [
+      'Corals live close to their upper temperature limit. When the water stays about 1 °C above its usual summer maximum for several weeks, they expel the algae that feed them and turn white: they bleach. Short heat they can survive; long or repeated heat kills them.',
+      'Satellites measure the heat every day; divers confirm the bleaching. Four global bleaching events have struck since 1998, the latest (2023–2025) reaching 84% of the world\'s reef area, the largest so far.',
+    ],
+    claims: ['coral-recovering'],
+  },
   'ohc.html': {
     units: "A zettajoule (ZJ) is a billion trillion joules. One ZJ is about the energy of 16 million Hiroshima bombs (63 terajoules each), or almost twice humanity's total energy use in a year.",
     text: [
