@@ -40,6 +40,8 @@ jobs:
           rc=0; python -u scripts/build_grace_tws.py 2>&1 | tee /tmp/g.log || rc=$?; tail -30 /tmp/g.log > data/grace_tws_check.txt; exit $rc
       - name: SMAP root-zone soil moisture
         continue-on-error: true
+        env:
+          SMAP_THREADS: "16"     # parallel requests; each one waits seconds for NASA's server, so more in parallel is faster
         timeout-minutes: 200
         run: |
           set -o pipefail
