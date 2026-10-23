@@ -10,15 +10,15 @@
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Earth Indicators">
-<meta property="og:title" content="The water cycle: water vapor in the air">
-<meta property="og:description" content="How much water vapor the atmosphere holds, month by month since 1940, and how it rises with temperature. Copernicus ERA5.">
+<meta property="og:title" content="The water cycle: water vapor in the air, soil moisture and flash droughts">
+<meta property="og:description" content="How much water vapor the atmosphere holds, month by month since 1940, how it rises with temperature, and how much of the world's land is in drought or hit by flash droughts. Copernicus ERA5.">
 <meta property="og:url" content="https://earthindicators.org/water.html">
 <meta property="og:image" content="https://earthindicators.org/og/water.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Water vapor in the air: latest value and trend">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="How much water vapor the atmosphere holds, month by month since 1940, and how it rises with temperature. Copernicus ERA5.">
+<meta name="description" content="How much water vapor the atmosphere holds, month by month since 1940, how it rises with temperature, and how much of the world's land is in drought or hit by flash droughts. Copernicus ERA5.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
@@ -28,7 +28,7 @@
 .seg{display:inline-flex;gap:6px;margin:0 0 8px;font-size:13px;align-items:center;color:var(--mut)}
 .seg .nb{padding:3px 10px}.seg .nb.on{border-color:var(--acc);color:var(--acc)}
 @media print{h2:has(+ #read){break-before:page;break-after:avoid}}</style></head><body><main>
-<h1>The water cycle: water vapor in the air (Copernicus ERA5)</h1>
+<h1>The water cycle: water vapor and soil moisture (Copernicus ERA5)</h1>
 <nav class="nav" id="nav"><button id="exp" class="nb" type="button" disabled>Export charts as JPG</button></nav><script src="site.js"></script>
 <p id="err"></p>
 <div id="out" class="hide">
@@ -49,6 +49,17 @@
 <h2 style="font-size:16px">Interpretation</h2><ul id="read"></ul>
 <p class="sub">Total column water vapor: all the water vapor above each square meter of Earth's surface, from the ground to the top of the atmosphere, averaged over the whole globe (weighted by area). 1 kg/m² equals a 1 mm layer of liquid water, which is why it is also called precipitable water. "Normal" is the 1991–2020 average for the same calendar month. ERA5 is a reanalysis: millions of observations (weather balloons, satellites, ships, stations) combined into one picture of the atmosphere for every hour since 1940, with a weather model filling the gaps between them. Before satellites (1979) it has far fewer humidity observations to work with, so the early decades are less certain. Monthly values appear about 5 days after the month ends; the newest months can still be revised slightly. Data: Copernicus Climate Change Service, ERA5 monthly averaged data on single levels (<a href="https://doi.org/10.24381/cds.f17050d7" target="_blank" rel="noopener">doi:10.24381/cds.f17050d7</a>).</p>
 </div>
+<section id="soil" class="hide">
+<h2 style="font-size:18px;margin:26px 0 6px">Soil moisture: drought and flash droughts</h2>
+<p style="margin:0 0 12px">Warmer air also pulls more water out of the ground. Soil moisture is the water plants can reach: when the top meter of soil dries out, crops wilt, pastures fail and wildfires spread more easily. A flash drought is one that sets in within weeks instead of months, usually when a heatwave meets a dry spell; it gives farmers little time to react. The 2012 flash drought in the U.S. Midwest left the U.S. corn harvest about a quarter smaller than expected that spring.</p>
+<div class="cards" id="scards"></div>
+<div class="box" data-nav="Land in drought, this year"><h2 id="t5"></h2><div class="sub bandkey" style="margin:0 0 6px"><button type="button" class="bk" data-band="1" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max)</button> &nbsp; <button type="button" class="bk" data-band="2" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</button></div><div class="wrap"><canvas id="c5"></canvas></div></div>
+<div class="box" data-nav="Flash droughts, yearly"><h2 id="t6"></h2><div class="wrap s"><canvas id="c6"></canvas></div></div>
+<div class="box" data-nav="Soil moisture, long term"><h2 id="t7"></h2><div class="wrap s"><canvas id="c7"></canvas></div></div>
+<ul id="sread"></ul>
+<p class="sub"><b>Calculated by a model, not measured.</b> Soil moisture cannot be measured everywhere. ERA5 calculates it with its land-surface model, from the reanalysis weather (rain, sunshine, heat, wind and humidity), which is corrected by observations from weather stations, balloons and satellites. Like the other ERA5 numbers on this site, it is an estimate; before satellites (1979) there were fewer observations to correct it, so the early years are less certain (shaded in the long-term chart). Satellites measure only the top few centimeters of soil, so for the root zone a model like this is the usual source.</p>
+<p class="sub">Shown: root-zone soil moisture, the water in the top meter of soil (ERA5's soil layers 0–7, 7–28 and 28–100 cm, averaged by thickness), one value a day at 12:00 UTC, averaged into five-day periods ("pentads", 73 a year), on a 1° grid over the land between 60°S and 75°N. For every place and pentad, "normal" and the 20th and 40th percentiles are taken from 1991–2020. In drought: soil moisture below its 20th percentile for the time of year (in 1991–2020 that is true 20% of the time by definition, so 20% of the land is "normal"). Flash drought: soil moisture falls from above its 40th percentile to below its 20th within 20 days or less (Ford and Labosier 2017). Only places and times where the soil is not frozen count, and places where soil moisture hardly ever changes (ice sheets, the driest deserts) are left out; the shares are of the land that counts, by area. Data: Copernicus ERA5 (ECMWF), read from Google's public ARCO-ERA5 copy.</p>
+</section>
 <script>
 const $=id=>document.getElementById(id);
 const charts=[],ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],AREA=5.1e14,ERIE=484;
@@ -202,8 +213,77 @@ function bandChart(tw){
   +(top===n-1?`the highest in the record (previous high ${r36[prevTop].toFixed(2)}, 36 months to ${mlab(labels[prevTop])}).`:`below the record of ${r36[top].toFixed(2)} (36 months to ${mlab(labels[top])}).`)
   +' Bands nearer the equator hold more water because the air there is warmer; compare the change over time, not the level between bands.'}
 
+const SOIL_READY=false;
+// ---- soil moisture (ERA5 root zone): share of land in drought each pentad, flash droughts per year (scripts/build_soil.py)
+(function(){
+ const ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],N=73,mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+ const q=(a,p)=>{const s=a.filter(x=>x!=null).sort((x,y)=>x-y);if(!s.length)return null;const k=(s.length-1)*p,f=Math.floor(k);return s[f]+(s[Math.min(f+1,s.length-1)]-s[f])*(k-f)};
+ const pl=k=>{const d=new Date(Date.UTC(2001,0,1+5*k));return ML[d.getUTCMonth()]+' '+d.getUTCDate()};          // pentad k -> its first day
+ const pk=s=>{const[y,m,d]=s.split('-').map(Number),n=Math.round((Date.UTC(y,m-1,d)-Date.UTC(y,0,1))/864e5),lp=y%4==0&&(y%100!=0||y%400==0);return Math.min(72,Math.floor((lp&&n>=59?n-1:n)/5))};
+ const tick=function(v){const d=new Date(Date.UTC(2001,0,1+5*v)),p=new Date(Date.UTC(2001,0,1+5*(v-1)));return v==0||d.getUTCMonth()!==p.getUTCMonth()?ML[d.getUTCMonth()]:''};
+ const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()}),rows=t=>t.trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
+ if(!SOIL_READY)return;   // switched on once the numbers have been checked
+ Promise.all([txt('soil_pentad.csv'),txt('soil_yearly.csv')]).then(([tp,ty])=>{
+  const R=rows(tp).map(p=>({d:p[0],y:+p[0].slice(0,4),k:pk(p[0]),dr:+p[1],fl:+p[2],an:+p[3]})),Yr=rows(ty).map(p=>({y:+p[0],fa:+p[1],dr:+p[2],n:+p[3]}));
+  const D={};R.forEach(r=>(D[r.y]??=Array(N).fill(null))[r.k]=r.dr);
+  const years=Object.keys(D).map(Number).sort((a,b)=>a-b),cur=years[years.length-1],prior=years.filter(y=>y<cur),L=R[R.length-1],last=L.k;
+  const at=prior.filter(y=>y>=1979).map(y=>[y,D[y][last]]).filter(r=>r[1]!=null),rec=at.reduce((a,b)=>b[1]>a[1]?b:a);
+  const full=Yr.filter(r=>r.y<cur&&r.n>=73),base=mean(full.filter(r=>r.y>=1991&&r.y<=2020).map(r=>r.fa)),Ycur=Yr.find(r=>r.y==cur);
+  // flash-drought area this year so far vs the same pentads in earlier years can't be split from the yearly union, so the
+  // card compares the current year so far with complete earlier years and says so
+  const lastFull=full[full.length-1],l12=R.slice(-73),an12=mean(l12.map(r=>r.an)),P=v=>v.toFixed(0)+'%',P1=v=>v.toFixed(1)+'%',sg=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1);
+  const dEnd=new Date(Date.parse(L.d)+4*864e5),endLab=ML[dEnd.getUTCMonth()]+' '+dEnd.getUTCDate()+', '+dEnd.getUTCFullYear();
+  document.getElementById('scards').innerHTML=[[P(L.dr),`of the land in drought (driest 20% for the time of year), 5 days to ${endLab}`],
+   [P(rec[1]),`highest share for this time of year since 1979 (${rec[0]})`],
+   [P(lastFull.fa),`of the land hit by a flash drought in ${lastFull.y} (1991–2020 average: ${P(base)})`],
+   [sg(an12)+'%',`soil moisture vs normal, average of the last 12 months`]]
+   .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  document.getElementById('t5').textContent=`Share of the land in drought (root-zone soil moisture in its driest 20% for the time of year): ${cur} compared with every year since ${years[0]} (%, five-day periods; modelled)`;
+  document.getElementById('t6').textContent=`Share of the land hit by at least one flash drought in the year, ${Yr[0].y}–${cur} (%; ${cur} so far; modelled)`;
+  document.getElementById('t7').textContent=`Root-zone soil moisture over the land compared with 1991–2020, ${years[0]}–${cur}: 12-month average (%; modelled)`;
+  const mn=[],mx=[],p10=[],p90=[],avg=[];for(let i=0;i<N;i++){const v=prior.map(y=>D[y][i]).filter(x=>x!=null);mn.push(v.length?Math.min(...v):null);mx.push(v.length?Math.max(...v):null);p10.push(q(v,.1));p90.push(q(v,.9));
+   const c=prior.filter(y=>y>=1991&&y<=2020).map(y=>D[y][i]).filter(x=>x!=null);avg.push(c.length?mean(c):null)}
+  const poly=(ch,lo,hi,c)=>{const{ctx,scales:{x,y}}=ch;ctx.save();ctx.beginPath();let st=false;for(let i=0;i<N;i++){if(hi[i]==null)continue;const px=x.getPixelForValue(i),py=y.getPixelForValue(hi[i]);st?ctx.lineTo(px,py):ctx.moveTo(px,py);st=true}for(let i=N-1;i>=0;i--){if(lo[i]==null)continue;ctx.lineTo(x.getPixelForValue(i),y.getPixelForValue(lo[i]))}ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.restore()};
+  const HL={2012:'#e6a23c',2023:'#7b5ea7'};if(D[cur-1]&&cur-1!==2023)HL[cur-1]='#2a9d8f';
+  const pf=v=>v.toFixed(1)+'%',tc=THEME.axis;
+  const ds=[{label:'Prior-year max',data:mx,borderWidth:0,pointRadius:0,fill:false},{label:'Prior-year min',data:mn,borderWidth:0,pointRadius:0,fill:false},
+   {label:'90th percentile',data:p90,borderWidth:0,pointRadius:0,fill:false},{label:'10th percentile',data:p10,borderWidth:0,pointRadius:0,fill:false},
+   {label:'1991–2020 average',data:avg,borderColor:THEME.clim,borderWidth:1.3,borderDash:[5,4],pointRadius:0,fill:false,order:4}];
+  Object.keys(HL).forEach(y=>{if(D[y]&&+y<cur)ds.push({label:y,data:D[y],borderColor:HL[y],borderWidth:1.4,pointRadius:0,fill:false,order:+y===cur-1?1:2})});
+  ds.push({label:String(cur),data:D[cur].map((v,i)=>i<=last?v:null),borderColor:'#d00000',borderWidth:3,pointRadius:0,fill:false,order:0});
+  const shown=['1991–2020 average',...Object.keys(HL),String(cur)];
+  const c5=new Chart(document.getElementById('c5'),{type:'line',plugins:[{id:'soilband',beforeDraw(ch){if(bandOn(ch,1))poly(ch,mn,mx,THEME.band1);if(bandOn(ch,2))poly(ch,p10,p90,THEME.band2)}},yearLines(prior,prior.map(y=>D[y]),pf)],
+   data:{labels:[...Array(N).keys()],datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{filter:i=>shown.includes(i.text)}},tooltip:{filter:i=>['Prior-year max',...shown].includes(i.dataset.label),callbacks:{title:t=>'5 days from '+pl(t[0].dataIndex),label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':pf(c.parsed.y))}}},
+    scales:{x:{ticks:{color:tc,maxRotation:0,autoSkip:false,callback:tick},grid:{display:false}},y:{min:0,title:{display:true,text:'% of the land in drought',color:tc},ticks:{color:tc},grid:{color:THEME.grid}}}}});
+  const pre=i1=>({id:'preSatSoil',beforeDatasetsDraw(ch){const{ctx,chartArea:a,scales:{x}}=ch;if(i1<=0)return;const x1=Math.min(a.right,x.getPixelForValue(i1-.5));ctx.save();ctx.fillStyle=THEME.dark?'rgba(255,255,255,.05)':'rgba(0,0,0,.045)';ctx.fillRect(a.left,a.top,x1-a.left,a.bottom-a.top);
+   ctx.fillStyle=THEME.mut;ctx.font='11px system-ui,sans-serif';ctx.textBaseline='top';ctx.fillText('before satellites: less certain',a.left+6,a.top+4);ctx.restore()}});
+  const yl=Yr.map(r=>String(r.y)),i79=yl.indexOf('1979'),r10=Yr.map((_,i)=>i<9||Yr[i].y==cur?null:mean(Yr.slice(i-9,i+1).map(r=>r.fa)));
+  const c6=new Chart(document.getElementById('c6'),{type:'bar',plugins:[pre(i79)],data:{labels:yl,datasets:[
+    {type:'line',label:'10-year average',data:r10,borderColor:THEME.clim,backgroundColor:THEME.clim,borderWidth:2,pointRadius:0,order:0},
+    {label:'Land hit by a flash drought',data:Yr.map(r=>r.fa),backgroundColor:Yr.map(r=>r.y==cur?'#d00000':'#c98a3c'),borderWidth:0,order:1}]},
+   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{tooltip:{callbacks:{label:c=>c.parsed.y==null?null:c.dataset.label+': '+pf(c.parsed.y)+(Yr[c.dataIndex].y==cur&&c.datasetIndex==1?' (so far)':'')}}},
+    scales:{x:{ticks:{autoSkip:true,maxRotation:0},grid:{display:false}},y:{min:0,title:{display:true,text:'% of the land'},grid:{color:THEME.grid}}}}});
+  const run=R.map((r,i)=>i<72?null:mean(R.slice(i-72,i+1).map(q=>q.an))),lab=R.map(r=>r.d),i79p=lab.findIndex(d=>d>='1979');
+  const c7=new Chart(document.getElementById('c7'),{type:'line',plugins:[pre(i79p)],data:{labels:lab,datasets:[
+    {label:'12-month average',data:run,borderColor:'#8a5a2b',backgroundColor:'#8a5a2b',borderWidth:2,pointRadius:0}]},
+   options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{filter:i=>i.parsed.y!=null,callbacks:{title:t=>'12 months to '+lab[t[0].dataIndex],label:c=>sg(c.parsed.y)+'% vs 1991–2020'}}},
+    scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>{const s=lab[v];return s.slice(5,10)<='01-05'&&+s.slice(0,4)%10==0?s.slice(0,4):''}},grid:{display:false}},y:{title:{display:true,text:'% wetter (+) or drier (−) than normal'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}});
+  const th=`${endLab} · ERA5 (modelled)`;[c5,c6,c7].forEach(c=>c.canvas.closest('.box').dataset.through=th);
+  const top=full.filter(r=>r.y>=1979).slice().sort((a,b)=>b.fa-a.fa).slice(0,5).map(r=>r.y).sort();
+  const dec=(a,b)=>mean(full.filter(r=>r.y>=a&&r.y<=b).map(r=>r.fa)),d1=dec(1981,1990),d2=dec(lastFull.y-9,lastFull.y);
+  document.getElementById('sread').innerHTML=[
+   `In the five days to ${endLab}, ${P1(L.dr)} of the land (where the soil was not frozen) was in drought, with root-zone soil moisture in its driest 20% for the time of year. Normal is about 20% by definition. Since 1979, the highest share for this time of year was ${P1(rec[1])}, in ${rec[0]}.`,
+   `Flash droughts: in ${lastFull.y}, a flash drought began somewhere on ${P1(lastFull.fa)} of the land, against ${P1(base)} in an average 1991–2020 year. Averaged over ${lastFull.y-9}–${lastFull.y}: ${P1(d2)} a year; over 1981–1990: ${P1(d1)}. The years with the most since 1979: ${top.join(', ')}.${Ycur?` In ${cur} so far: ${P1(Ycur.fa)}.`:''}`,
+   `Why soils dry faster as the world warms: warmer air takes up more water, so heat pulls moisture out of the ground and out of plants more quickly, and rain increasingly comes in heavier bursts with longer dry spells between them. Studies find that flash droughts have become more common in many regions and are expected to set in faster as warming continues (IPCC AR6, chapter 11; Yuan et al. 2023, Science).`
+  ].map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('soil').classList.remove('hide');
+  window.soilCharts=()=>[[c5,'t5',1],[c6,'t6',0],[c7,'t7',0]];
+ }).catch(e=>console.error('soil moisture:',e));
+})();
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>siteExport([1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),expName);
+$('exp').onclick=()=>siteExport([...[1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),...(window.soilCharts?soilCharts():[])],expName);
 const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
 Promise.all([txt('era5_tcwv_monthly.csv'),txt('era5_t2_regions_monthly.csv').catch(()=>null)]).then(([a,b])=>build(a,b))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the water vapor data. Please try again later.'});

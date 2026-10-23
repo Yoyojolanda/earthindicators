@@ -201,6 +201,7 @@ window.IN_SHORT = {
     text: [
       'How much water vapor the air holds, averaged over the whole globe. Warmer air holds more: about 7% more for every 1 °C (basic physics). More water in the air means heavier downpours, and, with rain coming in bigger bursts, longer dry spells in between (IPCC). A downpour does not make up for a dry spell: rain that falls faster than the soil can soak it up runs off, causing floods, instead of reaching the roots and groundwater.',
       'Latest ({wv.date}): {wv.now}, {wv.an} vs the 1991–2020 average for that month; {wv.rank}. Last 12 months: {wv.l12}.',
+      'Warmer air also pulls more water out of the ground. Further down, the page follows root-zone soil moisture (modelled by ERA5): how much of the world\'s land is in drought, and how often flash droughts strike, droughts that set in within weeks.',
     ],
     claims: ['weather-blame', 'trace-gas'],
   },
