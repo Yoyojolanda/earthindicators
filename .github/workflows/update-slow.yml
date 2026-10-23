@@ -25,6 +25,9 @@ jobs:
       - name: Permafrost (CALM thaw depth, PERMOS boreholes, ESA Permafrost_cci; the large CCI files only when new)
         continue-on-error: true
         run: python -u scripts/build_permafrost.py
+      - name: Observed coral bleaching, Global Coral Bleaching Database (downloaded once; kept afterwards)
+        continue-on-error: true
+        run: python -u scripts/build_coral_obs.py
       - name: CO2 history records (downloaded once; kept afterwards)
         continue-on-error: true
         run: python -u scripts/build_co2_history.py
