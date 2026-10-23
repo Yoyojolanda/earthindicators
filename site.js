@@ -65,6 +65,18 @@
       if (JSON.stringify(was) !== JSON.stringify(ch.$yl)) ch.$ylDirty = true;
     },
     afterEvent(ch, args) { if (ch.$ylDirty) { ch.$ylDirty = false; args.changed = true; } },
+    // with "Every year" on, the range band (and the hidden lines that set the axis) is off: keep every year's line on
+    // the chart by stretching the vertical axis to them, within the part of the x axis in view (zoom)
+    afterDataLimits(ch, { scale }) {
+      if (scale.axis !== 'y' || !bandOn(ch, 3)) return;
+      const x = ch.scales.x, i0 = x && isFinite(x.min) ? Math.max(0, Math.floor(x.min)) : 0, i1 = x && isFinite(x.max) ? Math.ceil(x.max) : Infinity;
+      let lo = Infinity, hi = -Infinity;
+      rows.forEach(r => { for (let i = i0; i < r.length && i <= i1; i++) { const v = r[i]; if (v != null && isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } } });
+      if (lo > hi) return;
+      const o = ch.options.scales.y || {};
+      if (o.min == null) scale.min = Math.min(scale.min, lo);
+      if (o.max == null) scale.max = Math.max(scale.max, hi);
+    },
     beforeDatasetsDraw(ch) {
       if (!bandOn(ch, 3)) return;
       const { ctx, scales: { x, y }, chartArea: A } = ch, n = years.length, h = ch.$yl;
