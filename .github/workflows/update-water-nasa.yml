@@ -37,13 +37,13 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          python -u scripts/build_grace_tws.py 2>&1 | tee /tmp/g.log; rc=$?; tail -30 /tmp/g.log > data/grace_tws_check.txt; exit $rc
+          rc=0; python -u scripts/build_grace_tws.py 2>&1 | tee /tmp/g.log || rc=$?; tail -30 /tmp/g.log > data/grace_tws_check.txt; exit $rc
       - name: SMAP root-zone soil moisture
         continue-on-error: true
         timeout-minutes: 200
         run: |
           set -o pipefail
-          python -u scripts/build_smap.py 2>&1 | tee /tmp/s.log; rc=$?; tail -30 /tmp/s.log > data/smap_check.txt; exit $rc
+          rc=0; python -u scripts/build_smap.py 2>&1 | tee /tmp/s.log || rc=$?; tail -30 /tmp/s.log > data/smap_check.txt; exit $rc
       - name: Commit changes
         if: always()
         run: |

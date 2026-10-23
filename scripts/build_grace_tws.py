@@ -13,7 +13,7 @@ Earthdata login (~/.netrc). The file is only downloaded when NASA publishes a ne
 Average over all land between 60°S and 90°N except Greenland (land_mask from the file; Antarctica south of 60°S and
 Greenland, whose ice is on the land ice page, left out), weighted by area; glaciers elsewhere are included.
   -> data/grace_tws_monthly.csv  date (middle of the month), mm (water layer over that land, compared with the
-     2004-2009 average, as JPL's file), gt (the same in billion metric tons; 1 mm over 1 km² = 0.001 Gt)
+     2004-2009 average, as JPL's file), gt (the same in billion metric tons; 1 mm over 1 km² = 0.000001 Gt)
      data/grace_tws_source.txt   the file used
 """
 import csv, io, json, os, sys, tempfile, urllib.request
@@ -78,7 +78,7 @@ def main():
             continue
         mm = 10 * float((v[ok] * area[ok]).sum() / area[ok].sum())
         day = str(np.datetime_as_string(t, unit="D"))
-        rows.append([day, f"{mm:.2f}", f"{mm * A / 1e3:.0f}"])
+        rows.append([day, f"{mm:.2f}", f"{mm * A / 1e6:.0f}"])   # 1 mm over 1 km² = 1,000 m³ = 0.000001 Gt
     if len(rows) < 150:
         sys.exit(f"only {len(rows)} months")
     buf = io.StringIO(); w = csv.writer(buf, lineterminator="\n"); w.writerow(["date", "mm", "gt"]); w.writerows(rows)

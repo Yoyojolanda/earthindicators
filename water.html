@@ -56,9 +56,18 @@
 <div class="box" data-nav="Land in drought, this year"><h2 id="t5"></h2><div class="sub bandkey" style="margin:0 0 6px"><button type="button" class="bk" data-band="1" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band1);border:1px solid var(--swatch)"></span> Range of prior years (min–max)</button> &nbsp; <button type="button" class="bk" data-band="2" aria-pressed="true"><span style="display:inline-block;width:14px;height:10px;background:var(--band2)"></span> Middle 80% of prior years</button></div><div class="wrap"><canvas id="c5"></canvas></div></div>
 <div class="box" data-nav="Flash droughts, yearly"><h2 id="t6"></h2><div class="wrap s"><canvas id="c6"></canvas></div></div>
 <div class="box" data-nav="Soil moisture, long term"><h2 id="t7"></h2><div class="wrap s"><canvas id="c7"></canvas></div></div>
+<div class="box hide" id="b9" data-nav="Satellite check"><h2 id="t9"></h2><div class="wrap s"><canvas id="c9"></canvas></div><p class="sub" id="n9" style="margin:8px 0 0"></p></div>
 <ul id="sread"></ul>
 <p class="sub"><b>Calculated by a model, not measured.</b> Soil moisture cannot be measured everywhere. ERA5 calculates it with its land-surface model, from the reanalysis weather (rain, sunshine, heat, wind and humidity), which is corrected by observations from weather stations, balloons and satellites. Like the other ERA5 numbers on this site, it is an estimate; before satellites (1979) there were fewer observations to correct it, so the early years are less certain (shaded in the long-term chart). Satellites measure only the top few centimeters of soil, so for the root zone a model like this is the usual source.</p>
 <p class="sub">Shown: root-zone soil moisture, the water in the top meter of soil (ERA5's soil layers 0–7, 7–28 and 28–100 cm, averaged by thickness), one value a day at 12:00 UTC, averaged into five-day periods ("pentads", 73 a year), on a 1° grid over the land between 60°S and 75°N. For every place and pentad, "normal" and the 20th and 40th percentiles are taken from 1991–2020. In drought: soil moisture below its 20th percentile for the time of year (in 1991–2020 that is true 20% of the time by definition, so 20% of the land is "normal"). Flash drought: soil moisture falls from above its 40th percentile to below its 20th within 20 days or less (Ford and Labosier 2017) and stays below it for at least 15 days. How many flash droughts are counted depends a lot on the exact definition, and studies use several, so compare the years with each other rather than reading the level as exact. Only places and times where the soil is not frozen count, and places and times where soil moisture hardly changes, or where its driest values all sit at the model's lower limit (ice sheets, deserts, dry seasons in dry places), are left out; the shares are of the land that counts, by area. Data: Copernicus ERA5 (ECMWF), read from Google's public ARCO-ERA5 copy.</p>
+</section>
+<section id="tws" class="hide">
+<h2 style="font-size:18px;margin:26px 0 6px">Water stored on land: GRACE satellites</h2>
+<p style="margin:0 0 12px">Two pairs of satellites, GRACE (2002–2017) and GRACE-FO (since 2018), weigh the water on and under the land every month by measuring tiny changes in Earth's gravity: soil moisture, groundwater, lakes and reservoirs, snow and glaciers together. Unlike the soil-moisture numbers above, this is a measurement, not a model.</p>
+<div class="cards" id="gcards"></div>
+<div class="box" data-nav="Water stored on land"><h2 id="t8"></h2><div class="wrap"><canvas id="c8"></canvas></div></div>
+<ul id="gread"></ul>
+<p class="sub">Shown: the change in all water stored on land between 60°S and the North Pole, except Greenland (on the <a href="land-ice.html">land ice page</a>), as a layer of water spread over that land, compared with the average for the same month in 2004–2009 (the land holds more water in some seasons than in others); glaciers elsewhere (Alaska, the Andes, High Mountain Asia) are included, and their melting is part of the decline. 1 mm over this land is about 130 billion metric tons of water. There is a gap from July 2017 to May 2018 between the two missions, and some months are missing when a satellite was switched off. Data: NASA JPL GRACE/GRACE-FO mascon solution RL06.3, version 4, with the coastal resolution improvement (Watkins et al. 2015; Wiese et al. 2016), via NASA PO.DAAC; averaged here by area.</p>
 </section>
 <script>
 const $=id=>document.getElementById(id);
@@ -282,8 +291,60 @@ const SOIL_READY=true;
   window.soilCharts=()=>[[c5,'t5',1],[c6,'t6',0],[c7,'t7',0]];
  }).catch(e=>console.error('soil moisture:',e));
 })();
+// ---- satellite check: SMAP Level-4 root-zone soil moisture vs ERA5, each against its own 2016-2025 average (scripts/build_smap.py)
+Promise.all([fetch('data/smap_rootzone_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}),fetch('data/soil_pentad.csv').then(r=>{if(!r.ok)throw 0;return r.text()})]).then(([ts,te])=>{
+ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],sg=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1);
+ const S=ts.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>({m:p[0],v:+p[1]}));
+ const E={};te.trim().split(/\r?\n/).slice(1).forEach(l=>{const p=l.split(','),m=p[0].slice(0,7);if(m>='2015-04')(E[m]=E[m]||[]).push(+p[3])});
+ const rel=(R,f)=>{const c={};R.filter(r=>r.m>='2016'&&r.m<'2026').forEach(r=>(c[r.m.slice(5)]=c[r.m.slice(5)]||[]).push(r.v));return R.map(r=>c[r.m.slice(5)]?f(r.v,mean(c[r.m.slice(5)])):null)};
+ const Sa=rel(S,(v,c)=>(v/c-1)*100),Er=Object.keys(E).sort().map(m=>({m,v:mean(E[m])})),Ea=rel(Er,(v,c)=>v-c),Em=Object.fromEntries(Er.map((r,i)=>[r.m,Ea[i]]));
+ const lab=S.map(r=>r.m),eLine=lab.map(m=>Em[m]??null);
+ const both=lab.map((m,i)=>[Sa[i],eLine[i]]).filter(p=>p[0]!=null&&p[1]!=null),cx=(()=>{const a=both.map(p=>p[0]),b=both.map(p=>p[1]),ma=mean(a),mb=mean(b);let s1=0,s2=0,s3=0;both.forEach(([x,y])=>{s1+=(x-ma)*(y-mb);s2+=(x-ma)**2;s3+=(y-mb)**2});return s1/Math.sqrt(s2*s3)})();
+ $('t9').textContent=`Satellite check: root-zone soil moisture from SMAP and from ERA5, ${lab[0].slice(0,4)}–${lab[lab.length-1].slice(0,4)} (% compared with each one's own 2016–2025 average for the month)`;
+ const c9=new Chart($('c9'),{type:'line',data:{labels:lab,datasets:[
+   {label:'SMAP satellite (NASA Level 4)',data:Sa,borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2,pointRadius:0,order:0},
+   {label:'ERA5',data:eLine,borderColor:'#8a5a2b',backgroundColor:'#8a5a2b',borderWidth:2,pointRadius:0,order:1}]},
+  options:{animation:false,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const[y,m]=lab[t[0].dataIndex].split('-');return ML[m-1]+' '+y},label:c=>c.parsed.y==null?null:c.dataset.label+': '+sg(c.parsed.y)+'%'}}},
+   scales:{x:{ticks:{maxRotation:0,autoSkip:false,callback:v=>lab[v].endsWith('-01')?lab[v].slice(0,4):''},grid:{display:false}},y:{title:{display:true,text:'% wetter (+) or drier (−)'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}});
+ const[ly,lm]=lab[lab.length-1].split('-');
+ $('n9').textContent=`SMAP feeds a satellite's measurements of the top few centimeters of soil into NASA's own land model, which carries them down to the root zone; ERA5 gets its soil moisture from weather observations and its own model. The two are made independently, so where they agree the picture is more certain. Month by month, their ups and downs line up with a correlation of ${cx.toFixed(2)} (1 = identical). They cover slightly different land (SMAP: all unfrozen land between 60°S and 75°N; ERA5: as above), and each is compared with its own 2016–2025 average because their absolute values differ. Data: NASA SMAP L4 Global 3-hourly 9 km Surface and Root Zone Soil Moisture (SPL4SMGP, Reichle et al.), via NSIDC; one field a day, every 10th grid point.`;
+ c9.canvas.closest('.box').dataset.through=`${ML[lm-1]} ${ly} · NASA SMAP L4, ERA5`;
+ $('b9').classList.remove('hide');window.smapChart=c9;
+}).catch(e=>console.error('SMAP check:',e));
+
+// ---- water stored on land: GRACE / GRACE-FO (scripts/build_grace_tws.py)
+fetch('data/grace_tws_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+ const mean=a=>a.reduce((s,x)=>s+x,0)/a.length,ML=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],sg=(v,d=1)=>(v>=0?'+':'−')+Math.abs(v).toFixed(d);
+ const R0=t.trim().split(/\r?\n/).slice(1).map(l=>l.split(',')).map(p=>{const[y,m,d]=p[0].split('-').map(Number);return{d:p[0],y,k:m-1,x:y+(m-1+(d-.5)/31)/12,raw:+p[1],gt:+p[2]}});
+ // the land holds more water in some seasons than others: compare each month with the same month in 2004-2009
+ const clim=[...Array(12)].map((_,k)=>mean(R0.filter(r=>r.k==k&&r.y>=2004&&r.y<=2009).map(r=>r.raw))),gpm=R0[R0.length-1].gt/R0[R0.length-1].raw;
+ const R=R0.map(r=>({...r,mm:r.raw-clim[r.k]})).map(r=>({...r,gt:r.mm*gpm}));
+ const L=R[R.length-1],lab=d=>ML[+d.slice(5,7)-1]+' '+d.slice(0,4);
+ // 12-month running mean only where 12 months fall within a year (no averaging across the gap)
+ const run=R.map((r,i)=>{const w=R.filter(q=>q.x>r.x-1+1e-6&&q.x<=r.x);return w.length>=10?{x:r.x,y:mean(w.map(q=>q.mm))}:null}).filter(Boolean);
+ const fit=P=>{const mx=mean(P.map(p=>p.x)),my=mean(P.map(p=>p.y));let a=0,b=0;P.forEach(p=>{a+=(p.x-mx)*(p.y-my);b+=(p.x-mx)**2});return a/b};
+ const tr=fit(R.map(r=>({x:r.x,y:r.mm}))),R12=run[run.length-1],lo=run.reduce((a,b)=>b.y<a.y?b:a);
+ $('gcards').innerHTML=[[sg(L.mm)+' mm',`water stored on land, ${lab(L.d)}, vs the same month in 2004–2009`],[sg(R12.y)+' mm',`12-month average to ${lab(L.d)}`],
+  [sg(tr*gpm,0)+' Gt',`a year on average since ${R[0].d.slice(0,4)} (trend)`],[sg(lo.y)+' mm',`lowest 12-month average, to ${ML[Math.min(11,Math.floor((lo.x%1)*12))]} ${Math.floor(lo.x)}`]]
+  .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+ $('t8').textContent=`Water stored on land (except Greenland and Antarctica), ${R[0].d.slice(0,4)}–${L.d.slice(0,4)}: mm of water over the land, compared with the same month in 2004–2009`;
+ const c8=new Chart($('c8'),{data:{datasets:[
+   {type:'line',label:'12-month average',data:run,borderColor:'#1f6fb5',backgroundColor:'#1f6fb5',borderWidth:2.5,pointRadius:0,order:0,spanGaps:false},
+   {type:'line',label:'Each month',data:R.map(r=>({x:r.x,y:r.mm})),borderColor:'#7fa6c9',backgroundColor:'#7fa6c9',borderWidth:1,pointRadius:1.5,order:1,segment:{borderColor:c=>c.p1.parsed.x-c.p0.parsed.x>0.25?'transparent':undefined}}]},
+  options:{animation:false,maintainAspectRatio:false,parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{tooltip:{callbacks:{title:t=>{const x=t[0].parsed.x,y=Math.floor(x);return ML[Math.min(11,Math.floor((x-y)*12))]+' '+y},label:c=>c.dataset.label+': '+sg(c.parsed.y)+' mm ('+sg(c.parsed.y*gpm,0)+' Gt)'}}},
+   scales:{x:{type:'linear',min:Math.floor(R[0].x),max:Math.ceil(L.x),ticks:{stepSize:2,callback:v=>String(v)},grid:{display:false}},y:{title:{display:true,text:'mm of water vs 2004–2009'},grid:{color:c=>c.tick.value==0?THEME.zero:THEME.grid}}}}});
+ c8.canvas.closest('.box').dataset.through=`${lab(L.d)} · NASA GRACE-FO`;
+ $('gread').innerHTML=[
+  `In ${lab(L.d)} the land held ${Math.abs(L.mm).toFixed(1)} mm ${L.mm<0?'less':'more'} water than in the same month of 2004–2009 on average, about ${Math.abs(Math.round(L.gt)).toLocaleString('en-US')} billion metric tons. Over the whole record the trend is ${sg(tr*gpm,0)} billion metric tons a year.`,
+  `The lowest 12-month average was ${sg(lo.y)} mm, to ${ML[Math.min(11,Math.floor((lo.x%1)*12))]} ${Math.floor(lo.x)}. Land water swings with El Niño and La Niña: La Niña years such as 2011 brought record rain to Australia and parts of South America and South Asia, so the land held more; El Niño years dry it out.`,
+  `Part of the long decline is glaciers melting and groundwater being pumped faster than rain refills it, in places such as northern India, the Middle East and California; a NASA-led study found that land freshwater dropped abruptly in May 2014 and stayed low: from 2015 to 2023 it averaged about 1,200 km³ less than in 2002–2014 (Rodell et al. 2024, Surveys in Geophysics). The water does not disappear: it ends up in the ocean and raises sea level.`
+ ].map(x=>`<li>${x}</li>`).join('');
+ $('tws').classList.remove('hide');window.graceChart=c8;
+}).catch(e=>console.error('GRACE:',e));
 ['beforeprint','afterprint'].forEach(e=>window.addEventListener(e,()=>charts.forEach(c=>c&&c.resize())));
-$('exp').onclick=()=>siteExport([...[1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),...(window.soilCharts?soilCharts():[])],expName);
+$('exp').onclick=()=>siteExport([...[1,4,2,3].filter(k=>charts[k-1]).map(k=>[charts[k-1],'t'+k,0]),...(window.soilCharts?soilCharts():[]),...(window.smapChart?[[smapChart,'t9',0]]:[]),...(window.graceChart?[[graceChart,'t8',0]]:[])],expName);
 const txt=f=>fetch('data/'+f).then(r=>{if(!r.ok)throw new Error(f);return r.text()});
 Promise.all([txt('era5_tcwv_monthly.csv'),txt('era5_t2_regions_monthly.csv').catch(()=>null)]).then(([a,b])=>build(a,b))
  .catch(e=>{console.error(e);$('err').textContent='Could not load the water vapor data. Please try again later.'});
