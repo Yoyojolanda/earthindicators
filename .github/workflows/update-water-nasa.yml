@@ -35,16 +35,20 @@ jobs:
           printf 'HTTP.NETRC=%s/.netrc\nHTTP.COOKIEJAR=%s/.edl_cookies\n' "$HOME" "$HOME" > ~/.dodsrc
       - name: GRACE/GRACE-FO land water storage
         continue-on-error: true
-        run: python -u scripts/build_grace_tws.py
+        run: |
+          set -o pipefail
+          python -u scripts/build_grace_tws.py 2>&1 | tee /tmp/g.log; rc=$?; tail -30 /tmp/g.log > data/grace_tws_check.txt; exit $rc
       - name: SMAP root-zone soil moisture
         continue-on-error: true
         timeout-minutes: 200
-        run: python -u scripts/build_smap.py
+        run: |
+          set -o pipefail
+          python -u scripts/build_smap.py 2>&1 | tee /tmp/s.log; rc=$?; tail -30 /tmp/s.log > data/smap_check.txt; exit $rc
       - name: Commit changes
         if: always()
         run: |
           rm -f ~/.netrc ~/.dodsrc ~/.edl_cookies data/*.tmp
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
-          git add data/grace_tws_* data/smap_* 2>/dev/null || true
+          git add data
           git diff --cached --quiet || (git commit -m "Update land water storage and SMAP data" && git pull --rebase && git push)
