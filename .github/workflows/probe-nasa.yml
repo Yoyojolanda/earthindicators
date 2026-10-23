@@ -20,19 +20,21 @@ jobs:
           printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc; chmod 600 ~/.netrc
           printf 'HTTP.NETRC=%s/.netrc\nHTTP.COOKIEJAR=%s/.c\n' "$HOME" "$HOME" > ~/.dodsrc
           cat > p.py <<'PY'
-          import time, requests, netCDF4
+          import time, requests, netCDF4, numpy as np, io
+          S = requests.Session()
           for short, day in [("GPM_3IMERGDF", "2025-09-30"), ("GPM_3IMERGDL", "2026-10-20")]:
               g = requests.get(f"https://cmr.earthdata.nasa.gov/search/granules.json?short_name={short}&temporal={day}T00:00:00Z,{day}T23:59:59Z", timeout=60).json()["feed"]["entry"][0]
               op = [l["href"] for l in g["links"] if "opendap" in l.get("href", "")][0]
-              dl = [l["href"] for l in g["links"] if l.get("href", "").endswith(".nc4")][0]
-              t = time.time()
-              try:
-                  ds = netCDF4.Dataset(op); v = ds.variables["precipitation"]; a = v[0, ::5, ::5]
-                  print(short, "opendap ok", v.dimensions, v.shape, a.shape, float(a.max()), f"{time.time()-t:.1f}s")
-                  t = time.time(); a = v[0, :, :]; print("  full", float(a.max()), f"{time.time()-t:.1f}s")
-              except Exception as e: print(short, "opendap ERR", str(e)[:300])
-              t = time.time()
-              r = requests.get(dl, timeout=120); print(short, "download", r.status_code, len(r.content), f"{time.time()-t:.1f}s")
+              for ce in ["/precipitation[0][0:10:3599][0:10:1799]", "/precipitation[0:1:0][0:10:3599][0:10:1799]"]:
+                  u = op + ".dap.nc4?dap4.ce=" + requests.utils.quote(ce, safe="/[]:")
+                  t = time.time(); r = S.get(u, timeout=120)
+                  print(short, ce, r.status_code, len(r.content), r.headers.get("content-type"), f"{time.time()-t:.1f}s")
+                  if r.status_code == 200:
+                      open("x.nc", "wb").write(r.content); ds = netCDF4.Dataset("x.nc")
+                      print("  vars", list(ds.variables), {k: ds.variables[k].shape for k in ds.variables})
+                      v = ds.variables["precipitation"][:]; print("  max", float(v.max()), "mean", float(v.mean()), ds.variables["precipitation"].dimensions)
+                      break
+                  else: print(r.text[:300])
           PY
           python -u p.py > probe.txt 2>&1 || true
           rm -f ~/.netrc
