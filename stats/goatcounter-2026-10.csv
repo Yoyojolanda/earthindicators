@@ -875,3 +875,56 @@ claim-open/cooling,It's freezing here. So much for global warming. Or: It's cool
 /,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,,o,"393,0,1",ES,0,2026-10-19T11:06:21Z
 /index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Linux ,0,,o,"1280,0,1",US-SC,1,2026-10-19T13:29:56Z
 /,Earth Indicators: is the climate changing? The latest data,0,Chrome 45,Windows 7,0,,o,"800,0,1",NL,1,2026-10-19T19:22:30Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,macOS 10.15,0,,o,"1440,0,1",US-NY,1,2026-10-20T09:23:44Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-20T09:23:52Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,0,2026-10-20T09:28:01Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,0,2026-10-20T09:28:32Z
+chart-copy/nino-cP,"El Niño winters since 1099–00: tree rings, measurements and 2026–27",1,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-20T09:31:15Z
+chart-pick/nino-cP,"El Niño winters since 1099–00: tree rings, measurements and 2026–27",1,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-20T09:31:29Z
+chart-pick/nino-c1,Niño 3.4: each day of 2026 compared with the same day in every year since 1982 (°C above or below the 1991–2020 average),1,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,1,2026-10-20T09:31:47Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org,h,"1440,0,1",US-NY,0,2026-10-20T09:33:47Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org/nino.html,h,"1440,0,1",US-NY,1,2026-10-20T09:35:13Z
+/ohc.html,Ocean heat content tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org/sst.html,h,"1440,0,1",US-NY,1,2026-10-20T09:35:21Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,,o,"1920,0,1",NL,1,2026-10-20T11:07:10Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,earthindicators.org/ohc.html,h,"1440,0,1",US-NY,1,2026-10-20T11:38:32Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,yoyojolanda.github.io,h,"423,0,1",KH,1,2026-10-20T12:49:23Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,Android 10,0,earthindicators.org,h,"423,0,1",KH,1,2026-10-20T12:49:30Z
+/ohc.html,Ocean heat content tracker,0,Chrome 155,Android 10,0,earthindicators.org/s/ohc-c1.html,h,"360,0,1",NL,1,2026-10-20T13:07:14Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,,o,"2056,0,1",NL,0,2026-10-20T13:57:30Z
+/air.html,Global air temperature tracker,0,Chrome 155,Android 10,0,earthindicators.org/s/air-c9.html,h,"413,0,1",AT,1,2026-10-20T16:20:01Z
+/air.html,Global air temperature tracker,0,Firefox 158,Windows 10,0,earthindicators.org/s/air-c9.html,h,"1920,0,1",US-CT,1,2026-10-20T21:40:10Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,,o,"1728,0,1",NL,1,2026-10-21T08:26:57Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 116,Linux ,0,,o,"800,0,1",RU,1,2026-10-21T08:53:54Z
+claim-link/not-accelerating,Warming isn't speeding up. The “acceleration” isn't even statistically significant.,1,Chrome 155,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"412,0,1",GB,1,2026-10-21T13:15:50Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 155,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"412,0,1",GB,1,2026-10-21T13:15:50Z
+claim-link/not-accelerating,Warming isn't speeding up. The “acceleration” isn't even statistically significant.,1,Chrome 151,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"412,0,1",IT,1,2026-10-21T13:17:11Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 151,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"412,0,1",IT,1,2026-10-21T13:17:11Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,,o,"393,0,1",ES,1,2026-10-21T13:46:45Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,yoyojolanda.github.io,h,"423,0,1",KH,1,2026-10-21T13:59:06Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,Android 10,0,earthindicators.org,h,"423,0,1",KH,1,2026-10-21T13:59:12Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,yoyojolanda.github.io,h,"423,0,1",KH,0,2026-10-21T14:04:11Z
+/models.html,Climate models,0, ,iOS 26.6,0,earthindicators.org/s/models-c12_1.html,h,"390,0,1",DE,1,2026-10-21T16:37:50Z
+/models.html,Climate models,0,Chrome 155,Windows 10,0,earthindicators.org/s/models-c12_1.html,h,"1536,0,1",NZ,1,2026-10-21T17:48:17Z
+/models.html,Climate models,0,Chrome 155,Android 17,0,earthindicators.org/s/models-c12_1.html,h,"427,0,1",IE,1,2026-10-21T17:54:13Z
+/models.html,Climate models,0,Chrome 155,Android 17,0,earthindicators.org/s/models-c12_1.html,h,"412,0,1",HK,1,2026-10-21T18:21:15Z
+/models.html,Climate models,0,Chrome 155,Android 16,0,earthindicators.org/s/models-c12_1.html,h,"384,0,1",DE,1,2026-10-21T18:22:37Z
+claim-link/not-accelerating,Warming isn't speeding up. The “acceleration” isn't even statistically significant.,1,Chrome 155,Windows 10,0,earthindicators.org/c/not-accelerating.html,h,"1536,0,1",CZ,1,2026-10-21T20:17:36Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 155,Windows 10,0,earthindicators.org/c/not-accelerating.html,h,"1536,0,1",CZ,1,2026-10-21T20:17:36Z
+/sst.html,Global sea-surface temperature tracker,0,Chrome 155,Windows 10,0,earthindicators.org/claims.html,h,"1536,0,1",CZ,1,2026-10-21T20:24:11Z
+/models.html,Climate models,0,Chrome 155,Android 17,0,earthindicators.org/s/models-c12_1.html,h,"412,0,1",GB,1,2026-10-21T20:50:29Z
+/models.html,Climate models,0, ,iOS 27.0,0,earthindicators.org/s/models-c12_1.html,h,"393,0,1",US-NY,1,2026-10-22T00:04:02Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,,o,"1728,0,1",NL,1,2026-10-22T06:41:34Z
+/nino.html,Niño 3.4 tracker,0,Chrome 155,macOS 10.15,0,,o,"1728,0,1",NL,0,2026-10-22T07:56:04Z
+claim-link/not-accelerating,Warming isn't speeding up. The “acceleration” isn't even statistically significant.,1,Chrome 155,Windows 10,0,earthindicators.org/c/not-accelerating.html,h,"1536,0,1",NL,1,2026-10-22T08:05:17Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 155,Windows 10,0,earthindicators.org/c/not-accelerating.html,h,"1536,0,1",NL,1,2026-10-22T08:05:17Z
+/index.html,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Windows 10,0,earthindicators.org/claims.html,h,"1536,0,1",NL,1,2026-10-22T08:06:39Z
+/models.html,Climate models,0, ,iOS 26.7,0,earthindicators.org/s/models-c12_1.html,h,"440,0,1",CO,1,2026-10-22T09:03:42Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 155,Android 15,0,earthindicators.org/c/too-late.html,h,"367,0,1",DE,1,2026-10-22T12:43:00Z
+claim-link/too-late,"It's too late, so nothing we do matters anymore.",1,Chrome 155,Android 15,0,earthindicators.org/c/too-late.html,h,"367,0,1",DE,1,2026-10-22T12:43:00Z
+claim-open/china-india,China and India emit far more. Nothing we do matters.,1,Chrome 155,Android 15,0,earthindicators.org/c/too-late.html,h,"367,0,1",DE,1,2026-10-22T12:48:21Z
+/,Earth Indicators: is the climate changing? The latest data,0,Safari 26.6,iOS 18.7,0,,o,"440,0,1",US-NY,1,2026-10-22T15:44:18Z
+/,Earth Indicators: is the climate changing? The latest data,0,Safari 26.6,iOS 18.7,0,,o,"440,0,1",US-NY,0,2026-10-22T20:26:34Z
+/models.html,Climate models,0, ,iOS 27.0,0,earthindicators.org/s/models-c12_1.html,h,"390,0,1",US-CA,1,2026-10-22T20:33:07Z
+claim-link/not-accelerating,Warming isn't speeding up. The “acceleration” isn't even statistically significant.,1,Chrome 138,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"360,0,1",NO,1,2026-10-22T22:10:44Z
+/claims.html,"Common climate claims, answered with the latest data | Earth Indicators",0,Chrome 138,Android 10,0,earthindicators.org/c/not-accelerating.html,h,"360,0,1",NO,1,2026-10-22T22:10:44Z
+/,Earth Indicators: is the climate changing? The latest data,0,Chrome 155,Android 10,0,t.co,h,"412,0,1",CA,1,2026-10-23T03:00:39Z
