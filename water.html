@@ -348,7 +348,7 @@ fetch('data/grace_tws_monthly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).
  $('gread').innerHTML=[
   `In ${lab(L.d)} the land held ${Math.abs(L.mm).toFixed(1)} mm ${L.mm<0?'less':'more'} water than in the same month of 2004–2009 on average, about ${Math.abs(Math.round(L.gt)).toLocaleString('en-US')} billion metric tons. Over the whole record the trend is ${sg(tr*gpm,0)} billion metric tons a year.`,
   `The lowest 12-month average was ${sg(lo.y)} mm, to ${ML[Math.min(11,Math.floor((lo.x%1)*12))]} ${Math.floor(lo.x)}. Land water swings with El Niño and La Niña: La Niña years such as 2011 brought record rain to Australia and parts of South America and South Asia, so the land held more; El Niño years dry it out.`,
-  `Part of the long decline is glaciers melting and groundwater being pumped faster than rain refills it, in places such as northern India, the Middle East and California; a NASA-led study found that land freshwater dropped abruptly in May 2014 and stayed low: from 2015 to 2023 it averaged about 1,200 km³ less than in 2002–2014 (Rodell et al. 2024, Surveys in Geophysics). The water does not disappear: it ends up in the ocean and raises sea level.`
+  `Much of the long decline is glaciers outside Greenland and Antarctica, which lost about 270 billion metric tons of ice a year in 2000–2023 (GlaMBIE 2025; see the <a href="land-ice.html">land ice page</a>). The rest comes from groundwater pumped faster than rain refills it, in places such as northern India, the Middle East and California, and from droughts; a NASA-led study found that land freshwater dropped abruptly in May 2014 and stayed low: from 2015 to 2023 it averaged about 1,200 km³ less than in 2002–2014 (Rodell et al. 2024, Surveys in Geophysics). The water does not disappear: it ends up in the ocean and raises sea level.`
  ].map(x=>`<li>${x}</li>`).join('');
  $('tws').classList.remove('hide');window.graceChart=c8;
 }).catch(e=>console.error('GRACE:',e));
@@ -362,7 +362,7 @@ fetch('data/imerg_yearly.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(
  const F=full.filter(r=>r.y>=2001&&!r.late),trx=fit(F.map(r=>({x:r.y,y:r.rx})))*10,tr9=fit(F.map(r=>({x:r.y,y:r.r99})))*10,b99=mean(F.filter(r=>r.y<=2020).map(r=>r.r99));
  const rk=[...full].sort((a,b)=>b.rx-a.rx),rank=rk.indexOf(L)+1,ord=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
  $('rcards').innerHTML=[[sg(L.rx)+'%',`wettest day of ${L.y}, land average, vs 2001–2020${L.late?' (preliminary)':''}`],[sg(trx)+'%',`per decade, wettest day of the year (trend since 2001)`],
-  [L.r99.toFixed(1)+'%',`of the rain on land in ${L.y} fell on very wet days (2001–2020: ${b99.toFixed(1)}%)`],[ord(rank),`wettest "wettest day" of ${full.length} complete years since ${full[0].y}`]]
+  [L.r99.toFixed(1)+'%',`of the rain on land in ${L.y} fell on very wet days (2001–2020: ${b99.toFixed(1)}%)`],[ord(rank),`highest of ${full.length} complete years since ${full[0].y}, for ${L.y}'s wettest day`]]
   .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
  $('t10').textContent=`Wettest day of the year, land average: % above (+) or below (−) each place's 2001–2020 average, ${Y[0].y}–${Y[Y.length-1].y}`;
  $('t11').textContent=`Share of all rain on land that fell on very wet days (wetter than 99% of wet days in 2001–2020), ${Y[0].y}–${Y[Y.length-1].y} (%)`;
