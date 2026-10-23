@@ -1,0 +1,41 @@
+name: Probe SMAP old granules (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy netCDF4 requests
+      - name: Probe
+        env:
+          EDL_USER: ${{ secrets.EARTHDATA_USERNAME }}
+          EDL_PASS: ${{ secrets.EARTHDATA_PASSWORD }}
+        run: |
+          printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc; chmod 600 ~/.netrc
+          printf 'HTTP.NETRC=%s/.netrc\nHTTP.COOKIEJAR=%s/.c\n' "$HOME" "$HOME" > ~/.dodsrc
+          cat > p.py <<'PY'
+          import requests, netCDF4
+          for day in ["2015-08-19", "2020-06-01", "2024-06-01", "2026-10-01"]:
+              g = requests.get(f"https://cmr.earthdata.nasa.gov/search/granules.json?short_name=SPL4SMGP&temporal={day}T10:00:00Z,{day}T11:59:59Z", timeout=60).json()["feed"]["entry"]
+              for e in g:
+                  print(day, e["title"], e.get("collection_concept_id"), [l["href"] for l in e["links"] if "opendap" in l.get("href","")])
+                  for u in [l["href"] for l in e["links"] if "opendap" in l.get("href","")] + [f"https://opendap.earthdata.nasa.gov/collections/{e['collection_concept_id']}/granules/{e['title']}"]:
+                      try: ds = netCDF4.Dataset(u); print("   OK", u[-60:]); ds.close()
+                      except Exception as x: print("   ERR", u[-60:], str(x)[:120])
+              c = requests.get("https://cmr.earthdata.nasa.gov/search/collections.json?short_name=SPL4SMGP", timeout=60).json()["feed"]["entry"]
+          for e in c: print("coll", e["id"], e.get("version_id"), e.get("time_start"))
+          PY
+          python -u p.py > probe.txt 2>&1 || true
+          rm -f ~/.netrc
+      - name: Save
+        if: always()
+        run: |
+          mkdir out && cp probe.txt out/ && cd out && git init -q && git checkout -q -b probe-out
+          git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add . && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
