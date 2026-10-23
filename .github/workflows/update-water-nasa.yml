@@ -33,6 +33,18 @@ jobs:
           printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "$EDL_USER" "$EDL_PASS" > ~/.netrc
           chmod 600 ~/.netrc
           printf 'HTTP.NETRC=%s/.netrc\nHTTP.COOKIEJAR=%s/.edl_cookies\n' "$HOME" "$HOME" > ~/.dodsrc
+      # SMAP's sampled grid for every day since 2015 (for the like-for-like check against ERA5) and ERA5's pentads
+      # (kept by the soil-moisture workflow), both in GitHub's Actions cache, not in the repository
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/smapgrid
+          key: smap-grid-v1-${{ github.run_id }}
+          restore-keys: smap-grid-v1-
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/soilcache
+          key: soil-pentads-v1-none
+          restore-keys: soil-pentads-v1-
       - name: GRACE/GRACE-FO land water storage
         continue-on-error: true
         run: |
@@ -41,11 +53,24 @@ jobs:
       - name: SMAP root-zone soil moisture
         continue-on-error: true
         env:
+          SMAP_GRID: /home/runner/smapgrid
           SMAP_THREADS: "16"     # parallel requests; each one waits seconds for NASA's server, so more in parallel is faster
         timeout-minutes: 200
         run: |
           set -o pipefail
           rc=0; python -u scripts/build_smap.py 2>&1 | tee /tmp/s.log || rc=$?; tail -30 /tmp/s.log > data/smap_check.txt; exit $rc
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: ~/smapgrid
+          key: smap-grid-v1-${{ github.run_id }}
+      - name: Satellite check, SMAP against ERA5 (same method, same years)
+        continue-on-error: true
+        env:
+          SOIL_CACHE: /home/runner/soilcache/pentads.npz
+          SMAP_GRID: /home/runner/smapgrid
+        run: |
+          rc=0; python -u scripts/build_soil_check.py 2>&1 | tee /tmp/c.log || rc=$?; tail -20 /tmp/c.log > data/soil_smap_check.txt; exit $rc
       - name: Commit changes
         if: always()
         run: |

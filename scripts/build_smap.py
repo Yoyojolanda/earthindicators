@@ -25,6 +25,7 @@ OUT = "data/smap_rootzone_monthly.csv"
 DAILY = "data/smap_rootzone_daily.csv"
 STRIDE, HOUR = 10, "T103000"
 THREADS = int(os.environ.get("SMAP_THREADS") or 6)
+GRID = os.environ.get("SMAP_GRID")       # optional: every day's sampled grid, kept in GitHub's Actions cache
 
 
 def granules(d0, d1):
@@ -79,8 +80,37 @@ def day_value(r):
 
 
 def one_day(url):
+    """(global value or None, root-zone grid as float16, soil temperature in whole °C as int8) for one day."""
     r = read(url)
-    return day_value(r) if r is not None else None
+    if r is None:
+        return None
+    rz, st = r
+    return day_value(r), rz.astype(np.float16), np.clip(np.nan_to_num(np.round(st - 273.15), nan=-128), -128, 127).astype(np.int8)
+
+
+def cache_load():
+    """{date: (rz, st)} from the grid cache (one file a year), and the grid's latitudes."""
+    out = {}
+    if not GRID or not os.path.isdir(GRID):
+        return out, None
+    lat = np.load(os.path.join(GRID, "lat.npy")) if os.path.exists(os.path.join(GRID, "lat.npy")) else None
+    for f in sorted(os.listdir(GRID)):
+        if f.endswith(".npz") and f[:4].isdigit():
+            z = np.load(os.path.join(GRID, f))
+            for k, d in enumerate(z["dates"]):
+                out[date.fromisoformat(str(d))] = (z["rz"][k], z["st"][k])
+    return out, lat
+
+
+def cache_save(grids):
+    os.makedirs(GRID, exist_ok=True)
+    if "lat" in GEO:
+        np.save(os.path.join(GRID, "lat.npy"), GEO["lat"])
+    for y in sorted({d.year for d in grids}):
+        ds = sorted(d for d in grids if d.year == y)
+        np.savez_compressed(os.path.join(GRID, f"{y}.tmp.npz"), dates=np.array([d.isoformat() for d in ds]),
+                            rz=np.stack([grids[d][0] for d in ds]), st=np.stack([grids[d][1] for d in ds]))
+        os.replace(os.path.join(GRID, f"{y}.tmp.npz"), os.path.join(GRID, f"{y}.npz"))
 
 
 def save(daily):
@@ -103,20 +133,33 @@ def main():
     daily = {}
     if os.path.exists(DAILY):
         daily = {r[0]: (float(r[1]), int(r[2])) for r in csv.reader(open(DAILY)) if r and r[0][:1].isdigit()}
-    start = date.fromisoformat(max(daily)) - timedelta(days=44) if daily else date(2015, 4, 1)
-    G = granules(start, today)
-    print(f"{len(G)} granules from {start}", flush=True)
-    todo = sorted(G)
+    grids, lat = cache_load()
+    if lat is not None:
+        GEO["lat"] = lat
+    recent = date.fromisoformat(max(daily)) - timedelta(days=44) if daily else date(2015, 4, 1)
+    G = granules(date(2015, 4, 1) if GRID else recent, today)
+    # the newest 45 days always (preliminary values get updated), and any day missing from the grid cache
+    todo = sorted(d for d in G if d >= recent or (GRID and d not in grids) or d.isoformat() not in daily)
+    print(f"{len(G)} granules; {len(todo)} to read; {len(grids)} days in the grid cache", flush=True)
+    if GRID and "lat" not in GEO and G:
+        read(G[max(G)])                             # the grid's latitudes, from one granule
     t0, n = time.time(), 0
     # separate processes, not threads: the netCDF/HDF5 library crashes when several threads use it at once.
     # Days come back in date order; progress is saved every 100 days, so a stopped run loses little.
-    with ProcessPoolExecutor(THREADS) as ex:
-        for d, v in zip(todo, ex.map(one_day, [G[d] for d in todo], chunksize=4)):
+    import multiprocessing
+    with ProcessPoolExecutor(THREADS, mp_context=multiprocessing.get_context("spawn")) as ex:
+        for d, r in zip(todo, ex.map(one_day, [G[d] for d in todo], chunksize=4)):
             n += 1
-            if v:
-                daily[d.isoformat()] = v
+            if r is not None:
+                v, rz, st = r
+                if v:
+                    daily[d.isoformat()] = v
+                if GRID:
+                    grids[d] = (rz, st)
             if n % 100 == 0:
                 save(daily)
+                if GRID:
+                    cache_save({q: v for q, v in grids.items() if q.year == d.year or q.year == d.year - 1})
                 print(f"  {d}: {n} of {len(todo)}, {time.time() - t0:.0f} s", flush=True)
             if time.time() - t0 > budget:
                 print(f"  time budget reached at {d}; the next run continues from here", flush=True)
@@ -125,6 +168,8 @@ def main():
     if len(daily) < 30:
         sys.exit("too few days")
     rows = save(daily)
+    if GRID:
+        cache_save(grids)
     print(f"{len(daily)} days; {len(rows)} months, {rows[0][0]} to {rows[-1][0]}; last {rows[-1][1]}", flush=True)
 
 

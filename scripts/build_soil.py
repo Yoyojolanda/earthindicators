@@ -251,6 +251,15 @@ def main():
     z = np.load(THR)
     M, Q20, Q40, Q0 = z["mean"], z["p20"], z["p40"], z["p0"]
     P = to_pentads(read_days(ds, end - timedelta(days=99), end, jj, ii))
+    if CACHE and os.path.exists(CACHE):            # keep the cache of every pentad up to date (for the SMAP check)
+        c = np.load(CACHE)
+        C = {(int(y), int(k)): (c["rz"][n], c["st"][n]) for n, (y, k) in enumerate(zip(c["y"], c["k"]))}
+        C.update({q: (v[0], np.clip(np.round(v[1]), -100, 100).astype(np.int8)) for q, v in P.items()})
+        K = sorted(C)
+        np.savez(CACHE + ".tmp.npz", y=np.array([q[0] for q in K], np.int16), k=np.array([q[1] for q in K], np.int16),
+                 rz=np.stack([C[q][0] for q in K]), st=np.stack([np.asarray(C[q][1]).astype(np.int8) for q in K]))
+        os.replace(CACHE + ".tmp.npz", CACHE)
+        del C
     keys = sorted(P)[4:]
     rows, onset = rows_for(P, keys, M, Q20, Q40, Q0, w)
     old = {r[0]: r for r in csv.reader(open(PCSV)) if r and r[0][:1].isdigit()}

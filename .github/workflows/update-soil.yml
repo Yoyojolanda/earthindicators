@@ -32,7 +32,6 @@ jobs:
       # every pentad since 1950 at every land point (~400 MB), kept in GitHub's Actions cache rather than the repository,
       # so a rebuild with other settings does not have to read 75 years from ARCO-ERA5 again
       - uses: actions/cache/restore@v4
-        if: ${{ inputs.rebuild }}
         with:
           path: ~/soilcache
           key: soil-pentads-v1-${{ github.run_id }}
@@ -40,12 +39,11 @@ jobs:
       - name: Build soil moisture and flash droughts
         env:
           SOIL_REBUILD: ${{ inputs.rebuild && '1' || '' }}
-          SOIL_CACHE: ${{ inputs.rebuild && '/home/runner/soilcache/pentads.npz' || '' }}
+          SOIL_CACHE: /home/runner/soilcache/pentads.npz
         run: |
           mkdir -p ~/soilcache
           python -u scripts/build_soil.py
       - uses: actions/cache/save@v4
-        if: ${{ inputs.rebuild }}
         with:
           path: ~/soilcache
           key: soil-pentads-v1-${{ github.run_id }}
