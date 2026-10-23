@@ -1,0 +1,55 @@
+name: Probe coral data sources (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Probe
+        run: |
+          cat > p.py <<'PY'
+          import re, json, urllib.request, urllib.parse
+          UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/126 earthindicators.org"}
+          def get(u, t=120):
+              return urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=t).read()
+          def sec(n): print("\n========", n, flush=True)
+          def show(u, n=3000, pat=None):
+              sec(u)
+              try:
+                  b = get(u); t = b.decode("utf-8", "replace"); print(len(b))
+                  if pat: [print("  ", x) for x in sorted(set(re.findall(pat, t)))[:80]]
+                  else: print(t[:n])
+              except Exception as e: print("ERR", e)
+          show("https://www.ncei.noaa.gov/archive/accession/0228498", pat=r'href="([^"]+)"')
+          show("https://www.ncei.noaa.gov/archive/archive-management-system/OAS/bin/prd/jquery/accession/download/228498", pat=r'href="([^"]+)"')
+          show("https://www.ncei.noaa.gov/data/oceans/archive/arc0193/0228498/", pat=r'href="([^"]+)"')
+          show("https://erddap.bco-dmo.org/erddap/tabledap/bcodmo_dataset_773466.das", 2500)
+          show("https://www.bco-dmo.org/dataset/773466", pat=r'href="([^"]+(?:csv|tsv|zip|xlsx|data)[^"]*)"')
+          show("https://api.figshare.com/v2/articles/search", 10)
+          try:
+              sec("figshare search")
+              req = urllib.request.Request("https://api.figshare.com/v2/articles/search", data=json.dumps({"search_for": "Global Coral Bleaching Database"}).encode(), headers={**UA, "Content-Type": "application/json"})
+              for a in json.loads(urllib.request.urlopen(req, timeout=60).read())[:10]: print(a["id"], a["title"], a.get("url_public_html"))
+          except Exception as e: print("ERR", e)
+          show("https://apps.aims.gov.au/reef-monitoring/sector/in/manta", pat=r'(?:src|href)="([^"]+)"')
+          try:
+              sec("AIMS js api refs")
+              h = get("https://apps.aims.gov.au/reef-monitoring/sector/in/manta").decode("utf-8","replace")
+              for js in re.findall(r'src="([^"]+\.js)"', h)[:8]:
+                  u = js if js.startswith("http") else urllib.parse.urljoin("https://apps.aims.gov.au/reef-monitoring/", js)
+                  t = get(u).decode("utf-8","replace")
+                  print("--", u, len(t))
+                  for m in sorted(set(re.findall(r'["\'`](/?(?:api|reef-monitoring/api|data)[^"\'`]{0,120})["\'`]', t)))[:40]: print("   ", m)
+                  for m in sorted(set(re.findall(r'https?://[a-z0-9.-]*aims[^"\'` ]{0,120}', t)))[:40]: print("   ", m)
+          except Exception as e: print("ERR", e)
+          PY
+          python -u p.py > probe.txt 2>&1 || true
+      - name: Save
+        if: always()
+        run: |
+          mkdir out && cp probe.txt out/ && cd out && git init -q && git checkout -q -b probe-out
+          git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add . && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
