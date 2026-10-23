@@ -1,0 +1,40 @@
+name: Probe coral data sources (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Probe
+        run: |
+          cat > p.py <<'PY'
+          import re, json, csv, io, urllib.request, collections
+          UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/126 earthindicators.org"}
+          def get(u, t=300): return urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=t).read()
+          print("======== AIMS main js")
+          t = get("https://apps.aims.gov.au/reef-monitoring/main-4WRA6BLJ.js").decode("utf-8","replace")
+          for m in sorted(set(re.findall(r'["\'`]([^"\'`\s]{0,80}(?:json|/api/|\.csv|summary|cover|sector|region)[^"\'`\s]{0,80})["\'`]', t)))[:150]: print("  ", m)
+          for k in ("fetch(", "HttpClient", ".get(", "baseUrl", "apiUrl", "environment"):
+              for i in [m.start() for m in re.finditer(re.escape(k), t)][:4]: print(k, "::", t[max(0,i-150):i+200].replace("\n"," "))
+          print("======== GCBD")
+          raw = get("https://datadocs.bco-dmo.org/dataset/773466/file/B11vA82u7y2Owp/global_bleaching_environmental.csv", 600).decode("utf-8","replace")
+          print(len(raw)); rd = list(csv.DictReader(io.StringIO(raw))); print(len(rd)); print(list(rd[0].keys()))
+          for r in rd[:3]: print({k: r[k] for k in list(r)[:40]})
+          for col in ("Date_Year","Percent_Bleached","Data_Source","Bleaching_Level","Ocean_Name","Ocean"):
+              if col in rd[0]: print(col, collections.Counter(r[col] for r in rd).most_common(15))
+          y = collections.defaultdict(list)
+          for r in rd:
+              try: y[int(r["Date_Year"])].append(float(r["Percent_Bleached"]))
+              except: pass
+          for k in sorted(y): v=y[k]; print(k, len(v), round(sum(1 for x in v if x>0)/len(v)*100,1), round(sum(v)/len(v),1))
+          PY
+          python -u p.py > probe.txt 2>&1 || true
+      - name: Save
+        if: always()
+        run: |
+          mkdir out && cp probe.txt out/ && cd out && git init -q && git checkout -q -b probe-out
+          git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add . && git commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
