@@ -14,22 +14,24 @@ jobs:
           import re, json, csv, io, urllib.request, collections
           UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/126 earthindicators.org"}
           def get(u, t=300): return urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=t).read()
-          print("======== AIMS main js")
+          print("======== AIMS")
           t = get("https://apps.aims.gov.au/reef-monitoring/main-4WRA6BLJ.js").decode("utf-8","replace")
-          for m in sorted(set(re.findall(r'["\'`]([^"\'`\s]{0,80}(?:json|/api/|\.csv|summary|cover|sector|region)[^"\'`\s]{0,80})["\'`]', t)))[:150]: print("  ", m)
-          for k in ("fetch(", "HttpClient", ".get(", "baseUrl", "apiUrl", "environment"):
-              for i in [m.start() for m in re.finditer(re.escape(k), t)][:4]: print(k, "::", t[max(0,i-150):i+200].replace("\n"," "))
+          for i in [m.start() for m in re.finditer("BASE_API:", t)][:3]: print(t[max(0,i-100):i+300])
+          m = re.search(r'BASE_API:\s*["`\']([^"`\']+)', t); base = m.group(1) if m else None; print("base", base)
+          for path in ["region-list", "sector-list", "sector-summary?sector=CA&year=2025", "region-summary", "gbr-summary", "summary"]:
+              try:
+                  u = base + path; b = get(u).decode("utf-8","replace"); print("--", u, len(b)); print(b[:1500])
+              except Exception as e: print("--", path, "ERR", e)
           print("======== GCBD")
           raw = get("https://datadocs.bco-dmo.org/dataset/773466/file/B11vA82u7y2Owp/global_bleaching_environmental.csv", 600).decode("utf-8","replace")
-          print(len(raw)); rd = list(csv.DictReader(io.StringIO(raw))); print(len(rd)); print(list(rd[0].keys()))
-          for r in rd[:3]: print({k: r[k] for k in list(r)[:40]})
-          for col in ("Date_Year","Percent_Bleached","Data_Source","Bleaching_Level","Ocean_Name","Ocean"):
-              if col in rd[0]: print(col, collections.Counter(r[col] for r in rd).most_common(15))
-          y = collections.defaultdict(list)
+          rd = list(csv.DictReader(io.StringIO(raw))); print(list(rd[0].keys()))
+          print("Percent_Bleached", collections.Counter(r["Percent_Bleached"] for r in rd).most_common(12))
+          y = collections.defaultdict(list); src = collections.defaultdict(collections.Counter)
           for r in rd:
-              try: y[int(r["Date_Year"])].append(float(r["Percent_Bleached"]))
+              try: y[int(r["Date_Year"])].append(float(r["Percent_Bleached"])); src[int(r["Date_Year"])][r["Data_Source"]] += 1
               except: pass
-          for k in sorted(y): v=y[k]; print(k, len(v), round(sum(1 for x in v if x>0)/len(v)*100,1), round(sum(v)/len(v),1))
+          for k in sorted(y):
+              v = y[k]; print(k, len(v), round(sum(1 for x in v if x > 0)/len(v)*100, 1), round(sum(1 for x in v if x >= 30)/len(v)*100, 1), round(sum(v)/len(v), 1), dict(src[k].most_common(3)))
           PY
           python -u p.py > probe.txt 2>&1 || true
       - name: Save
