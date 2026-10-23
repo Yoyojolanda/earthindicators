@@ -83,25 +83,7 @@ def one_day(url):
     return day_value(r) if r is not None else None
 
 
-def main():
-    today = date.today()
-    daily = {}
-    if os.path.exists(DAILY):
-        daily = {r[0]: (float(r[1]), int(r[2])) for r in csv.reader(open(DAILY)) if r and r[0][:1].isdigit()}
-    start = date.fromisoformat(max(daily)) - timedelta(days=44) if daily else date(2015, 4, 1)
-    G = granules(start, today)
-    print(f"{len(G)} granules from {start}", flush=True)
-    todo = sorted(G)
-    t0 = time.time()
-    # separate processes, not threads: the netCDF/HDF5 library crashes when several threads use it at once
-    with ProcessPoolExecutor(THREADS) as ex:
-        for d, v in zip(todo, ex.map(one_day, [G[d] for d in todo], chunksize=4)):
-            if v:
-                daily[d.isoformat()] = v
-            if len(daily) % 200 == 0:
-                print(f"  {d}: {time.time() - t0:.0f} s", flush=True)
-    if len(daily) < 30:
-        sys.exit("too few days")
+def save(daily):
     buf = io.StringIO(); w = csv.writer(buf, lineterminator="\n"); w.writerow(["date", "rz", "points"])
     for k in sorted(daily):
         w.writerow([k, f"{daily[k][0]:.5f}", daily[k][1]])
@@ -112,6 +94,37 @@ def main():
     rows = [[m, f"{np.mean([x[0] for x in by[m]]):.5f}", len(by[m]), f"{np.mean([x[1] for x in by[m]]):.0f}"] for m in sorted(by) if len(by[m]) >= 20]
     buf = io.StringIO(); w = csv.writer(buf, lineterminator="\n"); w.writerow(["month", "rz", "days", "points"]); w.writerows(rows)
     open(OUT + ".tmp", "w").write(buf.getvalue()); os.replace(OUT + ".tmp", OUT)
+    return rows
+
+
+def main():
+    today = date.today()
+    budget = float(os.environ.get("SMAP_BUDGET_MIN") or 150) * 60     # stop in time and save; the next run continues
+    daily = {}
+    if os.path.exists(DAILY):
+        daily = {r[0]: (float(r[1]), int(r[2])) for r in csv.reader(open(DAILY)) if r and r[0][:1].isdigit()}
+    start = date.fromisoformat(max(daily)) - timedelta(days=44) if daily else date(2015, 4, 1)
+    G = granules(start, today)
+    print(f"{len(G)} granules from {start}", flush=True)
+    todo = sorted(G)
+    t0, n = time.time(), 0
+    # separate processes, not threads: the netCDF/HDF5 library crashes when several threads use it at once.
+    # Days come back in date order; progress is saved every 100 days, so a stopped run loses little.
+    with ProcessPoolExecutor(THREADS) as ex:
+        for d, v in zip(todo, ex.map(one_day, [G[d] for d in todo], chunksize=4)):
+            n += 1
+            if v:
+                daily[d.isoformat()] = v
+            if n % 100 == 0:
+                save(daily)
+                print(f"  {d}: {n} of {len(todo)}, {time.time() - t0:.0f} s", flush=True)
+            if time.time() - t0 > budget:
+                print(f"  time budget reached at {d}; the next run continues from here", flush=True)
+                ex.shutdown(wait=False, cancel_futures=True)
+                break
+    if len(daily) < 30:
+        sys.exit("too few days")
+    rows = save(daily)
     print(f"{len(daily)} days; {len(rows)} months, {rows[0][0]} to {rows[-1][0]}; last {rows[-1][1]}", flush=True)
 
 
