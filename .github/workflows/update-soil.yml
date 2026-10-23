@@ -1,0 +1,36 @@
+name: Update soil moisture and flash droughts (ERA5)
+
+# Root-zone soil moisture from Google's ARCO-ERA5 copy (no account, no queue), counted in five-day periods, so a
+# weekly run is enough. The first run reads 1950 to now once (about an hour); later runs read only the last 100 days.
+on:
+  schedule:
+    - cron: "41 7 * * 3"       # Wednesdays
+  workflow_dispatch:           # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: soil
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install numpy xarray zarr gcsfs dask
+      - name: Build soil moisture and flash droughts
+        run: python -u scripts/build_soil.py
+      - name: Commit changes
+        if: always()
+        run: |
+          rm -f data/*.tmp data/*.tmp.npz
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/soil_*
+          git diff --cached --quiet || (git commit -m "Update soil moisture data" && git pull --rebase && git push)
