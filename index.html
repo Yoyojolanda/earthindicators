@@ -74,10 +74,13 @@ const GROUPS=[
   ['co2','co2.html','Carbon dioxide (CO₂)','NOAA Mauna Loa','The main driver of warming, mostly from coal, oil and gas. CO₂ is now higher than at any time in at least 2 million years (IPCC).'],
   ['ch4','ch4.html','Methane (CH₄)','NOAA','The second biggest driver. It traps far more heat per molecule than CO₂ but breaks down within about a decade.'],
   ['eei','eei.html','Earth\u2019s energy imbalance','NASA CERES','Measured from satellites: if more energy comes in than goes out, the planet must heat up. This is the warming at its source.']]],
- ['What it is doing','Heat melts ice and expands seawater.',[
+ ['What it is doing','Heat melts ice and raises the sea, dries out land, feeds fires and bleaches coral reefs.',[
   ['sl','sea-level.html','Global sea level','NASA','Melting ice and expanding warm water raise the sea, which makes coastal flooding and storm surges worse.'],
   ['ice','sea-ice.html','Arctic sea ice','NSIDC','Bright ice reflects sunlight; dark open water absorbs it. Losing ice speeds up Arctic warming.'],
-  ['land','land-ice.html','Glaciers and ice sheets','NASA GRACE, WGMS','Unlike sea ice, melting land ice adds water to the ocean. Glaciers are measured every year; satellites weigh Greenland and Antarctica every month.']]],
+  ['land','land-ice.html','Glaciers and ice sheets','NASA GRACE, WGMS','Unlike sea ice, melting land ice adds water to the ocean. Glaciers are measured every year; satellites weigh Greenland and Antarctica every month.'],
+  ['wv','water.html','The water cycle','Copernicus ERA5','Warmer air holds about 7% more water vapor per °C, so downpours get heavier, while heat also dries out the soil faster between them.'],
+  ['fire','wildfires.html','Wildfires','Copernicus GWIS','Heat and drought make fires bigger and more frequent. Burning forests release their carbon, which adds to the warming.'],
+  ['coral','corals.html','Coral reefs','NOAA Coral Reef Watch','Reefs shelter about a quarter of all sea life. When the water stays too warm for weeks, corals bleach, and many die.']]],
  ['Natural ups and downs','Natural cycles push temperatures up or down for a year or two, or slowly over decades, on top of the long-term trend.',[
   ['nino','nino.html','El Niño (Niño 3.4)','NOAA OISST','El Niño years run hotter and La Niña years cooler. Knowing which phase we are in helps tell a short-term swing from the trend.'],
   ['pdo','pdo.html','Pacific Decadal Oscillation','NOAA NCEI','A slower, El Niño-like swing in the North Pacific that lasts years to decades. It shifts heat around, nudging global temperatures and regional weather.'],
@@ -87,7 +90,7 @@ $('groups').innerHTML=GROUPS.map(([h,p,T])=>`<section class="grp"><h2>${h}</h2><
  return `<a class="tile" id="t-${id}" href="${href}"><h3>${title}</h3><div class="vd">Loading…</div><div class="num"></div><div class="s"></div><div class="spark"><canvas></canvas></div><div class="d"><span class="dl"></span><span class="sl"></span></div><p class="why">${why}</p><span class="go">See the data →</span></a>`}).join('')+'</div></section>').join('');
 function fill(id,{vd,v,l,s,through,spark,sparkLabel,bars}){
  const t=$('t-'+id);
- t.querySelector('.vd').textContent=vd;
+ t.querySelector('.vd').textContent=vd.charAt(0).toUpperCase()+vd.slice(1);
  t.querySelector('.num').innerHTML=`<b>${v}</b> ${l}`;t.querySelector('.s').textContent=s||'';
  t.querySelector('.dl').textContent=`${SRC[id]}, data through ${through}`;t.querySelector('.sl').textContent=sparkLabel||'';
  const P=spark.filter(p=>p.y!=null&&isFinite(p.y));
@@ -104,7 +107,7 @@ function spark(c,S,bars){const P=S.filter(p=>p.y!=null&&isFinite(p.y));chartRead
 function fail(id,e){console.error(e);const t=$('t-'+id);t.querySelector('.vd').textContent='Data unavailable right now';t.querySelector('.num').textContent='The full page may still have the latest values.'}
 
 // numbers and verdicts come from indicators.js, shared with the claims page and the "In short" boxes
-['air','sst','ohc','co2','ch4','eei','sl','ice','land','nino','pdo','sun'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
+['air','sst','ohc','co2','ch4','eei','sl','ice','land','wv','fire','coral','nino','pdo','sun'].forEach(id=>EI.get(id).then(r=>fill(id,{vd:r.vd,through:r.through,...r.tile})).catch(e=>fail(id,e)));
 
 // ---- slow signals: one wide tile with six headline numbers, each with its own date, since they lag months to years
 const SLOW=[
